@@ -10,19 +10,15 @@ dependencies:
 
 test:
   override:
-    - echo $slackTokenEncoded | base64 --decode > slackToken.tmp
-    - export slackToken=`cat slackToken.tmp`
-    - docker run -d -e slackToken=$slackToken --name bender danackerson/bender:vc$CIRCLE_BUILD_NUM
+    - docker run -d -e slackToken=$(echo $slackTokenEncoded | base64 --decode) --name bender danackerson/bender:vc$CIRCLE_BUILD_NUM
     - docker logs bender
 
-deployment:
-  live:
-    branch: master
-    commands:
-      - echo $slackTokenEncoded | base64 --decode > slackToken.tmp
-      - export slackToken=`cat slackToken.tmp`
-      - docker push danackerson/bender:vc$CIRCLE_BUILD_NUM
-      - ssh core@go.ackerson.de DOCKER_EMAIL=$DOCKER_EMAIL DOCKER_USER=$DOCKER_USER DOCKER_PASS=$DOCKER_PASS docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
-      - ssh core@go.ackerson.de CIRCLE_BUILD_NUM=$CIRCLE_BUILD_NUM docker pull danackerson/bender:vc$CIRCLE_BUILD_NUM
-      - ssh core@go.ackerson.de docker rm -f bender; true
-      - ssh core@go.ackerson.de CIRCLE_BUILD_NUM=$CIRCLE_BUILD_NUM slackToken=$slackToken docker run -d -e CIRCLE_BUILD_NUM=$CIRCLE_BUILD_NUM -e prodSession=true -e slackToken=$slackToken --dns 2001:4860:4860::8888 --dns 2001:4860:4860::8844 --dns 8.8.8.8 --dns 8.8.4.4 --name bender danackerson/bender:vc$CIRCLE_BUILD_NUM
+# deployment:
+#   live:
+#     branch: master
+#     commands:
+#       - docker push danackerson/bender:vc$CIRCLE_BUILD_NUM
+#       - ssh core@go.ackerson.de DOCKER_EMAIL=$DOCKER_EMAIL DOCKER_USER=$DOCKER_USER DOCKER_PASS=$DOCKER_PASS docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
+#       - ssh core@go.ackerson.de CIRCLE_BUILD_NUM=$CIRCLE_BUILD_NUM docker pull danackerson/bender:vc$CIRCLE_BUILD_NUM
+#       - ssh core@go.ackerson.de docker rm -f bender; true
+#       - ssh core@go.ackerson.de CIRCLE_BUILD_NUM=$CIRCLE_BUILD_NUM slackToken=$(echo $slackTokenEncoded | base64 --decode) docker run -d -e CIRCLE_BUILD_NUM=$CIRCLE_BUILD_NUM -e prodSession=true -e slackToken=$slackToken --dns 2001:4860:4860::8888 --dns 2001:4860:4860::8844 --dns 8.8.8.8 --dns 8.8.4.4 --name bender danackerson/bender:vc$CIRCLE_BUILD_NUM
