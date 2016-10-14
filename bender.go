@@ -6,7 +6,7 @@ import (
   "strings"
   "os"
 
-  "github.com/nlopes/slack"
+  "github.com/danackerson/bender/Godeps/_workspace/src/github.com/nlopes/slack"
 )
 
 var botID = "N/A" // U2NQSPHHD bender bot userID
@@ -37,7 +37,7 @@ Loop:
         //fmt.Println("Connection counter:", ev.ConnectionCount)
         botID = ev.Info.User.ID
         // TODO - reenable on version 0.1
-        //rtm.SendMessage(rtm.NewOutgoingMessage("I'm back baby!", generalChannel))
+        rtm.SendMessage(rtm.NewOutgoingMessage("I'm back baby!", generalChannel))
 
       case *slack.MessageEvent:
         fmt.Printf("Message: %+v\n", ev.Msg)

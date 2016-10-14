@@ -5,18 +5,19 @@ machine:
 dependencies:
   override:
     - docker version
-    - docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
+    - docker run --rm -it -v "$GOPATH":/gopath -v "$(pwd)":/app -e "GOPATH=/gopath" -w /app golang:1.7.1 sh -c 'CGO_ENABLED=0 go build -a --installsuffix cgo --ldflags="-s" -o bender'
     - docker build -t danackerson/bender:vc$CIRCLE_BUILD_NUM .
 
 test:
   override:
-    - docker run -d -e slackToken=$(echo $slackTokenEncoded | base64 --decode) --name bender danackerson/bender:vc$CIRCLE_BUILD_NUM
+    - docker run --rm -e slackToken=$(echo $slackTokenEncoded | base64 --decode) --name bender danackerson/bender:vc$CIRCLE_BUILD_NUM
     - docker logs bender
 
 # deployment:
 #   live:
 #     branch: master
 #     commands:
+#       - docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
 #       - docker push danackerson/bender:vc$CIRCLE_BUILD_NUM
 #       - ssh core@go.ackerson.de DOCKER_EMAIL=$DOCKER_EMAIL DOCKER_USER=$DOCKER_USER DOCKER_PASS=$DOCKER_PASS docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
 #       - ssh core@go.ackerson.de CIRCLE_BUILD_NUM=$CIRCLE_BUILD_NUM docker pull danackerson/bender:vc$CIRCLE_BUILD_NUM
