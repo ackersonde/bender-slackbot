@@ -5,12 +5,13 @@ machine:
 dependencies:
   override:
     - docker version
+    - go get ./...
     - CGO_ENABLED=0 go build -a --installsuffix cgo --ldflags="-s" -o bender
     - docker build -t danackerson/bender:vc$CIRCLE_BUILD_NUM .
 
 test:
   override:
-    - docker run --rm -e slackToken=$(echo $slackTokenEncoded | base64 --decode) --name bender danackerson/bender:vc$CIRCLE_BUILD_NUM
+    - docker run -d -e slackToken=$(echo $slackTokenEncoded | base64 --decode) --name bender danackerson/bender:vc$CIRCLE_BUILD_NUM
     - docker logs bender
 
 # deployment:

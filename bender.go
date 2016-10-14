@@ -6,7 +6,7 @@ import (
   "strings"
   "os"
 
-  "github.com/danackerson/bender/Godeps/_workspace/src/github.com/nlopes/slack"
+  "github.com/nlopes/slack"
 )
 
 var botID = "N/A" // U2NQSPHHD bender bot userID
