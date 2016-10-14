@@ -27,4 +27,4 @@ deployment:
       - ssh core@go.ackerson.de DOCKER_EMAIL=$DOCKER_EMAIL DOCKER_USER=$DOCKER_USER DOCKER_PASS=$DOCKER_PASS docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
       - ssh core@go.ackerson.de CIRCLE_BUILD_NUM=$CIRCLE_BUILD_NUM docker pull danackerson/bender:vc$CIRCLE_BUILD_NUM
       - ssh core@go.ackerson.de docker rm -f bender; true
-      - ssh core@go.ackerson.de CIRCLE_BUILD_NUM=$CIRCLE_BUILD_NUM slackToken=$(echo $slackTokenEncoded | base64 --decode) docker run -d -e CIRCLE_BUILD_NUM=$CIRCLE_BUILD_NUM -e prodSession=true -e slackToken=$slackToken --dns 2001:4860:4860::8888 --dns 2001:4860:4860::8844 --dns 8.8.8.8 --dns 8.8.4.4 --name bender danackerson/bender:vc$CIRCLE_BUILD_NUM
+      - ssh core@go.ackerson.de CIRCLE_BUILD_NUM=$CIRCLE_BUILD_NUM slackToken=$(echo $slackTokenEncoded | base64 --decode) docker run -d -e CIRCLE_BUILD_NUM=$CIRCLE_BUILD_NUM -e slackToken=$(echo $slackTokenEncoded | base64 --decode) --dns 2001:4860:4860::8888 --dns 2001:4860:4860::8844 --dns 8.8.8.8 --dns 8.8.4.4 --name bender danackerson/bender:vc$CIRCLE_BUILD_NUM
