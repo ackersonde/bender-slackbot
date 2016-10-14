@@ -1,6 +1,7 @@
 machine:
   services:
     - docker
+    - go
 
 dependencies:
   override:
