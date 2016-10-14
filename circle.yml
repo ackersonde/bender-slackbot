@@ -5,8 +5,6 @@ machine:
 dependencies:
   override:
     - docker version
-    - go get ./...
-    - CGO_ENABLED=0 go build -a --installsuffix cgo --ldflags="-s" -o bender
     - docker build -t danackerson/bender:vc$CIRCLE_BUILD_NUM .
 
 test:
