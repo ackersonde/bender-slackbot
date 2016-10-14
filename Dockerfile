@@ -1,6 +1,4 @@
-FROM golang:latest
-RUN mkdir /app
-ADD bender /app/
+FROM iron/base
 WORKDIR /app
-RUN go build -o main 
-CMD ["/app/main"]
+COPY bender /app/
+ENTRYPOINT ["./bender"]

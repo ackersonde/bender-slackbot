@@ -17,7 +17,7 @@ func main() {
   api := slack.New(slackToken)
   logger := log.New(os.Stdout, "slack-bot: ", log.Lshortfile|log.LstdFlags)
   slack.SetLogger(logger)
-  fmt.Println("slackToken: "+slackToken)
+  //fmt.Println("slackToken: "+slackToken)
   api.SetDebug(true)
 
   rtm := api.NewRTM()

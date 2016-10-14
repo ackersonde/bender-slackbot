@@ -7,12 +7,12 @@ dependencies:
     - docker version
     - go get -t -d -v ./...
     - go build -v bender.go
+    - docker build -t danackerson/bender-slackbot:vc$CIRCLE_BUILD_NUM
 
 test:
   override:
-    - slackToken=$(echo $slackTokenEncoded | base64 --decode) ./bender
-#    - docker run -d -e slackToken=$(echo $slackTokenEncoded | base64 --decode) --name bender danackerson/bender:vc$CIRCLE_BUILD_NUM
-#    - docker logs bender
+    - docker run -d -e slackToken=$(echo $slackTokenEncoded | base64 --decode) --name bender danackerson/bender:vc$CIRCLE_BUILD_NUM
+    - docker logs bender
 
 # deployment:
 #   live:
