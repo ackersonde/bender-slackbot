@@ -17,7 +17,6 @@ func main() {
   api := slack.New(slackToken)
   logger := log.New(os.Stdout, "slack-bot: ", log.Lshortfile|log.LstdFlags)
   slack.SetLogger(logger)
-  //fmt.Println("slackToken: "+slackToken)
   api.SetDebug(false)
 
   rtm := api.NewRTM()
@@ -44,7 +43,8 @@ Loop:
         // only react to messages to me and on the same channel!
         //botUser, _ := api.GetUserInfo(botID)
         callingUser, _ := api.GetUserInfo(ev.Msg.User)
-        if ev.Msg.Type == "message" && ev.Msg.ReplyTo != 1 && ev.Msg.SubType != "message_deleted" && 
+        fmt.Printf("botUser: %+v\n", botID)
+        if ev.Msg.Type == "message" && ev.Msg.User != botID && ev.Msg.SubType != "message_deleted" && 
            ( strings.Contains(ev.Msg.Text, "<@"+botID+">") || strings.HasPrefix(ev.Msg.Channel, "D") ) {
           originalMessage := ev.Msg.Text
           parsedMessage := strings.Replace(originalMessage, "<@"+botID+">", "", -1) // strip out bot's name from cmd
