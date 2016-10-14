@@ -1,8 +1,6 @@
 FROM golang:latest
 RUN mkdir /app
-ADD . /app/
-ENV GOPATH /app:$GOPATH
+ADD bender /app/
 WORKDIR /app
-RUN go get ./...
-RUN go build -o main .
+RUN go build -o main 
 CMD ["/app/main"]

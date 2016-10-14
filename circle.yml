@@ -3,9 +3,12 @@ machine:
     - docker
 
 dependencies:
+  pre:
+    - go get -u github.com/kardianos/govendor
   override:
     - docker version
-    - docker build -t danackerson/bender:vc$CIRCLE_BUILD_NUM .
+    - govendor build bender.go
+    - ./bender
 
 test:
   override:
