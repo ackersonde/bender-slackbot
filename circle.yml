@@ -6,7 +6,7 @@ dependencies:
   override:
     - docker version
     - go get -t -d -v ./...
-    - go build -v
+    - go build -v bender.go
 
 test:
   override:
