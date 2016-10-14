@@ -9,6 +9,10 @@ dependencies:
     - env GOOS=linux GOARCH=386 go build bender.go
     - docker build -t danackerson/bender:vc$CIRCLE_BUILD_NUM .
 
+# not all Env vars are created equal - some have ':' or '{}' or <shudder> '\/'s
+# in this case we base64 encode the parameter: `base64 <<< [string in question]`
+# taking the result and pasting it into the environment variable of this CircleCI project
+# below is an example how to decode this on the fly (e.g. slackToken)
 test:
   override:
     - docker run -d -e slackToken=$(echo $slackTokenEncoded | base64 --decode) --name bender danackerson/bender:vc$CIRCLE_BUILD_NUM
