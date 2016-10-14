@@ -12,7 +12,7 @@ dependencies:
 test:
   override:
     - docker run -d -e slackToken=$(echo $slackTokenEncoded | base64 --decode) --name bender danackerson/bender:vc$CIRCLE_BUILD_NUM
-    - docker logs bender | grep "Sending message: {1 C092UE0H4 I'm back baby! message}"
+    - docker logs bender | grep -q "{1 C092UE0H4 I'm back baby! message}"
 
 # deployment:
 #   live:
