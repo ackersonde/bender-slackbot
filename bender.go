@@ -44,6 +44,7 @@ Loop:
         //botUser, _ := api.GetUserInfo(botID)
         callingUser, _ := api.GetUserInfo(ev.Msg.User)
         fmt.Printf("botUser: %+v\n", botID)
+        fmt.Printf("calUser: %+v\n", ev.Msg.User)
         if ev.Msg.Type == "message" && ev.Msg.User != botID && ev.Msg.SubType != "message_deleted" && 
            ( strings.Contains(ev.Msg.Text, "<@"+botID+">") || strings.HasPrefix(ev.Msg.Channel, "D") ) {
           originalMessage := ev.Msg.Text
