@@ -8,8 +8,9 @@ dependencies:
     - go get -t -d -v ./...
     - go build -v
 
-#test:
-#  override:
+test:
+  override:
+    - slackToken=$(echo $slackTokenEncoded | base64 --decode) ./bender
 #    - docker run -d -e slackToken=$(echo $slackTokenEncoded | base64 --decode) --name bender danackerson/bender:vc$CIRCLE_BUILD_NUM
 #    - docker logs bender
 
