@@ -3,17 +3,15 @@ machine:
     - docker
 
 dependencies:
-  pre:
-    - go get -u github.com/kardianos/govendor
   override:
     - docker version
-    - govendor build bender.go
-    - ./bender
+    - go get -t -d -v ./...
+    - go build -v
 
-test:
-  override:
-    - docker run -d -e slackToken=$(echo $slackTokenEncoded | base64 --decode) --name bender danackerson/bender:vc$CIRCLE_BUILD_NUM
-    - docker logs bender
+#test:
+#  override:
+#    - docker run -d -e slackToken=$(echo $slackTokenEncoded | base64 --decode) --name bender danackerson/bender:vc$CIRCLE_BUILD_NUM
+#    - docker logs bender
 
 # deployment:
 #   live:
