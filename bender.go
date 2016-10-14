@@ -7,6 +7,7 @@ import (
   "os"
 
   "github.com/nlopes/slack"
+  "github.com/danackerson/bender-slackbot/commands"
 )
 
 var botID = "N/A" // U2NQSPHHD bender bot userID
@@ -26,30 +27,24 @@ Loop:
   for {
     select {
     case msg := <-rtm.IncomingEvents:
-      //fmt.Print("Event Received: ")
       switch ev := msg.Data.(type) {
       case *slack.HelloEvent:
         // Ignore hello
 
       case *slack.ConnectedEvent:
-        //fmt.Println("Infos:", ev.Info)
-        //fmt.Println("Connection counter:", ev.ConnectionCount)
         botID = ev.Info.User.ID
-        // TODO - reenable on version 0.1
         rtm.SendMessage(rtm.NewOutgoingMessage("I'm back baby!", generalChannel))
 
       case *slack.MessageEvent:
         fmt.Printf("Message: %+v\n", ev.Msg)
-        // only react to messages to me and on the same channel!
-        //botUser, _ := api.GetUserInfo(botID)
-        callingUser, _ := api.GetUserInfo(ev.Msg.User)
-        fmt.Printf("botUser: %+v\n", botID)
-        fmt.Printf("calUser: %+v\n", ev.Msg.User)
-        if ev.Msg.Type == "message" && ev.Msg.User != botID && ev.Msg.SubType != "message_deleted" && 
+        callerID := ev.Msg.User
+        
+        // only respond to messages sent to me by others on the same channel:
+        if ev.Msg.Type == "message" && callerID != botID && ev.Msg.SubType != "message_deleted" && 
            ( strings.Contains(ev.Msg.Text, "<@"+botID+">") || strings.HasPrefix(ev.Msg.Channel, "D") ) {
           originalMessage := ev.Msg.Text
           parsedMessage := strings.Replace(originalMessage, "<@"+botID+">", "", -1) // strip out bot's name from cmd
-          rtm.SendMessage(rtm.NewOutgoingMessage("whaddya say <@"+callingUser.Name+">? "+parsedMessage+"?", ev.Msg.Channel))
+          rtm.SendMessage(rtm.NewOutgoingMessage(commands.checkCommand(api, ev.Msg, parsedMessage), ev.Msg.Channel))
         }
 
       case *slack.PresenceChangeEvent:
