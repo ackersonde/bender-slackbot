@@ -43,8 +43,8 @@ Loop:
         if ev.Msg.Type == "message" && callerID != botID && ev.Msg.SubType != "message_deleted" && 
            ( strings.Contains(ev.Msg.Text, "<@"+botID+">") || strings.HasPrefix(ev.Msg.Channel, "D") ) {
           originalMessage := ev.Msg.Text
-          parsedMessage := strings.Replace(originalMessage, "<@"+botID+">", "", -1) // strip out bot's name from cmd
-          rtm.SendMessage(rtm.NewOutgoingMessage(commands.checkCommand(api, ev.Msg, parsedMessage), ev.Msg.Channel))
+          parsedMessage := strings.TrimSpace(strings.Replace(originalMessage, "<@"+botID+">", "", -1)) // strip out bot's name and spaces
+          commands.CheckCommand(api, rtm, ev.Msg, parsedMessage)
         }
 
       case *slack.PresenceChangeEvent:
