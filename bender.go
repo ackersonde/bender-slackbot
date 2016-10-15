@@ -23,7 +23,6 @@ func main() {
   rtm := api.NewRTM()
   go rtm.ManageConnection()
 
-Loop:
   for {
     select {
     case msg := <-rtm.IncomingEvents:
