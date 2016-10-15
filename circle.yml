@@ -4,7 +4,7 @@ machine:
 
 dependencies:
   override:
-    - docker version
+    - docker version && go version
     - go get -t -d -v ./...
     - env GOOS=linux GOARCH=386 go build bender.go
     - docker build -t danackerson/bender:vc$CIRCLE_BUILD_NUM .

@@ -8,7 +8,6 @@ import (
 
 // TestMessage is now commented
 func CheckCommand(api *slack.Client, rtm *slack.RTM, slackMessage slack.Msg, command string) {
-  callingUserProfile, _ := api.GetUserInfo(slackMessage.User)
   fmt.Printf("rcvd cmd: %s", command)
   
   if (command == "sw") {
@@ -16,6 +15,7 @@ func CheckCommand(api *slack.Client, rtm *slack.RTM, slackMessage slack.Msg, com
     params := slack.PostMessageParameters{ AsUser: true }
     api.PostMessage(slackMessage.Channel, response, params)
   } else {
+    callingUserProfile, _ := api.GetUserInfo(slackMessage.User)
     rtm.SendMessage(rtm.NewOutgoingMessage("whaddya say <@"+callingUserProfile.Name+">? "+command+"?", slackMessage.Channel))
   }
 
