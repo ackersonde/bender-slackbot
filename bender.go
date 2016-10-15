@@ -43,6 +43,9 @@ func main() {
             commands.CheckCommand(api, rtm, ev.Msg, parsedMessage)
           }
 
+        case *slack.PresenceChangeEvent:
+          fmt.Printf("Presence Change: %+v\n", ev)
+
         case *slack.RTMError:
           fmt.Printf("Error: %s\n", ev.Error())
       }
