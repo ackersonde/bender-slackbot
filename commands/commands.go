@@ -121,9 +121,14 @@ func CheckCommand(api *slack.Client, rtm *slack.RTM, slackMessage slack.Msg, com
 		result := execCmd("status")
 		rtm.SendMessage(rtm.NewOutgoingMessage(result, slackMessage.Channel))
 	} else if command == "trans" {
-		// TODO get current torrent status
-		result := "Raspberry PI Transmission Torrent Status:\n"
-		result += curlTransmission("trans")
+		result := execCmd("status")
+		if result != "Tunnel offline." {
+			// TODO get current torrent status
+			result = "Raspberry PI Transmission Torrent Status:\n"
+			result += curlTransmission("trans")
+		} else {
+			result = "No VPN Tunnel established! Try `vpnc` first..."
+		}
 		rtm.SendMessage(rtm.NewOutgoingMessage(result, slackMessage.Channel))
 	} else if command == "trand" {
 		// TODO delete indicated torrent
