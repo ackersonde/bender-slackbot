@@ -44,12 +44,12 @@ func curlTransmission(command ...string) (result string) {
 	torrent.Update()
 	fmt.Println(torrent)
 
-	// Remove it
+	/* Remove it
 	err = t.RemoveTorrents([]*transmission.Torrent{torrent}, true)
 	if err != nil {
 		fmt.Println(err)
 	}
-
+	*/
 	// Get session informations
 	t.Session.Update()
 
