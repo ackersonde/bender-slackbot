@@ -1,3 +1,5 @@
+[![Circle CI](https://circleci.com/gh/danackerson/bender-slackbot.svg?style=shield&circle-token=3ad6694a5592b15aef77eeb7051a7b6c61d1c56f)](https://circleci.com/gh/danackerson/bender-slackbot)
+
 # bender-slackbot
 Slackbot for ackerson.slack.com
 
