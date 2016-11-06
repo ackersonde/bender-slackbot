@@ -30,7 +30,7 @@ deployment:
   live:
     branch: master
     commands:
-      - docker login -u $DOCKER_USER -p $DOCKER_PASS
+      - docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
       - docker push danackerson/bender:vc$CIRCLE_BUILD_NUM
       - ssh core@bender.ackerson.de docker login -u $DOCKER_USER -p $DOCKER_PASS
       - ssh core@bender.ackerson.de docker pull danackerson/bender:vc$CIRCLE_BUILD_NUM
