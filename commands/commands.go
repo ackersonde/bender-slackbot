@@ -98,12 +98,16 @@ func execCmd(command ...string) string {
 	tun0StatusCmd := "/sbin/ip a show tun0 | /bin/grep tun0 | /usr/bin/tail -1"
 	tunnel, err := exec.Command("/bin/bash", "-c", tun0StatusCmd).Output()
 	if err != nil {
-		return fmt.Sprintf("Failed to execute command: %s", tun0StatusCmd)
+		fmt.Printf("Failed to execute command: %s", tun0StatusCmd)
+	} else {
+		fmt.Printf("tunnel status: %s", string(tunnel))
 	}
+
 	tunnelStatus := string(tunnel)
 	if len(tunnelStatus) == 0 {
 		tunnelStatus = "Tunnel offline."
 	}
+
 	return tunnelStatus
 }
 
