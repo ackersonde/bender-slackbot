@@ -24,40 +24,42 @@ func curlTransmission(command ...string) (result string) {
 	}
 	t, err := transmission.New(conf)
 	if err != nil {
-		fmt.Println(err)
+		fmt.Printf("\nNew err: %v", err)
 	}
 
 	// Get all torrents
 	torrents, err := t.GetTorrents()
-	if err != err {
-		fmt.Println(err)
+	if err != nil {
+		fmt.Printf("\nGet err: %v", err)
 	}
-	fmt.Println(torrents)
+	fmt.Printf("\nlist of torrents: %v", torrents)
 
 	// Add a torrent
 	torrent, err := t.Add("http://torrent.ubuntu.com:6969/file?info_hash=%BFo%2B%E5I%A8%AC%A5wf8%B5%9B%2B%CAS%D7%BB%C7H")
 	if err != nil {
-		fmt.Println(err)
+		fmt.Printf("\nAdd err: %v", err)
 	}
 
 	// Update is information
 	torrent.Update()
-	fmt.Println(torrent)
+	fmt.Printf("\nUpdate NewTorrent: %v", torrent)
 
-	/* Remove it
+	// Remove it
 	err = t.RemoveTorrents([]*transmission.Torrent{torrent}, true)
 	if err != nil {
-		fmt.Println(err)
+		fmt.Printf("\nRemove err: %v", err)
 	}
-	*/
+
 	// Get session informations
 	t.Session.Update()
 
 	torrents2, err := t.GetTorrents()
 	if err == nil {
-		for _, torrent := range torrents2 {
-			result += strconv.Itoa(torrent.ID) + ": " + torrent.Name + "\n"
+		for _, listTorrent := range torrents2 {
+			result += strconv.Itoa(listTorrent.ID) + ": " + listTorrent.Name + "\n"
 		}
+	} else {
+		fmt.Printf("\nGetFinal err: %v", err)
 	}
 
 	//t.Session.Close()
@@ -122,9 +124,9 @@ func CheckCommand(api *slack.Client, rtm *slack.RTM, slackMessage slack.Msg, com
 		rtm.SendMessage(rtm.NewOutgoingMessage(result, slackMessage.Channel))
 	} else if command == "trans" {
 		result := execCmd("status")
+		fmt.Printf("status? %s", result)
 		if result != "Tunnel offline." {
-			// TODO get current torrent status
-			result = "Raspberry PI Transmission Torrent Status:\n"
+			result = "RaspberryPI Transmission Torrent(s):\n"
 			result += curlTransmission("trans")
 		} else {
 			result = "No VPN Tunnel established! Try `vpnc` first..."

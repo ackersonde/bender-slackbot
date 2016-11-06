@@ -33,7 +33,7 @@ Loop:
 
 			case *slack.ConnectedEvent:
 				botID = ev.Info.User.ID
-				rtm.SendMessage(rtm.NewOutgoingMessage("I'm back baby!", generalChannel))
+				//rtm.SendMessage(rtm.NewOutgoingMessage("I'm back baby!", generalChannel))
 
 			case *slack.MessageEvent:
 				callerID := ev.Msg.User
