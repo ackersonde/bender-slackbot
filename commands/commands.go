@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"strconv"
+	"strings"
 
 	"github.com/nlopes/slack"
 	"github.com/odwrtw/transmission"
@@ -108,6 +109,7 @@ func execCmd(command ...string) string {
 		tunnelStatus = "Tunnel offline."
 	}
 
+	fmt.Printf("result status: %s", tunnelStatus)
 	return tunnelStatus
 }
 
@@ -128,8 +130,8 @@ func CheckCommand(api *slack.Client, rtm *slack.RTM, slackMessage slack.Msg, com
 		rtm.SendMessage(rtm.NewOutgoingMessage(result, slackMessage.Channel))
 	} else if command == "trans" {
 		result := execCmd("status")
-		fmt.Printf("status? %s", result)
-		if result != "Tunnel offline." {
+		fmt.Printf("tunnel status? %s\n", result)
+		if strings.Contains(result, "inet 192.168.178.201/32 scope global tun0") {
 			result = "RaspberryPI Transmission Torrent(s):\n"
 			result += curlTransmission("trans")
 		} else {
