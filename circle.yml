@@ -35,4 +35,4 @@ deployment:
       - ssh core@bender.ackerson.de docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
       - ssh core@bender.ackerson.de docker pull danackerson/bender:vc$CIRCLE_BUILD_NUM
       - ssh core@bender.ackerson.de docker rm -f bender; true
-      - ssh core@bender.ackerson.de docker run -d --privileged=true -e CIRCLE_BUILD_NUM=$CIRCLE_BUILD_NUM -e slackToken=$(echo $slackTokenEncoded | base64 --decode) --name bender danackerson/bender:vc$CIRCLE_BUILD_NUM
+      - ssh core@bender.ackerson.de docker run -d --restart=always --privileged=true -e CIRCLE_BUILD_NUM=$CIRCLE_BUILD_NUM -e slackToken=$(echo $slackTokenEncoded | base64 --decode) --name bender danackerson/bender:vc$CIRCLE_BUILD_NUM
