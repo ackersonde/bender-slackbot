@@ -15,7 +15,7 @@ func curlTransmission(command ...string) (result string) {
 	defer func() { //catch or finally
 		if err := recover(); err != nil { //catch
 			fmt.Fprintf(os.Stderr, "Exception: %v\n", err)
-			result = "\nlost connection to Transmission Daemon!\n" + execCmd("status")
+			result = "\nlost connection to Transmission Daemon!\n" + vpnTunnelCmds("status")
 		}
 	}()
 
@@ -67,7 +67,7 @@ func curlTransmission(command ...string) (result string) {
 	return result
 }
 
-func execCmd(command ...string) string {
+func vpnTunnelCmds(command ...string) string {
 	if command[0] != "status" {
 		cmd := exec.Command(command[0])
 
@@ -115,21 +115,25 @@ func execCmd(command ...string) string {
 
 // CheckCommand is now commented
 func CheckCommand(api *slack.Client, rtm *slack.RTM, slackMessage slack.Msg, command string) {
-	if command == "sw" {
+	if command == "do" {
+		response := ListDODroplets()
+		params := slack.PostMessageParameters{AsUser: true}
+		api.PostMessage(slackMessage.Channel, response, params)
+	} else if command == "sw" {
 		response := ":partly_sunny_rain: <https://www.wunderground.com/cgi-bin/findweather/getForecast?query=48.3,11.35#forecast-graph|10-day forecast Schwabhausen>"
 		params := slack.PostMessageParameters{AsUser: true}
 		api.PostMessage(slackMessage.Channel, response, params)
 	} else if command == "vpnc" {
-		result := execCmd("/usr/sbin/vpnc-connect", "fritzbox")
+		result := vpnTunnelCmds("/usr/sbin/vpnc-connect", "fritzbox")
 		rtm.SendMessage(rtm.NewOutgoingMessage(result, slackMessage.Channel))
 	} else if command == "vpnd" {
-		result := execCmd("/usr/sbin/vpnc-disconnect")
+		result := vpnTunnelCmds("/usr/sbin/vpnc-disconnect")
 		rtm.SendMessage(rtm.NewOutgoingMessage(result, slackMessage.Channel))
 	} else if command == "vpns" {
-		result := execCmd("status")
+		result := vpnTunnelCmds("status")
 		rtm.SendMessage(rtm.NewOutgoingMessage(result, slackMessage.Channel))
 	} else if command == "trans" {
-		result := execCmd("status")
+		result := vpnTunnelCmds("status")
 		fmt.Printf("tunnel status? %s\n", result)
 		if strings.Contains(result, "inet 192.168.178.201/32 scope global tun0") {
 			result = "RaspberryPI Transmission Torrent(s):\n"

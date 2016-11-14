@@ -7,11 +7,21 @@ import (
 	"strings"
 
 	"github.com/danackerson/bender-slackbot/commands"
+	"github.com/jasonlvhit/gocron"
 	"github.com/nlopes/slack"
 )
 
 var botID = "N/A" // U2NQSPHHD bender bot userID
 var generalChannel = "C092UE0H4"
+
+func prepareScheduler() {
+	scheduler := gocron.NewScheduler()
+	scheduler.Every(1).Day().At("15:39").Do(commands.ListDODroplets)
+	//TODO scheduler.Every(1).Friday().At("12:39").Do(commands.ShowGames)
+	<-scheduler.Start()
+
+	// more examples: https://github.com/jasonlvhit/gocron/blob/master/example/example.go#L19
+}
 
 func main() {
 	slackToken := os.Getenv("slackToken")
@@ -20,8 +30,10 @@ func main() {
 	slack.SetLogger(logger)
 	api.SetDebug(false)
 
+	go prepareScheduler() // spawn cron scheduler jobs
+
 	rtm := api.NewRTM()
-	go rtm.ManageConnection()
+	go rtm.ManageConnection() // spawn slack bot
 
 Loop:
 	for {
