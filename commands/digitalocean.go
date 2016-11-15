@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/digitalocean/godo"
+	"github.com/nlopes/slack"
 
 	"golang.org/x/oauth2"
 )
@@ -24,7 +25,7 @@ func (t *TokenSource) Token() (*oauth2.Token, error) {
 }
 
 // ListDODroplets is now commented
-func ListDODroplets() string {
+func ListDODroplets(rtm *slack.RTM) string {
 	doDropletInfoSite := "https://cloud.digitalocean.com/droplets/"
 	doPersonalAccessToken := os.Getenv("digitalOceanToken")
 	response := ""
@@ -46,8 +47,8 @@ func ListDODroplets() string {
 		}
 	}
 
-	fmt.Printf("wtf: %s", response)
-	rtm.IncomingEvents->response
+	customEvent := slack.RTMEvent{Type: "ListDODroplets", Data: response}
+	rtm.IncomingEvents <- customEvent
 	return response
 }
 

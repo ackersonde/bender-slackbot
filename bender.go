@@ -13,17 +13,16 @@ import (
 
 var botID = "N/A" // U2NQSPHHD bender bot userID
 var generalChannel = "C092UE0H4"
+var rtm *slack.RTM
 
 func prepareScheduler() {
 	scheduler := gocron.NewScheduler()
-	scheduler.Every(1).Day().At("15:39").Do(commands.ListDODroplets)
+	scheduler.Every(1).Day().At("09:39").Do(commands.ListDODroplets, rtm)
 	//TODO scheduler.Every(1).Friday().At("12:39").Do(commands.ShowGames)
 	<-scheduler.Start()
 
 	// more examples: https://github.com/jasonlvhit/gocron/blob/master/example/example.go#L19
 }
-
-var rtm *slack.RTM 
 
 func main() {
 	slackToken := os.Getenv("slackToken")
@@ -42,6 +41,7 @@ Loop:
 		select {
 		case msg := <-rtm.IncomingEvents:
 			switch ev := msg.Data.(type) {
+
 			case *slack.HelloEvent:
 				// Ignore hello
 
@@ -82,8 +82,14 @@ Loop:
 				break Loop
 
 			default:
-				// Ignore other events..
-				fmt.Printf("Unexpected: %+v\n", msg.Data)
+				if msg.Type == "ListDODroplets" {
+					response := msg.Data.(string)
+					params := slack.PostMessageParameters{AsUser: true}
+					api.PostMessage(generalChannel, response, params)
+				} else {
+					// Ignore other events..
+					//fmt.Printf("Unexpected %s: %+v\n", msg.Type, msg.Data)
+				}
 			}
 		}
 	}
