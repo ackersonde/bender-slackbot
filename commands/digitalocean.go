@@ -46,7 +46,8 @@ func ListDODroplets() string {
 		}
 	}
 
-	fmt.Printf(response)
+	fmt.Printf("wtf: %s", response)
+	rtm.IncomingEvents->response
 	return response
 }
 

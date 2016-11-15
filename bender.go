@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/danackerson/bender-slackbot/commands"
+	"./commands"
 	"github.com/jasonlvhit/gocron"
 	"github.com/nlopes/slack"
 )
@@ -23,6 +23,8 @@ func prepareScheduler() {
 	// more examples: https://github.com/jasonlvhit/gocron/blob/master/example/example.go#L19
 }
 
+var rtm *slack.RTM 
+
 func main() {
 	slackToken := os.Getenv("slackToken")
 	api := slack.New(slackToken)
@@ -32,7 +34,7 @@ func main() {
 
 	go prepareScheduler() // spawn cron scheduler jobs
 
-	rtm := api.NewRTM()
+	rtm = api.NewRTM()
 	go rtm.ManageConnection() // spawn slack bot
 
 Loop:
@@ -81,7 +83,7 @@ Loop:
 
 			default:
 				// Ignore other events..
-				//fmt.Printf("Unexpected: %+v\n", msg.Data)
+				fmt.Printf("Unexpected: %+v\n", msg.Data)
 			}
 		}
 	}
