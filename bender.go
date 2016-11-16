@@ -82,6 +82,9 @@ Loop:
 				break Loop
 
 			default:
+				// the gocron scheduler above communicates with the RTMbot subroutine
+				// via it's builtin channel. here we check for custom events and act
+				// accordingly
 				if msg.Type == "ListDODroplets" {
 					response := msg.Data.(string)
 					params := slack.PostMessageParameters{AsUser: true}

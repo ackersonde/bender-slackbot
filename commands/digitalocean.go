@@ -43,7 +43,7 @@ func ListDODroplets(rtm *slack.RTM) string {
 		for _, droplet := range droplets {
 			ipv4, _ := droplet.PublicIPv4()
 			addr := doDropletInfoSite + strconv.Itoa(droplet.ID)
-			response += fmt.Sprintf("%s: <%s|%s>\n", ipv4, addr, droplet.Name)
+			response += fmt.Sprintf(":do_droplet: <%s|%s> (%s)\n", addr, droplet.Name, ipv4)
 		}
 	}
 

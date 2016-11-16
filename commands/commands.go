@@ -4,67 +4,10 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"strconv"
+	"strings"
 
 	"github.com/nlopes/slack"
-	"github.com/odwrtw/transmission"
 )
-
-func curlTransmission(command ...string) (result string) {
-	defer func() { //catch or finally
-		if err := recover(); err != nil { //catch
-			fmt.Fprintf(os.Stderr, "Exception: %v\n", err)
-			result = "\nlost connection to Transmission Daemon!\n" + vpnTunnelCmds("status")
-		}
-	}()
-
-	// Simple client
-	conf := transmission.Config{
-		Address: "http://192.168.178.38:9091/transmission/rpc",
-	}
-	t, err := transmission.New(conf)
-	if err != nil {
-		fmt.Printf("\nNew err: %v", err)
-	}
-
-	// Get all torrents
-	torrents, err := t.GetTorrents()
-	if err != nil {
-		fmt.Printf("\nGet err: %v", err)
-	}
-	fmt.Printf("\nlist of torrents: %v", torrents)
-
-	// Add a torrent
-	torrent, err := t.Add("http://torrent.ubuntu.com:6969/file?info_hash=%BFo%2B%E5I%A8%AC%A5wf8%B5%9B%2B%CAS%D7%BB%C7H")
-	if err != nil {
-		fmt.Printf("\nAdd err: %v", err)
-	}
-
-	// Update is information
-	torrent.Update()
-	fmt.Printf("\nUpdate NewTorrent: %v", torrent)
-
-	// Remove it
-	err = t.RemoveTorrents([]*transmission.Torrent{torrent}, true)
-	if err != nil {
-		fmt.Printf("\nRemove err: %v", err)
-	}
-
-	// Get session informations
-	t.Session.Update()
-
-	torrents2, err := t.GetTorrents()
-	if err == nil {
-		for _, listTorrent := range torrents2 {
-			result += strconv.Itoa(listTorrent.ID) + ": " + listTorrent.Name + "\n"
-		}
-	} else {
-		fmt.Printf("\nGetFinal err: %v", err)
-	}
-
-	//t.Session.Close()
-	return result
-}
 
 func vpnTunnelCmds(command ...string) string {
 	if command[0] != "status" {
@@ -111,33 +54,33 @@ func vpnTunnelCmds(command ...string) string {
 
 // CheckCommand is now commented
 func CheckCommand(api *slack.Client, rtm *slack.RTM, slackMessage slack.Msg, command string) {
-	if command == "do" {
+
+	args := strings.Fields(command)
+	if args[0] == "do" {
 		ListDODroplets(rtm)
-	} else if command == "sw" {
+	} else if args[0] == "sw" {
 		response := ":partly_sunny_rain: <https://www.wunderground.com/cgi-bin/findweather/getForecast?query=48.3,11.35#forecast-graph|10-day forecast Schwabhausen>"
 		params := slack.PostMessageParameters{AsUser: true}
 		api.PostMessage(slackMessage.Channel, response, params)
-	} else if command == "vpnc" {
+	} else if args[0] == "vpnc" {
 		result := vpnTunnelCmds("/usr/sbin/vpnc-connect", "fritzbox")
 		rtm.SendMessage(rtm.NewOutgoingMessage(result, slackMessage.Channel))
-	} else if command == "vpnd" {
+	} else if args[0] == "vpnd" {
 		result := vpnTunnelCmds("/usr/sbin/vpnc-disconnect")
 		rtm.SendMessage(rtm.NewOutgoingMessage(result, slackMessage.Channel))
-	} else if command == "vpns" {
+	} else if args[0] == "vpns" {
 		result := vpnTunnelCmds("status")
 		rtm.SendMessage(rtm.NewOutgoingMessage(result, slackMessage.Channel))
-	} else if command == "trans" {
-		result := torrentCommand("trans")
+	} else if args[0] == "trans" {
+		result := torrentCommand(args)
 		rtm.SendMessage(rtm.NewOutgoingMessage(result, slackMessage.Channel))
-	} else if command == "trand" {
-		// TODO delete indicated torrent
-		result := "Deleting " + command
+	} else if args[0] == "trand" {
+		result := torrentCommand(args)
 		rtm.SendMessage(rtm.NewOutgoingMessage(result, slackMessage.Channel))
-	} else if command == "trang" {
-		// TODO grab indicated magnet link
-		result := "Fetching magnet " + command
+	} else if args[0] == "tranc" {
+		result := torrentCommand(args)
 		rtm.SendMessage(rtm.NewOutgoingMessage(result, slackMessage.Channel))
-	} else if command == "help" {
+	} else if args[0] == "help" {
 		response := "`sw`: Schwabhausen weather\n" +
 			"`vpn[c|s|d]`: [C]onnect, [S]tatus, [D]rop VPN tunnel to fritz.box\n" +
 			"`tran[c|s|d]`: [C]reate, [S]tatus, [D]rop torrents on RaspberryPI Transmission\n"
