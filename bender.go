@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"./commands"
+	"github.com/danackerson/bender-slackbot/commands"
 	"github.com/jasonlvhit/gocron"
 	"github.com/nlopes/slack"
 )

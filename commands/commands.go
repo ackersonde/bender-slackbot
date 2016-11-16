@@ -5,7 +5,6 @@ import (
 	"os"
 	"os/exec"
 	"strconv"
-	"strings"
 
 	"github.com/nlopes/slack"
 	"github.com/odwrtw/transmission"
@@ -100,8 +99,6 @@ func vpnTunnelCmds(command ...string) string {
 	tunnel, err := exec.Command("/bin/bash", "-c", tun0StatusCmd).Output()
 	if err != nil {
 		fmt.Printf("Failed to execute command: %s", tun0StatusCmd)
-	} else {
-		fmt.Printf("tunnel status: %s", string(tunnel))
 	}
 
 	tunnelStatus := string(tunnel)
@@ -109,7 +106,6 @@ func vpnTunnelCmds(command ...string) string {
 		tunnelStatus = "Tunnel offline."
 	}
 
-	fmt.Printf("result status: %s", tunnelStatus)
 	return tunnelStatus
 }
 
@@ -131,14 +127,7 @@ func CheckCommand(api *slack.Client, rtm *slack.RTM, slackMessage slack.Msg, com
 		result := vpnTunnelCmds("status")
 		rtm.SendMessage(rtm.NewOutgoingMessage(result, slackMessage.Channel))
 	} else if command == "trans" {
-		result := vpnTunnelCmds("status")
-		fmt.Printf("tunnel status? %s\n", result)
-		if strings.Contains(result, "inet 192.168.178.201/32 scope global tun0") {
-			result = "RaspberryPI Transmission Torrent(s):\n"
-			result += curlTransmission("trans")
-		} else {
-			result = "No VPN Tunnel established! Try `vpnc` first..."
-		}
+		result := torrentCommand("trans")
 		rtm.SendMessage(rtm.NewOutgoingMessage(result, slackMessage.Channel))
 	} else if command == "trand" {
 		// TODO delete indicated torrent
