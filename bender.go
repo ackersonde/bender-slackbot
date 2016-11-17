@@ -11,8 +11,8 @@ import (
 	"github.com/nlopes/slack"
 )
 
-var botID = "N/A" // U2NQSPHHD bender bot userID
-var generalChannel = "C092UE0H4"
+var botID = "N/A"                // U2NQSPHHD bender bot userID
+var generalChannel = "C33QYV3PW" // #remote_network_report
 var rtm *slack.RTM
 
 func prepareScheduler() {
@@ -47,7 +47,7 @@ Loop:
 
 			case *slack.ConnectedEvent:
 				botID = ev.Info.User.ID
-				//rtm.SendMessage(rtm.NewOutgoingMessage("I'm back baby!", generalChannel))
+				rtm.SendMessage(rtm.NewOutgoingMessage("I'm back baby!", generalChannel))
 
 			case *slack.MessageEvent:
 				callerID := ev.Msg.User
