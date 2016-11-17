@@ -13,8 +13,22 @@ func getTorrents(t *transmission.Client) (result string) {
 	// Get all torrents
 	torrents, err := t.GetTorrents()
 	if err == nil {
+		result = ":transmission: Running RaspberryPI Torrent(s)\n"
 		for _, listTorrent := range torrents {
-			result += strconv.Itoa(listTorrent.ID) + ": " + listTorrent.Name + "\n"
+			status := ":arrows_counterclockwise:"
+			switch listTorrent.Status {
+			case transmission.StatusStopped:
+				status = ":black_square_for_stop:"
+			case transmission.StatusDownloading:
+				status = ":arrow_double_down:"
+			case transmission.StatusSeeding:
+				status = ":cinema:"
+			}
+
+			percentComplete := strconv.FormatFloat(listTorrent.PercentDone, 'f', 0, 64)
+
+			result += status + " *" + strconv.Itoa(listTorrent.ID) + "*: " +
+				listTorrent.Name + " " + percentComplete + "%\n"
 		}
 	} else {
 		fmt.Printf("\nGetTorrents err: %v", err)
@@ -34,10 +48,9 @@ func addTorrents(t *transmission.Client, torrentLink string) (result string) {
 	if indexPipe := strings.Index(torrentLink, "|"); indexPipe > 0 {
 		torrentLink = torrentLink[:indexPipe]
 	}
-	result = fmt.Sprintf("going to add your torrent %s\n", torrentLink)
+	result = fmt.Sprintf(":star2: adding %s\n", torrentLink)
 
 	// Add a torrent
-	//torrent, err := t.Add("http://torrent.ubuntu.com:6969/file?info_hash=%BFo%2B%E5I%A8%AC%A5wf8%B5%9B%2B%CAS%D7%BB%C7H")
 	_, err := t.Add(torrentLink)
 	if err != nil {
 		fmt.Printf("\nAdd err: %v", err)
@@ -54,7 +67,7 @@ func deleteTorrents(t *transmission.Client, torrentIDStr string) (result string)
 		return fmt.Sprintf("Unable to remove torrent ID #%s. Is it a valid ID?", torrentIDStr)
 	}
 
-	result = fmt.Sprintf("going to delete your torrent %d\n", torrentID)
+	result = fmt.Sprintf(":x: deleting torrent #%d\n", torrentID)
 	torrentToDelete := &transmission.Torrent{ID: torrentID}
 	removeErr := t.RemoveTorrents([]*transmission.Torrent{torrentToDelete}, true)
 	if err != nil {
@@ -62,7 +75,7 @@ func deleteTorrents(t *transmission.Client, torrentIDStr string) (result string)
 	}
 
 	// Get session informations
-	t.Session.Update()
+	//t.Session.Update()
 
 	result += getTorrents(t)
 	return result
@@ -76,7 +89,8 @@ func torrentCommand(cmd []string) (result string) {
 		}
 	}()
 
-	result = "No VPN Tunnel established! Try `vpnc` first..."
+	result = ":closed_lock_with_key: No tunnel exists! Try `vpnc` first..."
+	// TODO - if tunnel doesn't exist, create it! (cronjob checks to shutdown idle tunnels?!)
 
 	tunnelStatus := vpnTunnelCmds("status")
 	if strings.Contains(tunnelStatus, "inet 192.168.178.201/32 scope global tun0") {
@@ -90,12 +104,11 @@ func torrentCommand(cmd []string) (result string) {
 		}
 
 		if cmd[0] == "trans" {
-			result = "RaspberryPI Transmission Torrent(s):\n"
-			result += getTorrents(t)
+			result = getTorrents(t)
 		} else if cmd[0] == "tranc" {
-			result += addTorrents(t, cmd[1])
+			result = addTorrents(t, cmd[1])
 		} else if cmd[0] == "trand" {
-			result += deleteTorrents(t, cmd[1])
+			result = deleteTorrents(t, cmd[1])
 		}
 	}
 

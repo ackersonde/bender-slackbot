@@ -49,7 +49,7 @@ func vpnTunnelCmds(command ...string) string {
 		tunnelStatus = "Tunnel offline."
 	}
 
-	return tunnelStatus
+	return ":closed_lock_with_key: " + tunnelStatus
 }
 
 // CheckCommand is now commented
@@ -81,13 +81,14 @@ func CheckCommand(api *slack.Client, rtm *slack.RTM, slackMessage slack.Msg, com
 		result := torrentCommand(args)
 		rtm.SendMessage(rtm.NewOutgoingMessage(result, slackMessage.Channel))
 	} else if args[0] == "help" {
-		response := "`sw`: Schwabhausen weather\n" +
-			"`vpn[c|s|d]`: [C]onnect, [S]tatus, [D]rop VPN tunnel to fritz.box\n" +
-			"`tran[c|s|d]`: [C]reate, [S]tatus, [D]rop torrents on RaspberryPI Transmission\n"
+		response := ":sun_behind_rain_cloud: `sw`: Schwabhausen weather\n" +
+			":do_droplet: `do`: show current DigitalOcean droplets\n" +
+			":closed_lock_with_key: `vpn[c|s|d]`: [C]onnect, [S]tatus, [D]rop VPN tunnel to fritz.box\n" +
+			":transmission: `tran[c|s|d]`: [C]reate <URL>, [S]tatus, [D]elete <ID> torrents on RaspberryPI\n"
 		params := slack.PostMessageParameters{AsUser: true}
 		api.PostMessage(slackMessage.Channel, response, params)
 	} else {
 		callingUserProfile, _ := api.GetUserInfo(slackMessage.User)
-		rtm.SendMessage(rtm.NewOutgoingMessage("whaddya say <@"+callingUserProfile.Name+">? "+command+"?", slackMessage.Channel))
+		rtm.SendMessage(rtm.NewOutgoingMessage("whaddya say <@"+callingUserProfile.Name+">? Try `help` instead...", slackMessage.Channel))
 	}
 }
