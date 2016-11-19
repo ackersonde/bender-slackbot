@@ -47,7 +47,7 @@ func raspberryPIPrivateTunnelChecks() string {
 
 	// `curl ipinfo.io` (if this doesn't work, just `curl icanhazip.com`)
 	results := make(chan string, 10)
-	timeout := time.After(2 * time.Second)
+	timeout := time.After(5 * time.Second)
 	go func() {
 		results <- executeRemoteCmd("curl ipinfo.io", sshConfig)
 	}()
@@ -67,7 +67,7 @@ func raspberryPIPrivateTunnelChecks() string {
 			}
 			if jsonRes.Country == "NL" {
 				resultsDig := make(chan string, 10)
-				timeoutDig := time.After(2 * time.Second)
+				timeoutDig := time.After(5 * time.Second)
 				// ensure home.ackerson.de is DIFFERENT than PI IP address!
 				go func() {
 					resultsDig <- executeRemoteCmd("dig +short home.ackerson.de | tail -n1", sshConfig)
@@ -90,7 +90,7 @@ func raspberryPIPrivateTunnelChecks() string {
 	// ALL Internet requests are running over OpenVPN!
 	if tunnelUp != "" {
 		resultsIPTables := make(chan string, 10)
-		timeoutIPTables := time.After(2 * time.Second)
+		timeoutIPTables := time.After(5 * time.Second)
 		// ensure home.ackerson.de is DIFFERENT than PI IP address!
 		go func() {
 			resultsIPTables <- executeRemoteCmd("sudo iptables -L OUTPUT -v --line-numbers | grep all", sshConfig)
