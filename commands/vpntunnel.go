@@ -12,14 +12,16 @@ import (
 	"golang.org/x/crypto/ssh"
 )
 
-func executeRemoteCmd(command, hostname string, config *ssh.ClientConfig) string {
+func executeRemoteCmd(command string, config *ssh.ClientConfig) string {
 	defer func() { //catch or finally
 		if err := recover(); err != nil { //catch
 			fmt.Fprintf(os.Stderr, "Exception: %v\n", err)
 		}
 	}()
 
-	conn, errConn := ssh.Dial("tcp", fmt.Sprintf("%s:%s", hostname, "22"), config)
+	connectionString := fmt.Sprintf("%s:%s", raspberryPIIP, "22")
+	fmt.Println("SSH to " + connectionString)
+	conn, errConn := ssh.Dial("tcp", connectionString, config)
 	if errConn != nil { //catch
 		fmt.Fprintf(os.Stderr, "Exception: %v\n", errConn)
 	}
@@ -47,9 +49,9 @@ func raspberryPIPrivateTunnelChecks() string {
 	// `curl ipinfo.io` (if this doesn't work, just `curl icanhazip.com`)
 	results := make(chan string, 10)
 	timeout := time.After(2 * time.Second)
-	go func(hostname string, port string) {
-		results <- executeRemoteCmd("curl ipinfo.io", raspberryPIIP, sshConfig)
-	}(raspberryPIIP, "22")
+	go func() {
+		results <- executeRemoteCmd("curl ipinfo.io", sshConfig)
+	}()
 
 	type IPInfoResponse struct {
 		IP      string
@@ -68,9 +70,9 @@ func raspberryPIPrivateTunnelChecks() string {
 				resultsDig := make(chan string, 10)
 				timeoutDig := time.After(2 * time.Second)
 				// ensure home.ackerson.de is DIFFERENT than PI IP address!
-				go func(hostname string, port string) {
-					resultsDig <- executeRemoteCmd("dig +short home.ackerson.de | tail -n1", raspberryPIIP, sshConfig)
-				}(raspberryPIIP, "22")
+				go func() {
+					resultsDig <- executeRemoteCmd("dig +short home.ackerson.de | tail -n1", sshConfig)
+				}()
 				select {
 				case resComp := <-resultsDig:
 					if resComp != jsonRes.IP {
@@ -91,9 +93,9 @@ func raspberryPIPrivateTunnelChecks() string {
 		resultsIPTables := make(chan string, 10)
 		timeoutIPTables := time.After(2 * time.Second)
 		// ensure home.ackerson.de is DIFFERENT than PI IP address!
-		go func(hostname string, port string) {
-			resultsIPTables <- executeRemoteCmd("sudo iptables -L OUTPUT -v --line-numbers | grep all", raspberryPIIP, sshConfig)
-		}(raspberryPIIP, "22")
+		go func() {
+			resultsIPTables <- executeRemoteCmd("sudo iptables -L OUTPUT -v --line-numbers | grep all", sshConfig)
+		}()
 		select {
 		case resIPTables := <-resultsIPTables:
 			lines := strings.Split(resIPTables, "\n")
