@@ -25,8 +25,7 @@ func getTorrents(t *transmission.Client) (result string) {
 				status = ":cinema:"
 			}
 
-			percentComplete := strconv.FormatFloat(listTorrent.MetadataPercentComplete, 'f', 0, 64)
-			// TODO - this don't work :(
+			percentComplete := strconv.FormatFloat(listTorrent.PercentDone*100, 'f', 0, 64)
 			result += status + " *" + strconv.Itoa(listTorrent.ID) + "*: " +
 				listTorrent.Name + " *" + percentComplete + "%* [S: " +
 				strconv.Itoa(listTorrent.PeersSendingToUs) + "]\n"
