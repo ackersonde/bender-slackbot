@@ -6,11 +6,20 @@ import (
 	"github.com/nlopes/slack"
 )
 
+var raspberryPIIP = "192.168.178.38"
+
 // CheckCommand is now commented
 func CheckCommand(api *slack.Client, rtm *slack.RTM, slackMessage slack.Msg, command string) {
 	args := strings.Fields(command)
 	if args[0] == "do" {
 		ListDODroplets(rtm)
+	} else if args[0] == "ovpn" {
+		result := raspberryPIPrivateTunnelChecks()
+		if result == "" {
+			rtm.SendMessage(rtm.NewOutgoingMessage(":openvpn: PI status: DOWN :rotating_light:", slackMessage.Channel))
+		} else {
+			rtm.SendMessage(rtm.NewOutgoingMessage(":openvpn: PI status: UP with IP "+result, slackMessage.Channel))
+		}
 	} else if args[0] == "sw" {
 		response := ":partly_sunny_rain: <https://www.wunderground.com/cgi-bin/findweather/getForecast?query=48.3,11.35#forecast-graph|10-day forecast Schwabhausen>"
 		params := slack.PostMessageParameters{AsUser: true}

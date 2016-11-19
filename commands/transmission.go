@@ -39,18 +39,22 @@ func getTorrents(t *transmission.Client) (result string) {
 }
 
 func addTorrents(t *transmission.Client, torrentLink string) (result string) {
-	// slack 'markdown's URLs with '<link|text>' so clip these off
-	if strings.HasPrefix(torrentLink, "<") {
-		torrentLink = strings.TrimLeft(torrentLink, "<")
+	privateTunnelUp := raspberryPIPrivateTunnelChecks()
+	if privateTunnelUp != "" {
+		// slack 'markdown's URLs with '<link|text>' so clip these off
+		if strings.HasPrefix(torrentLink, "<") {
+			torrentLink = strings.TrimLeft(torrentLink, "<")
+		}
+		if strings.HasSuffix(torrentLink, ">") {
+			torrentLink = strings.TrimRight(torrentLink, ">")
+		}
+		if indexPipe := strings.Index(torrentLink, "|"); indexPipe > 0 {
+			torrentLink = torrentLink[:indexPipe]
+		}
+		result = fmt.Sprintf(":star2: adding %s\n", torrentLink)
+	} else {
+		result = ":openvpn: PI status: DOWN :rotating_light:\n"
 	}
-	if strings.HasSuffix(torrentLink, ">") {
-		torrentLink = strings.TrimRight(torrentLink, ">")
-	}
-	if indexPipe := strings.Index(torrentLink, "|"); indexPipe > 0 {
-		torrentLink = torrentLink[:indexPipe]
-	}
-	result = fmt.Sprintf(":star2: adding %s\n", torrentLink)
-
 	// Add a torrent
 	_, err := t.Add(torrentLink)
 	if err != nil {
@@ -58,6 +62,7 @@ func addTorrents(t *transmission.Client, torrentLink string) (result string) {
 	}
 
 	result += getTorrents(t)
+
 	return result
 }
 
@@ -97,7 +102,7 @@ func torrentCommand(cmd []string) (result string) {
 	if strings.Contains(tunnelStatus, "inet 192.168.178.201/32 scope global tun0") {
 		// Connect to Transmission RPC daemon
 		conf := transmission.Config{
-			Address: "http://192.168.178.38:9091/transmission/rpc",
+			Address: "http://" + raspberryPIIP + ":9091/transmission/rpc",
 		}
 		t, err := transmission.New(conf)
 		if err != nil {

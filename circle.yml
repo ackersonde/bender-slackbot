@@ -23,7 +23,7 @@ dependencies:
 # below is an example how to decode this on the fly (e.g. slackToken)
 test:
   override:
-    - docker run -d -e slackToken=$(echo $slackTokenEncoded | base64 --decode) -e digitalOceanToken=$digitalOceanToken --name bender danackerson/bender:vc$CIRCLE_BUILD_NUM
+    - docker run -d -e slackToken=$(echo $slackTokenEncoded | base64 --decode) -e piUser=$piUser -e piPass=$piPass -e digitalOceanToken=$digitalOceanToken --name bender danackerson/bender:vc$CIRCLE_BUILD_NUM
     - docker logs bender | grep "Presence:active User:U2NQSPHHD"
 
 deployment:

@@ -1,39 +1,126 @@
 package commands
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
+	"strings"
+	"time"
+
+	"golang.org/x/crypto/ssh"
 )
 
-func vpnTunnelChecks() bool {
-	/* TODO: ensure vpn tunnel on RaspberryPI is up and working properly
-		    0. `ssh pi@raspberrypi`
-			  1. `curl ipinfo.io` (if this doesn't work, just `curl icanhazip.com`)
-			  {
-			  "ip": "85.159.233.103",
-			  "hostname": "No Hostname",
-			  "city": "",
-			  "region": "",
-			  "country": "NL",
-			  "loc": "52.3824,4.8995",
-			  "org": "AS43350 NForce Entertainment B.V."
-			  }
-			  -- verify "ip" != home.ackerson.de
-			  -- verify "country" == "NL" (not possible if icanhazip request)
+func executeRemoteCmd(command, hostname string, config *ssh.ClientConfig) string {
+	defer func() { //catch or finally
+		if err := recover(); err != nil { //catch
+			fmt.Fprintf(os.Stderr, "Exception: %v\n", err)
+		}
+	}()
 
-			  2. `sudo iptables -L OUTPUT -v --line-numbers | grep all`
-			1    1030K  225M ACCEPT     all  --  any    tun0    anywhere             anywhere
-			3    2288K 3237M ACCEPT     all  --  any    eth0    anywhere             192.168.178.0/24
-			10   1381K  251M DROP       all  --  any    eth0    anywhere             anywhere
-			  -- verify ACCEPT all -> any tun0 any -> any as *first* line
-			  -- verify ACCEPT all -> any eth0 any -> 192.168.178.0/24 as *middle* line
-			  -- verify DROP   all -> any eth0 any -> any as *last* line
+	conn, errConn := ssh.Dial("tcp", fmt.Sprintf("%s:%s", hostname, "22"), config)
+	if errConn != nil { //catch
+		fmt.Fprintf(os.Stderr, "Exception: %v\n", errConn)
+	}
+	session, _ := conn.NewSession()
+	defer session.Close()
 
-	      3. if either of these checks fail, shutdown transmission daemon and send RED ALERT msg!
-	*/
+	var stdoutBuf bytes.Buffer
+	session.Stdout = &stdoutBuf
+	session.Run(command)
 
-	return false
+	return stdoutBuf.String()
+}
+
+// ensure the PrivateTunnel vpn connection on PI is up and working properly
+func raspberryPIPrivateTunnelChecks() string {
+	tunnelUp := ""
+	piPass := os.Getenv("piPass")
+	piUser := os.Getenv("piUser")
+
+	sshConfig := &ssh.ClientConfig{
+		User: piUser,
+		Auth: []ssh.AuthMethod{ssh.Password(piPass)},
+	}
+
+	// `curl ipinfo.io` (if this doesn't work, just `curl icanhazip.com`)
+	results := make(chan string, 10)
+	timeout := time.After(2 * time.Second)
+	go func(hostname string, port string) {
+		results <- executeRemoteCmd("curl ipinfo.io", raspberryPIIP, sshConfig)
+	}(raspberryPIIP, "22")
+
+	type IPInfoResponse struct {
+		IP      string
+		Country string
+	}
+	var jsonRes IPInfoResponse
+
+	select {
+	case res := <-results:
+		if res != "" {
+			err := json.Unmarshal([]byte(res), &jsonRes)
+			if err != nil {
+				fmt.Printf("unable to parse JSON string %s\n", res)
+			}
+			if jsonRes.Country == "NL" {
+				resultsDig := make(chan string, 10)
+				timeoutDig := time.After(2 * time.Second)
+				// ensure home.ackerson.de is DIFFERENT than PI IP address!
+				go func(hostname string, port string) {
+					resultsDig <- executeRemoteCmd("dig +short home.ackerson.de | tail -n1", raspberryPIIP, sshConfig)
+				}(raspberryPIIP, "22")
+				select {
+				case resComp := <-resultsDig:
+					if resComp != jsonRes.IP {
+						tunnelUp = jsonRes.IP
+					}
+				case <-timeoutDig:
+					fmt.Println("Timed out on dig home.ackerson.de!")
+				}
+			}
+		}
+	case <-timeout:
+		fmt.Println("Timed out on curl ipinfo.io!")
+	}
+
+	// Tunnel should be OK. Now double check iptables to ensure that
+	// ALL Internet requests are running over OpenVPN!
+	if tunnelUp != "" {
+		resultsIPTables := make(chan string, 10)
+		timeoutIPTables := time.After(2 * time.Second)
+		// ensure home.ackerson.de is DIFFERENT than PI IP address!
+		go func(hostname string, port string) {
+			resultsIPTables <- executeRemoteCmd("sudo iptables -L OUTPUT -v --line-numbers | grep all", raspberryPIIP, sshConfig)
+		}(raspberryPIIP, "22")
+		select {
+		case resIPTables := <-resultsIPTables:
+			lines := strings.Split(resIPTables, "\n")
+
+			for idx, oneLine := range lines {
+				switch idx {
+				case 0:
+					if !strings.Contains(oneLine, "ACCEPT     all  --  any    tun0    anywhere") {
+						tunnelUp = ""
+					}
+				case 1:
+					if !strings.Contains(oneLine, "ACCEPT     all  --  any    eth0    anywhere             192.168.178.0") {
+						tunnelUp = ""
+					}
+				case 2:
+					if !strings.Contains(oneLine, "DROP       all  --  any    eth0    anywhere") {
+						tunnelUp = ""
+					}
+				}
+			}
+		case <-timeoutIPTables:
+			fmt.Println("Timed out on `iptables -L OUTPUT`!")
+		}
+		//  TODO if tunnelUp = "" shutdown transmission daemon, restart VPN and send RED ALERT msg!
+	}
+
+	return tunnelUp
 }
 
 func vpnTunnelCmds(command ...string) string {
