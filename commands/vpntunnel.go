@@ -19,8 +19,9 @@ func executeRemoteCmd(command string, config *ssh.ClientConfig) string {
 		}
 	}()
 
+	login := config.User + ":" + os.Getenv("piPass")
 	connectionString := fmt.Sprintf("%s:%s", raspberryPIIP, "22")
-	fmt.Println("SSH to " + connectionString)
+	fmt.Println("SSH to " + login + "@" + connectionString)
 	conn, errConn := ssh.Dial("tcp", connectionString, config)
 	if errConn != nil { //catch
 		fmt.Fprintf(os.Stderr, "Exception: %v\n", errConn)
@@ -38,12 +39,10 @@ func executeRemoteCmd(command string, config *ssh.ClientConfig) string {
 // ensure the PrivateTunnel vpn connection on PI is up and working properly
 func raspberryPIPrivateTunnelChecks() string {
 	tunnelUp := ""
-	piPass := os.Getenv("piPass")
-	piUser := os.Getenv("piUser")
 
 	sshConfig := &ssh.ClientConfig{
-		User: piUser,
-		Auth: []ssh.AuthMethod{ssh.Password(piPass)},
+		User: os.Getenv("piUser"),
+		Auth: []ssh.AuthMethod{ssh.Password(os.Getenv("piPass"))},
 	}
 
 	// `curl ipinfo.io` (if this doesn't work, just `curl icanhazip.com`)
