@@ -14,11 +14,17 @@ func CheckCommand(api *slack.Client, rtm *slack.RTM, slackMessage slack.Msg, com
 	if args[0] == "do" {
 		ListDODroplets(rtm)
 	} else if args[0] == "ovpn" {
-		result := raspberryPIPrivateTunnelChecks()
-		if result == "" {
-			rtm.SendMessage(rtm.NewOutgoingMessage(":openvpn: PI status: DOWN :rotating_light:", slackMessage.Channel))
+		response := ":closed_lock_with_key: No tunnel exists! Try `vpnc` first..."
+		tunnelStatus := vpnTunnelCmds("status")
+		if strings.Contains(tunnelStatus, "inet 192.168.178.201/32 scope global tun0") {
+			result := raspberryPIPrivateTunnelChecks()
+			if result == "" {
+				rtm.SendMessage(rtm.NewOutgoingMessage(":openvpn: PI status: DOWN :rotating_light:", slackMessage.Channel))
+			} else {
+				rtm.SendMessage(rtm.NewOutgoingMessage(":openvpn: PI status: UP :raspberry_pi: @ "+result, slackMessage.Channel))
+			}
 		} else {
-			rtm.SendMessage(rtm.NewOutgoingMessage(":openvpn: PI status: UP with IP "+result, slackMessage.Channel))
+			rtm.SendMessage(rtm.NewOutgoingMessage(response, slackMessage.Channel))
 		}
 	} else if args[0] == "sw" {
 		response := ":partly_sunny_rain: <https://www.wunderground.com/cgi-bin/findweather/getForecast?query=48.3,11.35#forecast-graph|10-day forecast Schwabhausen>"
