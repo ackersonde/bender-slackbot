@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strconv"
 	"strings"
 	"time"
 
@@ -13,8 +14,9 @@ import (
 	"golang.org/x/crypto/ssh"
 )
 
-var tunnelOnTime, tunnelIdleSince = int64(0), int64(0)
-var maxTunnelIdleTime = int64(10 * 60 * 1000) // 10 mins in milliseconds
+var tunnelOnTime time.Time
+var tunnelIdleSince time.Time
+var maxTunnelIdleTime = float64(10 * 60) // 10 mins in seconds
 
 func executeRemoteCmd(command string, config *ssh.ClientConfig) string {
 	defer func() { //catch or finally
@@ -37,7 +39,7 @@ func executeRemoteCmd(command string, config *ssh.ClientConfig) string {
 	session.Stdout = &stdoutBuf
 	session.Run(command)
 
-	tunnelIdleSince = time.Now().Unix()
+	tunnelIdleSince = time.Now()
 
 	return stdoutBuf.String()
 }
@@ -132,17 +134,16 @@ func raspberryPIPrivateTunnelChecks() string {
 
 // DisconnectIdleTunnel is now commented
 func DisconnectIdleTunnel(rtm *slack.RTM) {
-	msg := ":closed_lock_with_key: UP since: " + string(tunnelOnTime) + " IDLE since "
-	if tunnelOnTime > 0 {
-		currentIdleTime := time.Now().Unix() - tunnelIdleSince
-		if currentIdleTime > maxTunnelIdleTime {
+	msg := ":closed_lock_with_key: UP since: " + tunnelIdleSince.Format("Mon Jan _2 15:04:05") + " IDLE for "
+	if !tunnelOnTime.IsZero() {
+		currentIdleTime := time.Now().Sub(tunnelIdleSince)
+		stringCurrentIdleTimeSecs := strconv.FormatFloat(currentIdleTime.Seconds(), 'f', 0, 64)
+		if currentIdleTime.Seconds() > maxTunnelIdleTime {
 			vpnTunnelCmds("/usr/sbin/vpnc-disconnect")
-			msg += string(currentIdleTime/1000) + "secs => disconnected!"
+			msg += stringCurrentIdleTimeSecs + "secs => disconnected!"
 		} else {
-			msg += string(currentIdleTime/1000) + "secs"
+			msg += stringCurrentIdleTimeSecs + "secs"
 		}
-	} else {
-		msg = ":closed_lock_with_key: Tunnel offline"
 	}
 
 	rtm.SendMessage(rtm.NewOutgoingMessage(msg, "C33QYV3PW"))
@@ -165,10 +166,11 @@ func vpnTunnelCmds(command ...string) string {
 		}
 
 		if strings.HasSuffix(command[0], "vpnc-connect") {
-			now := time.Now().Unix()
+			now := time.Now()
 			tunnelOnTime, tunnelIdleSince = now, now
 		} else if strings.HasSuffix(command[0], "vpnc-disconnect") {
-			tunnelOnTime, tunnelIdleSince = 0, 0
+			tunnelOnTime = *new(time.Time)
+			tunnelIdleSince = *new(time.Time)
 		}
 	}
 
