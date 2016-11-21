@@ -9,8 +9,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/nlopes/slack"
 	"golang.org/x/crypto/ssh"
 )
+
+var tunnelOnTime, tunnelIdleSince = int64(0), int64(0)
+var maxTunnelIdleTime = int64(10 * 60 * 1000) // 10 mins in milliseconds
 
 func executeRemoteCmd(command string, config *ssh.ClientConfig) string {
 	defer func() { //catch or finally
@@ -32,6 +36,8 @@ func executeRemoteCmd(command string, config *ssh.ClientConfig) string {
 	var stdoutBuf bytes.Buffer
 	session.Stdout = &stdoutBuf
 	session.Run(command)
+
+	tunnelIdleSince = time.Now().Unix()
 
 	return stdoutBuf.String()
 }
@@ -124,6 +130,24 @@ func raspberryPIPrivateTunnelChecks() string {
 	return tunnelUp
 }
 
+// DisconnectIdleTunnel is now commented
+func DisconnectIdleTunnel(rtm *slack.RTM) {
+	msg := ":closed_lock_with_key: UP since: " + string(tunnelOnTime) + " IDLE since "
+	if tunnelOnTime > 0 {
+		currentIdleTime := time.Now().Unix() - tunnelIdleSince
+		if currentIdleTime > maxTunnelIdleTime {
+			vpnTunnelCmds("/usr/sbin/vpnc-disconnect")
+			msg += string(currentIdleTime/1000) + "secs => disconnected!"
+		} else {
+			msg += string(currentIdleTime/1000) + "secs"
+		}
+	} else {
+		msg = ":closed_lock_with_key: Tunnel offline"
+	}
+
+	rtm.SendMessage(rtm.NewOutgoingMessage(msg, "C33QYV3PW"))
+}
+
 func vpnTunnelCmds(command ...string) string {
 	if command[0] != "status" {
 		cmd := exec.Command(command[0])
@@ -136,10 +160,15 @@ func vpnTunnelCmds(command ...string) string {
 		errStart := cmd.Start()
 		if errStart != nil {
 			os.Stderr.WriteString(errStart.Error())
+		} else if errWait := cmd.Wait(); errWait != nil {
+			os.Stderr.WriteString(errWait.Error())
 		}
 
-		if errWait := cmd.Wait(); errWait != nil {
-			fmt.Println(errWait)
+		if strings.HasSuffix(command[0], "vpnc-connect") {
+			now := time.Now().Unix()
+			tunnelOnTime, tunnelIdleSince = now, now
+		} else if strings.HasSuffix(command[0], "vpnc-disconnect") {
+			tunnelOnTime, tunnelIdleSince = 0, 0
 		}
 	}
 

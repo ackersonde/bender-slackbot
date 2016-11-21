@@ -18,6 +18,7 @@ var rtm *slack.RTM
 func prepareScheduler() {
 	scheduler := gocron.NewScheduler()
 	scheduler.Every(1).Day().At("09:39").Do(commands.ListDODroplets, rtm)
+	scheduler.Every(10).Minutes().Do(commands.DisconnectIdleTunnel, rtm)
 	//TODO scheduler.Every(1).Friday().At("12:39").Do(commands.ShowGames)
 	<-scheduler.Start()
 
