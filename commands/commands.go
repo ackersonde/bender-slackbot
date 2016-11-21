@@ -7,22 +7,23 @@ import (
 )
 
 var raspberryPIIP = "192.168.178.38"
+var rtm *slack.RTM
+
+// SetRTM sets singleton
+func SetRTM(rtmPassed *slack.RTM) {
+	rtm = rtmPassed
+}
 
 // CheckCommand is now commented
-func CheckCommand(api *slack.Client, rtm *slack.RTM, slackMessage slack.Msg, command string) {
+func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 	args := strings.Fields(command)
 	if args[0] == "do" {
-		ListDODroplets(rtm)
+		ListDODroplets()
 	} else if args[0] == "ovpn" {
 		response := ":closed_lock_with_key: No tunnel exists! Try `vpnc` first..."
 		tunnelStatus := vpnTunnelCmds("status")
 		if strings.Contains(tunnelStatus, "inet 192.168.178.201/32 scope global tun0") {
-			result := raspberryPIPrivateTunnelChecks()
-			if result == "" {
-				rtm.SendMessage(rtm.NewOutgoingMessage(":openvpn: PI status: DOWN :rotating_light:", slackMessage.Channel))
-			} else {
-				rtm.SendMessage(rtm.NewOutgoingMessage(":openvpn: PI status: UP :raspberry_pi: @ "+result, slackMessage.Channel))
-			}
+			RaspberryPIPrivateTunnelChecks()
 		} else {
 			rtm.SendMessage(rtm.NewOutgoingMessage(response, slackMessage.Channel))
 		}

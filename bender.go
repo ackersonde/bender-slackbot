@@ -13,13 +13,12 @@ import (
 
 var botID = "N/A"                // U2NQSPHHD bender bot userID
 var generalChannel = "C33QYV3PW" // #remote_network_report
-var rtm *slack.RTM
 
 func prepareScheduler() {
 	scheduler := gocron.NewScheduler()
-	scheduler.Every(1).Day().At("09:39").Do(commands.ListDODroplets, rtm)
-	scheduler.Every(10).Minutes().Do(commands.DisconnectIdleTunnel, rtm)
-	//TODO scheduler.Every(1).Friday().At("12:39").Do(commands.ShowGames)
+	scheduler.Every(1).Day().At("09:39").Do(commands.ListDODroplets)
+	scheduler.Every(1).Day().At("09:40").Do(commands.RaspberryPIPrivateTunnelChecks)
+	scheduler.Every(10).Minutes().Do(commands.DisconnectIdleTunnel)
 	<-scheduler.Start()
 
 	// more examples: https://github.com/jasonlvhit/gocron/blob/master/example/example.go#L19
@@ -34,7 +33,8 @@ func main() {
 
 	go prepareScheduler() // spawn cron scheduler jobs
 
-	rtm = api.NewRTM()
+	rtm := api.NewRTM()
+	commands.SetRTM(rtm)
 	go rtm.ManageConnection() // spawn slack bot
 
 Loop:
@@ -59,7 +59,7 @@ Loop:
 					fmt.Printf("Message: %+v\n", ev.Msg)
 					originalMessage := ev.Msg.Text
 					parsedMessage := strings.TrimSpace(strings.Replace(originalMessage, "<@"+botID+">", "", -1)) // strip out bot's name and spaces
-					commands.CheckCommand(api, rtm, ev.Msg, parsedMessage)
+					commands.CheckCommand(api, ev.Msg, parsedMessage)
 				}
 
 			case *slack.PresenceChangeEvent:
@@ -79,7 +79,7 @@ Loop:
 				fmt.Printf("Error: %s\n", ev.Error())
 
 			case *slack.InvalidAuthEvent:
-				fmt.Printf("Invalid credentials")
+				fmt.Println("Invalid credentials")
 				break Loop
 
 			default:

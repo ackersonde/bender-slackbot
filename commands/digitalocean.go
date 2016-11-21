@@ -25,7 +25,7 @@ func (t *TokenSource) Token() (*oauth2.Token, error) {
 }
 
 // ListDODroplets is now commented
-func ListDODroplets(rtm *slack.RTM) string {
+func ListDODroplets() string {
 	doDropletInfoSite := "https://cloud.digitalocean.com/droplets/"
 	doPersonalAccessToken := os.Getenv("digitalOceanToken")
 	response := ""

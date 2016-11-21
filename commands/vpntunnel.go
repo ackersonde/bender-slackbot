@@ -10,13 +10,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/nlopes/slack"
 	"golang.org/x/crypto/ssh"
 )
 
+var reportChannel = "C33QYV3PW"
 var tunnelOnTime time.Time
 var tunnelIdleSince time.Time
-var maxTunnelIdleTime = float64(10 * 60) // 10 mins in seconds
+var maxTunnelIdleTime = float64(5 * 60) // 5 mins in seconds
 
 func executeRemoteCmd(command string, config *ssh.ClientConfig) string {
 	defer func() { //catch or finally
@@ -44,8 +44,9 @@ func executeRemoteCmd(command string, config *ssh.ClientConfig) string {
 	return stdoutBuf.String()
 }
 
-// ensure the PrivateTunnel vpn connection on PI is up and working properly
-func raspberryPIPrivateTunnelChecks() string {
+// RaspberryPIPrivateTunnelChecks ensures PrivateTunnel vpn connection
+// on PI is up and working properly
+func RaspberryPIPrivateTunnelChecks() string {
 	tunnelUp := ""
 
 	sshConfig := &ssh.ClientConfig{
@@ -129,12 +130,19 @@ func raspberryPIPrivateTunnelChecks() string {
 		//  TODO if tunnelUp = "" shutdown transmission daemon, restart VPN and send RED ALERT msg!
 	}
 
+	if tunnelUp == "" {
+		rtm.SendMessage(rtm.NewOutgoingMessage(":openvpn: PI status: DOWN :rotating_light:", reportChannel))
+	} else {
+		rtm.SendMessage(rtm.NewOutgoingMessage(":openvpn: PI status: UP :raspberry_pi: @ "+tunnelUp, reportChannel))
+	}
+
 	return tunnelUp
 }
 
 // DisconnectIdleTunnel is now commented
-func DisconnectIdleTunnel(rtm *slack.RTM) {
-	msg := ":closed_lock_with_key: UP since: " + tunnelIdleSince.Format("Mon Jan _2 15:04:05") + " IDLE for "
+func DisconnectIdleTunnel() {
+	msg := ":closed_lock_with_key: UP since: " + tunnelIdleSince.Format("Mon Jan _2 15:04") + " IDLE for "
+
 	if !tunnelOnTime.IsZero() {
 		currentIdleTime := time.Now().Sub(tunnelIdleSince)
 		stringCurrentIdleTimeSecs := strconv.FormatFloat(currentIdleTime.Seconds(), 'f', 0, 64)
@@ -144,9 +152,9 @@ func DisconnectIdleTunnel(rtm *slack.RTM) {
 		} else {
 			msg += stringCurrentIdleTimeSecs + "secs"
 		}
-	}
 
-	rtm.SendMessage(rtm.NewOutgoingMessage(msg, "C33QYV3PW"))
+		rtm.SendMessage(rtm.NewOutgoingMessage(msg, reportChannel))
+	}
 }
 
 func vpnTunnelCmds(command ...string) string {

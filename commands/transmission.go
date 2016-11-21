@@ -38,7 +38,7 @@ func getTorrents(t *transmission.Client) (result string) {
 }
 
 func addTorrents(t *transmission.Client, torrentLink string) (result string) {
-	privateTunnelUp := raspberryPIPrivateTunnelChecks()
+	privateTunnelUp := RaspberryPIPrivateTunnelChecks()
 	if privateTunnelUp != "" {
 		// slack 'markdown's URLs with '<link|text>' so clip these off
 		if strings.HasPrefix(torrentLink, "<") {
