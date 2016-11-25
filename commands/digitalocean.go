@@ -25,7 +25,7 @@ func (t *TokenSource) Token() (*oauth2.Token, error) {
 }
 
 // ListDODroplets is now commented
-func ListDODroplets() string {
+func ListDODroplets(userCall bool) string {
 	doDropletInfoSite := "https://cloud.digitalocean.com/droplets/"
 	doPersonalAccessToken := os.Getenv("digitalOceanToken")
 	response := ""
@@ -47,8 +47,10 @@ func ListDODroplets() string {
 		}
 	}
 
-	customEvent := slack.RTMEvent{Type: "ListDODroplets", Data: response}
-	rtm.IncomingEvents <- customEvent
+	if !userCall {
+		rtm.IncomingEvents <- slack.RTMEvent{Type: "ListDODroplets", Data: response}
+	}
+
 	return response
 }
 

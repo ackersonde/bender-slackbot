@@ -10,10 +10,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/nlopes/slack"
 	"golang.org/x/crypto/ssh"
 )
 
-var reportChannel = "C33QYV3PW"
 var tunnelOnTime time.Time
 var tunnelIdleSince time.Time
 var maxTunnelIdleTime = float64(5 * 60) // 5 mins in seconds
@@ -46,97 +46,104 @@ func executeRemoteCmd(command string, config *ssh.ClientConfig) string {
 
 // RaspberryPIPrivateTunnelChecks ensures PrivateTunnel vpn connection
 // on PI is up and working properly
-func RaspberryPIPrivateTunnelChecks() string {
+func RaspberryPIPrivateTunnelChecks(userCall bool) string {
 	tunnelUp := ""
+	response := ":openvpn: PI status: DOWN :rotating_light:"
 
-	sshConfig := &ssh.ClientConfig{
-		User: os.Getenv("piUser"),
-		Auth: []ssh.AuthMethod{ssh.Password(os.Getenv("piPass"))},
-	}
-
-	// `curl ipinfo.io` (if this doesn't work, just `curl icanhazip.com`)
-	results := make(chan string, 10)
-	timeout := time.After(5 * time.Second)
-	go func() {
-		results <- executeRemoteCmd("curl ipinfo.io", sshConfig)
-	}()
-
-	type IPInfoResponse struct {
-		IP      string
-		Country string
-	}
-	var jsonRes IPInfoResponse
-
-	select {
-	case res := <-results:
-		if res != "" {
-			err := json.Unmarshal([]byte(res), &jsonRes)
-			if err != nil {
-				fmt.Printf("unable to parse JSON string %s\n", res)
-			}
-			if jsonRes.Country == "NL" {
-				resultsDig := make(chan string, 10)
-				timeoutDig := time.After(5 * time.Second)
-				// ensure home.ackerson.de is DIFFERENT than PI IP address!
-				go func() {
-					resultsDig <- executeRemoteCmd("dig +short home.ackerson.de | tail -n1", sshConfig)
-				}()
-				select {
-				case resComp := <-resultsDig:
-					if resComp != jsonRes.IP {
-						tunnelUp = jsonRes.IP
-					}
-				case <-timeoutDig:
-					fmt.Println("Timed out on dig home.ackerson.de!")
-				}
-			}
+	if runningFritzboxTunnel() {
+		sshConfig := &ssh.ClientConfig{
+			User: os.Getenv("piUser"),
+			Auth: []ssh.AuthMethod{ssh.Password(os.Getenv("piPass"))},
 		}
-	case <-timeout:
-		fmt.Println("Timed out on curl ipinfo.io!")
-	}
 
-	// Tunnel should be OK. Now double check iptables to ensure that
-	// ALL Internet requests are running over OpenVPN!
-	if tunnelUp != "" {
-		resultsIPTables := make(chan string, 10)
-		timeoutIPTables := time.After(5 * time.Second)
-		// ensure home.ackerson.de is DIFFERENT than PI IP address!
+		// `curl ipinfo.io` (if this doesn't work, just `curl icanhazip.com`)
+		results := make(chan string, 10)
+		timeout := time.After(5 * time.Second)
 		go func() {
-			resultsIPTables <- executeRemoteCmd("sudo iptables -L OUTPUT -v --line-numbers | grep all", sshConfig)
+			results <- executeRemoteCmd("curl ipinfo.io", sshConfig)
 		}()
-		select {
-		case resIPTables := <-resultsIPTables:
-			lines := strings.Split(resIPTables, "\n")
 
-			for idx, oneLine := range lines {
-				switch idx {
-				case 0:
-					if !strings.Contains(oneLine, "ACCEPT     all  --  any    tun0    anywhere") {
-						tunnelUp = ""
-					}
-				case 1:
-					if !strings.Contains(oneLine, "ACCEPT     all  --  any    eth0    anywhere             192.168.178.0") {
-						tunnelUp = ""
-					}
-				case 2:
-					if !strings.Contains(oneLine, "DROP       all  --  any    eth0    anywhere") {
-						tunnelUp = ""
+		type IPInfoResponse struct {
+			IP      string
+			Country string
+		}
+		var jsonRes IPInfoResponse
+
+		select {
+		case res := <-results:
+			if res != "" {
+				err := json.Unmarshal([]byte(res), &jsonRes)
+				if err != nil {
+					fmt.Printf("unable to parse JSON string %s\n", res)
+				}
+				if jsonRes.Country == "NL" {
+					resultsDig := make(chan string, 10)
+					timeoutDig := time.After(5 * time.Second)
+					// ensure home.ackerson.de is DIFFERENT than PI IP address!
+					go func() {
+						resultsDig <- executeRemoteCmd("dig +short home.ackerson.de | tail -n1", sshConfig)
+					}()
+					select {
+					case resComp := <-resultsDig:
+						if resComp != jsonRes.IP {
+							tunnelUp = jsonRes.IP
+						}
+					case <-timeoutDig:
+						fmt.Println("Timed out on dig home.ackerson.de!")
 					}
 				}
 			}
-		case <-timeoutIPTables:
-			fmt.Println("Timed out on `iptables -L OUTPUT`!")
+		case <-timeout:
+			fmt.Println("Timed out on curl ipinfo.io!")
 		}
-		//  TODO if tunnelUp = "" shutdown transmission daemon, restart VPN and send RED ALERT msg!
-	}
 
-	if tunnelUp == "" {
-		rtm.SendMessage(rtm.NewOutgoingMessage(":openvpn: PI status: DOWN :rotating_light:", reportChannel))
+		// Tunnel should be OK. Now double check iptables to ensure that
+		// ALL Internet requests are running over OpenVPN!
+		if tunnelUp != "" {
+			resultsIPTables := make(chan string, 10)
+			timeoutIPTables := time.After(5 * time.Second)
+			// ensure home.ackerson.de is DIFFERENT than PI IP address!
+			go func() {
+				resultsIPTables <- executeRemoteCmd("sudo iptables -L OUTPUT -v --line-numbers | grep all", sshConfig)
+			}()
+			select {
+			case resIPTables := <-resultsIPTables:
+				lines := strings.Split(resIPTables, "\n")
+
+				for idx, oneLine := range lines {
+					switch idx {
+					case 0:
+						if !strings.Contains(oneLine, "ACCEPT     all  --  any    tun0    anywhere") {
+							tunnelUp = ""
+						}
+					case 1:
+						if !strings.Contains(oneLine, "ACCEPT     all  --  any    eth0    anywhere             192.168.178.0") {
+							tunnelUp = ""
+						}
+					case 2:
+						if !strings.Contains(oneLine, "DROP       all  --  any    eth0    anywhere") {
+							tunnelUp = ""
+						}
+					}
+				}
+			case <-timeoutIPTables:
+				fmt.Println("Timed out on `iptables -L OUTPUT`!")
+			}
+			//  TODO if tunnelUp = "" shutdown transmission daemon, restart VPN and send RED ALERT msg!
+		}
+
+		if tunnelUp != "" {
+			response = ":openvpn: PI status: UP :raspberry_pi: @ " + tunnelUp
+		}
+
+		if !userCall {
+			customEvent := slack.RTMEvent{Type: "RaspberryPIPrivateTunnelChecks", Data: response}
+			rtm.IncomingEvents <- customEvent
+		}
 	} else {
-		rtm.SendMessage(rtm.NewOutgoingMessage(":openvpn: PI status: UP :raspberry_pi: @ "+tunnelUp, reportChannel))
+		response = "Unable to connect to Fritz!Box tunnel to check :openvpn:"
 	}
-
-	return tunnelUp
+	return response
 }
 
 // DisconnectIdleTunnel is now commented
@@ -153,7 +160,7 @@ func DisconnectIdleTunnel() {
 			msg += stringCurrentIdleTimeSecs + "secs"
 		}
 
-		rtm.SendMessage(rtm.NewOutgoingMessage(msg, reportChannel))
+		rtm.SendMessage(rtm.NewOutgoingMessage(msg, SlackReportChannel))
 	}
 }
 
@@ -184,7 +191,7 @@ func vpnTunnelCmds(command ...string) string {
 
 	/* Here's the next cmd to get setup
 			# ip a show tun0
-			9: tun0: <POINTOPOINT,MULTICAST,NOARP,UP,LOWER_UP> mtu 1024 qdisc pfifo_fast state UNKNOWN group default qlen 500 link/none
+			9: tun0: <POINTOPOINT,MULTICAST,NOARP,UP,LOWER_UP> mtu 1024 qdisc
 	    		inet 192.168.178.201/32 scope global tun0
 	       	valid_lft forever preferred_lft forever
 			# vpnc-disconnect

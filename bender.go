@@ -11,13 +11,12 @@ import (
 	"github.com/nlopes/slack"
 )
 
-var botID = "N/A"                // U2NQSPHHD bender bot userID
-var generalChannel = "C33QYV3PW" // #remote_network_report
+var botID = "N/A" // U2NQSPHHD bender bot userID
 
 func prepareScheduler() {
 	scheduler := gocron.NewScheduler()
-	scheduler.Every(1).Day().At("09:39").Do(commands.ListDODroplets)
-	scheduler.Every(1).Day().At("09:40").Do(commands.RaspberryPIPrivateTunnelChecks)
+	scheduler.Every(1).Day().At("15:39").Do(commands.ListDODroplets, false)
+	scheduler.Every(1).Day().At("15:40").Do(commands.RaspberryPIPrivateTunnelChecks, false)
 	scheduler.Every(10).Minutes().Do(commands.DisconnectIdleTunnel)
 	<-scheduler.Start()
 
@@ -25,8 +24,7 @@ func prepareScheduler() {
 }
 
 func main() {
-	slackToken := os.Getenv("slackToken")
-	api := slack.New(slackToken)
+	api := slack.New(os.Getenv("slackToken"))
 	logger := log.New(os.Stdout, "slack-bot: ", log.Lshortfile|log.LstdFlags)
 	slack.SetLogger(logger)
 	api.SetDebug(false)
@@ -56,9 +54,10 @@ Loop:
 				// only respond to messages sent to me by others on the same channel:
 				if ev.Msg.Type == "message" && callerID != botID && ev.Msg.SubType != "message_deleted" &&
 					(strings.Contains(ev.Msg.Text, "<@"+botID+">") || strings.HasPrefix(ev.Msg.Channel, "D")) {
-					fmt.Printf("Message: %+v\n", ev.Msg)
+					logger.Printf("Message: %+v\n", ev.Msg)
 					originalMessage := ev.Msg.Text
-					parsedMessage := strings.TrimSpace(strings.Replace(originalMessage, "<@"+botID+">", "", -1)) // strip out bot's name and spaces
+					// strip out bot's name and spaces
+					parsedMessage := strings.TrimSpace(strings.Replace(originalMessage, "<@"+botID+">", "", -1))
 					commands.CheckCommand(api, ev.Msg, parsedMessage)
 				}
 
@@ -68,28 +67,29 @@ Loop:
 				// bug in API sets "away" sometimes when user rejoins slack :(
 				/*if (ev.Presence == "away") {
 				  leavingUser, _ := api.GetUserInfo(ev.User)
-				  rtm.SendMessage(rtm.NewOutgoingMessage(leavingUser.Profile.FirstName+" just cheezed it!", generalChannel))
+				  rtm.SendMessage(rtm.NewOutgoingMessage(leavingUser.Profile.FirstName+" just cheezed it!",
+				  generalChannel))
 				}*/
 
 			case *slack.LatencyReport:
 				api.GetUserInfo(botID)
-				//fmt.Printf("Current latency: %+v\n", ev.Value)
+				//logger.Printf("Current latency: %+v\n", ev.Value)
 
 			case *slack.RTMError:
-				fmt.Printf("Error: %s\n", ev.Error())
+				logger.Printf("Error: %s\n", ev.Error())
 
 			case *slack.InvalidAuthEvent:
-				fmt.Println("Invalid credentials")
+				logger.Println("Invalid credentials")
 				break Loop
 
 			default:
 				// the gocron scheduler above communicates with the RTMbot subroutine
 				// via it's builtin channel. here we check for custom events and act
 				// accordingly
-				if msg.Type == "ListDODroplets" {
+				if msg.Type == "ListDODroplets" || msg.Type == "RaspberryPIPrivateTunnelChecks" {
 					response := msg.Data.(string)
 					params := slack.PostMessageParameters{AsUser: true}
-					api.PostMessage(generalChannel, response, params)
+					api.PostMessage(commands.SlackReportChannel, response, params)
 				} else {
 					// Ignore other events..
 					//fmt.Printf("Unexpected %s: %+v\n", msg.Type, msg.Data)

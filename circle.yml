@@ -23,7 +23,7 @@ dependencies:
 # below is an example how to decode this on the fly (e.g. slackToken)
 test:
   override:
-    - docker run -d -e slackToken=$(echo $slackTokenEncoded | base64 --decode) -e piUser=$piUser -e piPass=$piPass -e digitalOceanToken=$digitalOceanToken --name bender danackerson/bender:vc$CIRCLE_BUILD_NUM
+    - docker run -d -e slackToken=$(echo $slackTokenEncoded | base64 --decode) -e raspberryPIIP=$raspberryPIIP -e slackReportChannel=$slackReportChannel -e piUser=$piUser -e piPass=$piPass -e digitalOceanToken=$digitalOceanToken --name bender danackerson/bender:vc$CIRCLE_BUILD_NUM
     - docker logs bender | grep "Presence:active User:U2NQSPHHD"
 
 deployment:
@@ -35,4 +35,4 @@ deployment:
       - ssh core@bender.ackerson.de docker login -u $DOCKER_USER -p $DOCKER_PASS
       - ssh core@bender.ackerson.de docker pull danackerson/bender:vc$CIRCLE_BUILD_NUM
       - ssh core@bender.ackerson.de docker rm -f bender; true
-      - ssh core@bender.ackerson.de docker run -d --restart=always --privileged=true -e piUser=$piUser -e piPass=$piPass -e digitalOceanToken=$digitalOceanToken -e CIRCLE_BUILD_NUM=$CIRCLE_BUILD_NUM -e slackToken=$(echo $slackTokenEncoded | base64 --decode) --name bender danackerson/bender:vc$CIRCLE_BUILD_NUM
+      - ssh core@bender.ackerson.de docker run -d --restart=always --privileged=true -e raspberryPIIP=$raspberryPIIP -e slackReportChannel=$slackReportChannel -e piUser=$piUser -e piPass=$piPass -e digitalOceanToken=$digitalOceanToken -e CIRCLE_BUILD_NUM=$CIRCLE_BUILD_NUM -e slackToken=$(echo $slackTokenEncoded | base64 --decode) --name bender danackerson/bender:vc$CIRCLE_BUILD_NUM

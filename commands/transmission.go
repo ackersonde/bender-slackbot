@@ -5,6 +5,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/odwrtw/transmission"
 )
@@ -37,8 +38,8 @@ func getTorrents(t *transmission.Client) (result string) {
 	return result
 }
 
-func addTorrents(t *transmission.Client, torrentLink string) (result string) {
-	privateTunnelUp := RaspberryPIPrivateTunnelChecks()
+func addTorrents(t *transmission.Client, torrentLink string, userCall bool) (result string) {
+	privateTunnelUp := RaspberryPIPrivateTunnelChecks(userCall) // TODO this is fucked up
 	if privateTunnelUp != "" {
 		// slack 'markdown's URLs with '<link|text>' so clip these off
 		if strings.HasPrefix(torrentLink, "<") {
@@ -65,7 +66,7 @@ func addTorrents(t *transmission.Client, torrentLink string) (result string) {
 	return result
 }
 
-func deleteTorrents(t *transmission.Client, torrentIDStr string) (result string) {
+func deleteTorrents(t *transmission.Client, torrentIDStr string, userCall bool) (result string) {
 	torrentID, err := strconv.Atoi(torrentIDStr)
 	if err != nil {
 		fmt.Printf("\nRemove err: %v", err)
@@ -111,10 +112,12 @@ func torrentCommand(cmd []string) (result string) {
 		if cmd[0] == "trans" {
 			result = getTorrents(t)
 		} else if cmd[0] == "tranc" {
-			result = addTorrents(t, cmd[1])
+			result = addTorrents(t, cmd[1], true)
 		} else if cmd[0] == "trand" {
-			result = deleteTorrents(t, cmd[1])
+			result = deleteTorrents(t, cmd[1], true)
 		}
+
+		tunnelIdleSince = time.Now()
 	}
 
 	return result

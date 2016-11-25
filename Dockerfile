@@ -1,5 +1,5 @@
 FROM ubuntu:16.10
-RUN apt-get update && apt-get install -y --no-install-recommends openssh-client inetutils-ping vim vpnc curl ca-certificates
+RUN apt-get update && apt-get install -y --no-install-recommends openssh-client vpnc curl ca-certificates
 # prepare build environment
 ARG vpnc_gateway
 ARG vpnc_id
