@@ -61,30 +61,3 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 			slackMessage.Channel))
 	}
 }
-
-func runningFritzboxTunnel() bool {
-	status := false
-
-	if !isFritzboxTunnelUp() {
-		vpnTunnelCmds("/usr/sbin/vpnc-connect", "fritzbox")
-		if !isFritzboxTunnelUp() {
-			rtm.SendMessage(rtm.NewOutgoingMessage(
-				":closed_lock_with_key: Unable to tunnel to Fritz!Box", ""))
-		} else {
-			status = true
-		}
-	}
-
-	return status
-}
-
-func isFritzboxTunnelUp() bool {
-	status := false
-
-	tunnelStatus := vpnTunnelCmds("status")
-	if strings.Contains(tunnelStatus, "inet 192.168.178.201/32 scope global tun0") {
-		status = true
-	}
-
-	return status
-}

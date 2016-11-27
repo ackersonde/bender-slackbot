@@ -38,23 +38,19 @@ func getTorrents(t *transmission.Client) (result string) {
 	return result
 }
 
-func addTorrents(t *transmission.Client, torrentLink string, userCall bool) (result string) {
-	privateTunnelUp := RaspberryPIPrivateTunnelChecks(userCall) // TODO this is fucked up
-	if privateTunnelUp != "" {
-		// slack 'markdown's URLs with '<link|text>' so clip these off
-		if strings.HasPrefix(torrentLink, "<") {
-			torrentLink = strings.TrimLeft(torrentLink, "<")
-		}
-		if strings.HasSuffix(torrentLink, ">") {
-			torrentLink = strings.TrimRight(torrentLink, ">")
-		}
-		if indexPipe := strings.Index(torrentLink, "|"); indexPipe > 0 {
-			torrentLink = torrentLink[:indexPipe]
-		}
-		result = fmt.Sprintf(":star2: adding %s\n", torrentLink)
-	} else {
-		result = ":openvpn: PI status: DOWN :rotating_light:\n"
+func addTorrents(t *transmission.Client, torrentLink string) (result string) {
+	// slack 'markdown's URLs with '<link|text>' so clip these off
+	if strings.HasPrefix(torrentLink, "<") {
+		torrentLink = strings.TrimLeft(torrentLink, "<")
 	}
+	if strings.HasSuffix(torrentLink, ">") {
+		torrentLink = strings.TrimRight(torrentLink, ">")
+	}
+	if indexPipe := strings.Index(torrentLink, "|"); indexPipe > 0 {
+		torrentLink = torrentLink[:indexPipe]
+	}
+	result = fmt.Sprintf(":star2: adding %s\n", torrentLink)
+
 	// Add a torrent
 	_, err := t.Add(torrentLink)
 	if err != nil {
@@ -66,7 +62,7 @@ func addTorrents(t *transmission.Client, torrentLink string, userCall bool) (res
 	return result
 }
 
-func deleteTorrents(t *transmission.Client, torrentIDStr string, userCall bool) (result string) {
+func deleteTorrents(t *transmission.Client, torrentIDStr string) (result string) {
 	torrentID, err := strconv.Atoi(torrentIDStr)
 	if err != nil {
 		fmt.Printf("\nRemove err: %v", err)
@@ -79,9 +75,6 @@ func deleteTorrents(t *transmission.Client, torrentIDStr string, userCall bool) 
 	if err != nil {
 		fmt.Printf("\nRemove err: %v", removeErr)
 	}
-
-	// Get session informations
-	//t.Session.Update()
 
 	result += getTorrents(t)
 	return result
@@ -96,10 +89,8 @@ func torrentCommand(cmd []string) (result string) {
 	}()
 
 	result = ":closed_lock_with_key: No tunnel exists! Try `vpnc` first..."
-	// TODO - if tunnel doesn't exist, create it! (cronjob checks to shutdown idle tunnels?!)
 
-	tunnelStatus := vpnTunnelCmds("status")
-	if strings.Contains(tunnelStatus, "inet 192.168.178.201/32 scope global tun0") {
+	if runningFritzboxTunnel() {
 		// Connect to Transmission RPC daemon
 		conf := transmission.Config{
 			Address: "http://" + raspberryPIIP + ":9091/transmission/rpc",

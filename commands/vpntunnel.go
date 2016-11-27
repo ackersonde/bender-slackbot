@@ -117,11 +117,11 @@ func RaspberryPIPrivateTunnelChecks(userCall bool) string {
 							tunnelUp = ""
 						}
 					case 1:
-						if !strings.Contains(oneLine, "ACCEPT     all  --  any    eth0    anywhere             192.168.178.0") {
+						if !strings.Contains(oneLine, "ACCEPT     all  --  any    eth0    anywhere             192.168.178.0/24") {
 							tunnelUp = ""
 						}
 					case 2:
-						if !strings.Contains(oneLine, "DROP       all  --  any    eth0    anywhere") {
+						if !strings.Contains(oneLine, "DROP       all  --  any    eth0    anywhere             anywhere") {
 							tunnelUp = ""
 						}
 					}
@@ -211,4 +211,31 @@ func vpnTunnelCmds(command ...string) string {
 	}
 
 	return ":closed_lock_with_key: " + tunnelStatus
+}
+
+func runningFritzboxTunnel() bool {
+	status := false
+
+	if !isFritzboxTunnelUp() {
+		vpnTunnelCmds("/usr/sbin/vpnc-connect", "fritzbox")
+		if !isFritzboxTunnelUp() {
+			rtm.SendMessage(rtm.NewOutgoingMessage(
+				":closed_lock_with_key: Unable to tunnel to Fritz!Box", ""))
+		} else {
+			status = true
+		}
+	}
+
+	return status
+}
+
+func isFritzboxTunnelUp() bool {
+	status := false
+
+	tunnelStatus := vpnTunnelCmds("status")
+	if strings.Contains(tunnelStatus, "192.168.178.201") {
+		status = true
+	}
+
+	return status
 }
