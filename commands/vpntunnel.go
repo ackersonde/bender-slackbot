@@ -148,7 +148,7 @@ func RaspberryPIPrivateTunnelChecks(userCall bool) string {
 
 // DisconnectIdleTunnel is now commented
 func DisconnectIdleTunnel() {
-	msg := ":closed_lock_with_key: UP since: " + tunnelIdleSince.Format("Mon Jan _2 15:04") + " IDLE for "
+	msg := ":closed_lock_with_key: UP since: " + tunnelOnTime.Format("Mon Jan _2 15:04") + " IDLE for "
 
 	if !tunnelOnTime.IsZero() {
 		currentIdleTime := time.Now().Sub(tunnelIdleSince)
@@ -210,23 +210,21 @@ func vpnTunnelCmds(command ...string) string {
 		tunnelStatus = "Tunnel offline."
 	}
 
-	return ":closed_lock_with_key: " + tunnelStatus
+	return ":closed_lock_with_key: " + tunnelStatus + " IDLE since: " + tunnelIdleSince.Format("Mon Jan _2 15:04")
 }
 
 func runningFritzboxTunnel() bool {
-	status := false
+	up := isFritzboxTunnelUp()
 
-	if !isFritzboxTunnelUp() {
+	if !up { // attempt to establish connection
 		vpnTunnelCmds("/usr/sbin/vpnc-connect", "fritzbox")
-		if !isFritzboxTunnelUp() {
+		if up = isFritzboxTunnelUp(); !up {
 			rtm.SendMessage(rtm.NewOutgoingMessage(
 				":closed_lock_with_key: Unable to tunnel to Fritz!Box", ""))
-		} else {
-			status = true
 		}
 	}
 
-	return status
+	return up
 }
 
 func isFritzboxTunnelUp() bool {
