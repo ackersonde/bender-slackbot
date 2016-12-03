@@ -25,6 +25,16 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 		response := ListDODroplets(true)
 		params := slack.PostMessageParameters{AsUser: true}
 		api.PostMessage(slackMessage.Channel, response, params)
+	} else if args[0] == "torq" {
+		cat := 207
+		if args[1] == "nfl" {
+			cat = 200
+		} else if args[1] == "ubuntu" {
+			cat = 300
+		}
+		response := SearchFor(args[1], Category(cat))
+		params := slack.PostMessageParameters{AsUser: true}
+		api.PostMessage(slackMessage.Channel, response, params)
 	} else if args[0] == "ovpn" {
 		response := RaspberryPIPrivateTunnelChecks(true)
 		rtm.SendMessage(rtm.NewOutgoingMessage(response, slackMessage.Channel))
@@ -52,7 +62,8 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 			":do_droplet: `do`: show current DigitalOcean droplets\n" +
 			":closed_lock_with_key: `vpn[c|s|d]`: [C]onnect, [S]tatus, [D]rop VPN tunnel to Fritz!Box\n" +
 			":openvpn: `ovpn`: show status of PrivateTunnel on :raspberry_pi:\n" +
-			":transmission: `tran[c|s|d]`: [C]reate <URL>, [S]tatus, [D]elete <ID> torrents on :raspberry_pi:\n"
+			":transmission: `tran[c|s|d]`: [C]reate <URL>, [S]tatus, [D]elete <ID> torrents on :raspberry_pi:\n" +
+			":pirate_bay: `torq <search term>`\n"
 		params := slack.PostMessageParameters{AsUser: true}
 		api.PostMessage(slackMessage.Channel, response, params)
 	} else {

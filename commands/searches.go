@@ -1,5 +1,5 @@
 package commands
-
+// forked from https://github.com/jasonrhansen/piratebay
 import (
   "fmt"
   "net/http"
@@ -45,30 +45,31 @@ type Torrent struct {
 }
 
 // SearchFor is now commented
-func SearchFor(term string) {
-  search := "ubuntu"
-  torrents, err := Search(search, 200)
+func SearchFor(term string, cat Category) string {
+  response := ""
+  torrents, err := search(term, cat)
   found := 0
   if err == nil {
     for i, t:= range torrents {
       if t.Seeders > 10 {
         found++
-        fmt.Printf("\nTO %d: %s (%d bytes)\n", i, t.Title, t.Size)
-        fmt.Printf("\tSE %d: %s\n", t.Seeders, t.MagnetLink)
+        humanSize := t.Size / (1024 * 1024)
+        response += fmt.Sprintf("%d: <http://%s|%s> SE:%d (%d MiB)\n", i, t.MagnetLink, t.Title, t.Seeders, humanSize)
       }
     }
   } else {
-    fmt.Printf("unable to search %s : %v\n", pirateURL, err)
+    response = pirateURL + " seems to be offline: " + fmt.Sprintf("%v", err)
   }
 
   if found < 1 {
-    fmt.Println("unable to find torrents with enough Seeds '%s'", search)
+    response = "unable to find torrents with enough Seeders for '" + term
   }
+
+  return response
 }
 
-
-// Search returns the torrents found with the given search string and categories.
-func Search(query string, cats ...Category) ([]Torrent, error) {
+// search returns the torrents found with the given search string and categories.
+func search(query string, cats ...Category) ([]Torrent, error) {
   if len(cats) == 0 {
     cats = []Category{0}
   }

@@ -49,6 +49,8 @@ func addTorrents(t *transmission.Client, torrentLink string) (result string) {
 	if indexPipe := strings.Index(torrentLink, "|"); indexPipe > 0 {
 		torrentLink = torrentLink[:indexPipe]
 	}
+
+	torrentLink = strings.Replace(torrentLink, "http://magnet/", "magnet:", -1)
 	result = fmt.Sprintf(":star2: adding %s\n", torrentLink)
 
 	// Add a torrent
