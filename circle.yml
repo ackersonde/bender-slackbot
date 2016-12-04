@@ -13,6 +13,7 @@ machine:
 dependencies:
   override:
     - docker version && go version
+    - rm -Rf $IMPORT_PATH/vendor
     - go get -t -d -v ./...
     - env GOOS=linux GOARCH=amd64 go build bender.go
     - docker build -t danackerson/bender:vc$CIRCLE_BUILD_NUM --build-arg vpnc_gateway=$VPNC_GATEWAY --build-arg vpnc_id=$VPNC_ID --build-arg vpnc_secret=$VPNC_SECRET --build-arg vpnc_username=$VPNC_USERNAME --build-arg vpnc_password=$VPNC_PASSWORD .
