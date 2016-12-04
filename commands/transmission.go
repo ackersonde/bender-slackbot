@@ -93,6 +93,10 @@ func torrentCommand(cmd []string) (result string) {
 	result = ":closed_lock_with_key: No tunnel exists! Try `vpnc` first..."
 
 	if runningFritzboxTunnel() {
+		if raspberryPIIP == "" {
+			raspberryPIIP = "raspberrypi.fritz.box"
+		}
+
 		// Connect to Transmission RPC daemon
 		conf := transmission.Config{
 			Address: "http://" + raspberryPIIP + ":9091/transmission/rpc",
@@ -105,9 +109,18 @@ func torrentCommand(cmd []string) (result string) {
 		if cmd[0] == "trans" {
 			result = getTorrents(t)
 		} else if cmd[0] == "tranc" {
-			result = addTorrents(t, cmd[1])
+
+			if len(cmd) == 1 {
+				result = "Usage: `tranc <Torrent link>`"
+			} else {
+				result = addTorrents(t, cmd[1])
+			}
 		} else if cmd[0] == "trand" {
-			result = deleteTorrents(t, cmd[1])
+			if len(cmd) == 1 {
+				result = "Usage: `trand <Torrent ID>`"
+			} else {
+				result = deleteTorrents(t, cmd[1])
+			}
 		}
 
 		tunnelIdleSince = time.Now()

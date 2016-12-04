@@ -224,7 +224,7 @@ func runningFritzboxTunnel() bool {
 		}
 	}
 
-	return up
+	return up // if running locally, change to true
 }
 
 func isFritzboxTunnelUp() bool {

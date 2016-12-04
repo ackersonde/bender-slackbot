@@ -5,6 +5,8 @@ import (
 	"log"
 	"os"
 	"strings"
+	"unicode"
+	"unicode/utf8"
 
 	"github.com/danackerson/bender-slackbot/commands"
 	"github.com/jasonlvhit/gocron"
@@ -58,6 +60,8 @@ Loop:
 					originalMessage := ev.Msg.Text
 					// strip out bot's name and spaces
 					parsedMessage := strings.TrimSpace(strings.Replace(originalMessage, "<@"+botID+">", "", -1))
+					r, n := utf8.DecodeRuneInString(parsedMessage)
+					parsedMessage = string(unicode.ToLower(r)) + parsedMessage[n:]
 					commands.CheckCommand(api, ev.Msg, parsedMessage)
 				}
 
