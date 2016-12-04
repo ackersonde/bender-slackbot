@@ -2,6 +2,7 @@ package commands
 
 // forked from https://github.com/jasonrhansen/piratebay
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -71,29 +72,38 @@ func SearchFor(term string, cat Category) string {
 
 // search returns the torrents found with the given search string and categories.
 func search(query string, cats ...Category) ([]Torrent, error) {
-	if len(cats) == 0 {
-		cats = []Category{0}
+	resp := new(http.Response)
+	err := errors.New("")
+
+	if query != "" {
+		if len(cats) == 0 {
+			cats = []Category{0}
+		}
+
+		var catStr string
+		for i, c := range cats {
+			if i != 0 {
+				catStr += ","
+			}
+			catStr += strconv.Itoa(int(c))
+		}
+		if catStr == "" {
+			catStr = "0"
+		}
+		resp, err = http.Get(
+			pirateURL +
+				"/search/" +
+				url.QueryEscape(query) +
+				"/0/99/" +
+				catStr)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		resp, err = http.Get(
+			pirateURL + "/browse/207/0/7/0")
 	}
 
-	var catStr string
-	for i, c := range cats {
-		if i != 0 {
-			catStr += ","
-		}
-		catStr += strconv.Itoa(int(c))
-	}
-	if catStr == "" {
-		catStr = "0"
-	}
-	resp, err := http.Get(
-		pirateURL +
-			"/search/" +
-			url.QueryEscape(query) +
-			"/0/99/" +
-			catStr)
-	if err != nil {
-		return nil, err
-	}
 	doc, err := html.Parse(resp.Body)
 	if err != nil {
 		return nil, err

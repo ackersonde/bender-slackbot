@@ -148,7 +148,7 @@ func RaspberryPIPrivateTunnelChecks(userCall bool) string {
 
 // DisconnectIdleTunnel is now commented
 func DisconnectIdleTunnel() {
-	msg := ":closed_lock_with_key: UP since: " + tunnelOnTime.Format("Mon Jan _2 15:04") + " IDLE for "
+	msg := ":closed_lock_with_key: UP since: " + tunnelOnTime.Format("Mon, Jan 2 15:04") + " IDLE for "
 
 	if !tunnelOnTime.IsZero() {
 		currentIdleTime := time.Now().Sub(tunnelIdleSince)

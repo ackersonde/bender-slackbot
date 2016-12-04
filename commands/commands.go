@@ -26,13 +26,19 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 		params := slack.PostMessageParameters{AsUser: true}
 		api.PostMessage(slackMessage.Channel, response, params)
 	} else if args[0] == "torq" {
+		response := ""
 		cat := 207
-		if args[1] == "nfl" {
-			cat = 200
-		} else if args[1] == "ubuntu" {
-			cat = 300
+		if len(args) > 1 {
+			if args[1] == "nfl" {
+				cat = 200
+			} else if args[1] == "ubuntu" {
+				cat = 300
+			}
+
+			response = SearchFor(args[1], Category(cat))
+		} else {
+			response = SearchFor("", Category(cat))
 		}
-		response := SearchFor(args[1], Category(cat))
 		params := slack.PostMessageParameters{AsUser: true}
 		api.PostMessage(slackMessage.Channel, response, params)
 	} else if args[0] == "ovpn" {
