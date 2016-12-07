@@ -28,16 +28,18 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 		params := slack.PostMessageParameters{AsUser: true}
 		api.PostMessage(slackMessage.Channel, response, params)
 	} else if args[0] == "fsck" {
-		response := ":raspberry_pi: *SD Card Disk Usage*\n"
+		if runningFritzboxTunnel() {
+			response := ":raspberry_pi: *SD Card Disk Usage*\n"
 
-		if len(args) > 1 {
-			path := strings.Join(args[1:], " ")
-			response += CheckPiDiskSpace(path)
-		} else {
-			response += CheckPiDiskSpace("")
+			if len(args) > 1 {
+				path := strings.Join(args[1:], " ")
+				response += CheckPiDiskSpace(path)
+			} else {
+				response += CheckPiDiskSpace("")
+			}
+		
+			rtm.SendMessage(rtm.NewOutgoingMessage(response, slackMessage.Channel))
 		}
-
-		rtm.SendMessage(rtm.NewOutgoingMessage(response, slackMessage.Channel))
 	} else if args[0] == "mv" || args[0] == "rm" {
 		response := ""
 		if len(args) > 1 {
