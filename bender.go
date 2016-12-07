@@ -19,6 +19,7 @@ func prepareScheduler() {
 	scheduler := gocron.NewScheduler()
 	scheduler.Every(1).Day().At("09:03").Do(commands.ListDODroplets, false)
 	scheduler.Every(1).Day().At("09:04").Do(commands.RaspberryPIPrivateTunnelChecks, false)
+	scheduler.Every(1).Day().At("09:05").Do(commands.CheckPiDiskSpace, "---")
 	scheduler.Every(10).Minutes().Do(commands.DisconnectIdleTunnel)
 	<-scheduler.Start()
 
@@ -90,7 +91,9 @@ Loop:
 				// the gocron scheduler above communicates with the RTMbot subroutine
 				// via it's builtin channel. here we check for custom events and act
 				// accordingly
-				if msg.Type == "ListDODroplets" || msg.Type == "RaspberryPIPrivateTunnelChecks" {
+				if msg.Type == "ListDODroplets" || msg.Type == "MoveTorrent" ||
+					msg.Type == "RaspberryPIPrivateTunnelChecks" ||
+					msg.Type == "CheckPiDiskSpace" {
 					response := msg.Data.(string)
 					params := slack.PostMessageParameters{AsUser: true}
 					api.PostMessage(commands.SlackReportChannel, response, params)

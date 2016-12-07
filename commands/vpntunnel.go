@@ -18,16 +18,22 @@ var tunnelOnTime time.Time
 var tunnelIdleSince time.Time
 var maxTunnelIdleTime = float64(5 * 60) // 5 mins in seconds
 
-func executeRemoteCmd(command string, config *ssh.ClientConfig) string {
+func executeRemoteCmd(command string) string {
 	defer func() { //catch or finally
 		if err := recover(); err != nil { //catch
 			fmt.Fprintf(os.Stderr, "Exception: %v\n", err)
 		}
 	}()
 
-	login := config.User + ":" + os.Getenv("piPass")
+	config := &ssh.ClientConfig{
+		User: os.Getenv("piUser"),
+		Auth: []ssh.AuthMethod{ssh.Password(os.Getenv("piPass"))},
+	}
+
+	if raspberryPIIP == "" {
+		raspberryPIIP = "raspberrypi.fritz.box"
+	}
 	connectionString := fmt.Sprintf("%s:%s", raspberryPIIP, "22")
-	fmt.Println("SSH to " + login + "@" + connectionString)
 	conn, errConn := ssh.Dial("tcp", connectionString, config)
 	if errConn != nil { //catch
 		fmt.Fprintf(os.Stderr, "Exception: %v\n", errConn)
@@ -37,11 +43,19 @@ func executeRemoteCmd(command string, config *ssh.ClientConfig) string {
 
 	var stdoutBuf bytes.Buffer
 	session.Stdout = &stdoutBuf
+	var stderrBuf bytes.Buffer // hmmm
+	session.Stderr = &stderrBuf
 	session.Run(command)
 
 	tunnelIdleSince = time.Now()
 
-	return stdoutBuf.String()
+	errors := ""
+	if stderrBuf.String() != "" {
+		errStr := strings.TrimSpace(stderrBuf.String())
+		errors = "ERR `" + errStr + "`"
+	}
+
+	return stdoutBuf.String() + errors
 }
 
 // RaspberryPIPrivateTunnelChecks ensures PrivateTunnel vpn connection
@@ -51,16 +65,11 @@ func RaspberryPIPrivateTunnelChecks(userCall bool) string {
 	response := ":openvpn: PI status: DOWN :rotating_light:"
 
 	if runningFritzboxTunnel() {
-		sshConfig := &ssh.ClientConfig{
-			User: os.Getenv("piUser"),
-			Auth: []ssh.AuthMethod{ssh.Password(os.Getenv("piPass"))},
-		}
-
 		// `curl ipinfo.io` (if this doesn't work, just `curl icanhazip.com`)
 		results := make(chan string, 10)
 		timeout := time.After(5 * time.Second)
 		go func() {
-			results <- executeRemoteCmd("curl ipinfo.io", sshConfig)
+			results <- executeRemoteCmd("curl ipinfo.io")
 		}()
 
 		type IPInfoResponse struct {
@@ -81,7 +90,7 @@ func RaspberryPIPrivateTunnelChecks(userCall bool) string {
 					timeoutDig := time.After(5 * time.Second)
 					// ensure home.ackerson.de is DIFFERENT than PI IP address!
 					go func() {
-						resultsDig <- executeRemoteCmd("dig +short home.ackerson.de | tail -n1", sshConfig)
+						resultsDig <- executeRemoteCmd("dig +short home.ackerson.de | tail -n1")
 					}()
 					select {
 					case resComp := <-resultsDig:
@@ -104,7 +113,7 @@ func RaspberryPIPrivateTunnelChecks(userCall bool) string {
 			timeoutIPTables := time.After(5 * time.Second)
 			// ensure home.ackerson.de is DIFFERENT than PI IP address!
 			go func() {
-				resultsIPTables <- executeRemoteCmd("sudo iptables -L OUTPUT -v --line-numbers | grep all", sshConfig)
+				resultsIPTables <- executeRemoteCmd("sudo iptables -L OUTPUT -v --line-numbers | grep all")
 			}()
 			select {
 			case resIPTables := <-resultsIPTables:
@@ -144,6 +153,65 @@ func RaspberryPIPrivateTunnelChecks(userCall bool) string {
 		response = "Unable to connect to Fritz!Box tunnel to check :openvpn:"
 	}
 	return response
+}
+
+// CheckPiDiskSpace now exported
+func CheckPiDiskSpace(path string) string {
+	userCall := true
+	if path == "---" {
+		path = ""
+		userCall = false
+	}
+
+	response := executeRemoteCmd("du -sh \""+piSDCardPath+path+"\"/*") + "\n\n"
+	response += executeRemoteCmd("df -h /root/")
+
+	if !userCall {
+		customEvent := slack.RTMEvent{Type: "CheckPiDiskSpace", Data: response}
+		rtm.IncomingEvents <- customEvent
+	}
+
+	return response
+}
+
+// DeleteTorrentFile now exported
+func DeleteTorrentFile(filename string) string {
+	response := ""
+	if filename == "*" || filename == "" || strings.Contains(filename, "../") {
+		response = "Please enter an existing filename - try `fsck`"
+	} else {
+		path := piSDCardPath + filename
+
+		deleteCmd := ""
+		isDir := executeRemoteCmd("test -d \"" + path + "\" && echo 'Yes'")
+		if strings.HasPrefix(isDir, "Yes") {
+			deleteCmd = "rm -Rf \"" + path + "\""
+		} else {
+			deleteCmd = "rm \"" + path + "\""
+		}
+
+		response = executeRemoteCmd(deleteCmd)
+	}
+
+	return response
+}
+
+// MoveTorrentFile now exported
+func MoveTorrentFile(filename string) {
+	if filename == "*" || filename == "" || strings.Contains(filename, "../") {
+		rtm.IncomingEvents <- slack.RTMEvent{Type: "MoveTorrent", Data: "Please enter an existing filename - try `fsck`"}
+	} else {
+		moveCmd := "mv \"" + piSDCardPath + filename + "\" " + piUSBMountPath
+
+		go func() {
+			result := executeRemoteCmd(moveCmd)
+			fmt.Printf("mv ? %v", result)
+			if result == "" {
+				result = "Successfully moved " + filename + " to " + piUSBMountPath
+			}
+			rtm.IncomingEvents <- slack.RTMEvent{Type: "MoveTorrent", Data: result}
+		}()
+	}
 }
 
 // DisconnectIdleTunnel is now commented

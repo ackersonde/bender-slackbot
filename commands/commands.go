@@ -9,6 +9,8 @@ import (
 
 var raspberryPIIP = os.Getenv("raspberryPIIP")
 var rtm *slack.RTM
+var piSDCardPath = "/home/pi/torrents/"
+var piUSBMountPath = "/mnt/usb_1/DLNA/torrents/"
 
 // SlackReportChannel default reporting channel for bot crons
 var SlackReportChannel = os.Getenv("slackReportChannel") // C33QYV3PW is #remote_network_report
@@ -25,6 +27,31 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 		response := ListDODroplets(true)
 		params := slack.PostMessageParameters{AsUser: true}
 		api.PostMessage(slackMessage.Channel, response, params)
+	} else if args[0] == "fsck" {
+		response := ":raspberry_pi: *SD Card Disk Usage*\n"
+
+		if len(args) > 1 {
+			path := strings.Join(args[1:], " ")
+			response += CheckPiDiskSpace(path)
+		} else {
+			response += CheckPiDiskSpace("")
+		}
+
+		rtm.SendMessage(rtm.NewOutgoingMessage(response, slackMessage.Channel))
+	} else if args[0] == "mv" || args[0] == "rm" {
+		response := ""
+		if len(args) > 1 {
+			path := strings.Join(args[1:], " ")
+			if args[0] == "rm" {
+				response = DeleteTorrentFile(path)
+			} else {
+				MoveTorrentFile(path)
+			}
+
+			rtm.SendMessage(rtm.NewOutgoingMessage(response, slackMessage.Channel))
+		} else {
+			rtm.SendMessage(rtm.NewOutgoingMessage("Please provide a filename", slackMessage.Channel))
+		}
 	} else if args[0] == "torq" {
 		response := ""
 		cat := 207
@@ -69,7 +96,9 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 			":closed_lock_with_key: `vpn[c|s|d]`: [C]onnect, [S]tatus, [D]rop VPN tunnel to Fritz!Box\n" +
 			":openvpn: `ovpn`: show status of PrivateTunnel on :raspberry_pi:\n" +
 			":transmission: `tran[c|s|d]`: [C]reate <URL>, [S]tatus, [D]elete <ID> torrents on :raspberry_pi:\n" +
-			":pirate_bay: `torq <search term>`\n"
+			":pirate_bay: `torq <search term>`\n" +
+			":floppy_disk: `fsck`: show disk space on :raspberry_pi:\n" +
+			":recycle: `[mv|rm] <filename>`: move or delete torrent file from `" + piSDCardPath + "` (to `" + piUSBMountPath + "`) on :raspberry_pi:\n"
 		params := slack.PostMessageParameters{AsUser: true}
 		api.PostMessage(slackMessage.Channel, response, params)
 	} else {
