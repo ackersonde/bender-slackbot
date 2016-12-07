@@ -41,14 +41,16 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 	} else if args[0] == "mv" || args[0] == "rm" {
 		response := ""
 		if len(args) > 1 {
-			path := strings.Join(args[1:], " ")
-			if args[0] == "rm" {
-				response = DeleteTorrentFile(path)
-			} else {
-				MoveTorrentFile(path)
-			}
+			if runningFritzboxTunnel() {
+				path := strings.Join(args[1:], " ")
+				if args[0] == "rm" {
+					response = DeleteTorrentFile(path)
+				} else {
+					MoveTorrentFile(path)
+				}
 
-			rtm.SendMessage(rtm.NewOutgoingMessage(response, slackMessage.Channel))
+				rtm.SendMessage(rtm.NewOutgoingMessage(response, slackMessage.Channel))
+			}
 		} else {
 			rtm.SendMessage(rtm.NewOutgoingMessage("Please provide a filename", slackMessage.Channel))
 		}
