@@ -69,13 +69,17 @@ func RaspberryPIPrivateTunnelChecks(userCall bool) string {
 		results := make(chan string, 10)
 		timeout := time.After(5 * time.Second)
 		go func() {
-			stdout, _ := executeRemoteCmd("curl ipinfo.io")
+			// TODO: get both ipv4+ipv6 internet addresses
+			/*
+			curl https://ipleak.net/json/
+			*/
+			stdout, _ := executeRemoteCmd("https://ipleak.net/json/")
 			results <- stdout
 		}()
 
 		type IPInfoResponse struct {
 			IP      string
-			Country string
+			CountryCode string
 		}
 		var jsonRes IPInfoResponse
 
@@ -86,16 +90,23 @@ func RaspberryPIPrivateTunnelChecks(userCall bool) string {
 				if err != nil {
 					fmt.Printf("unable to parse JSON string (%v)\n%s\n", err, res)
 				}
-				if jsonRes.Country == "NL" {
+				if jsonRes.CountryCode == "NL" {
 					resultsDig := make(chan string, 10)
 					timeoutDig := time.After(5 * time.Second)
 					// ensure home.ackerson.de is DIFFERENT than PI IP address!
 					go func() {
-						stdout, _ := executeRemoteCmd("dig +short home.ackerson.de | tail -n1")
+						stdout, _ := executeRemoteCmd("ddig home.ackerson.de A home.ackerson.de AAAA +short")
 						resultsDig <- stdout
 					}()
 					select {
 					case resComp := <-resultsDig:
+						// TODO: ipv4 + ipv6 means multiline parse
+						/*
+						  ackerson.dynv6.net.
+							93.227.143.65
+							ackerson.dynv6.net.
+							2003:dc:d3bf:20f0:a96:d7ff:fe12:7ee7
+						*/
 						if resComp != jsonRes.IP {
 							tunnelUp = jsonRes.IP
 						} else {
@@ -140,6 +151,20 @@ func RaspberryPIPrivateTunnelChecks(userCall bool) string {
 						}
 					}
 				}
+
+				// TODO: ip6tables -L OUTPUT -v --line-numbers
+				/*
+1        0     0 DROP       all      any    any     anywhere             anywhere             rt type:0 segsleft:0
+2      161 20197 ACCEPT     all      any    any     fe80::/10            anywhere
+3       23  2830 ACCEPT     all      any    any     anywhere             ff00::/8
+5       19  2311 ACCEPT     all      any    lo      anywhere             anywhere
+6    41090 3333K ACCEPT     all      any    tun0    anywhere             anywhere
+7     1211  624K ACCEPT     all      any    eth0    anywhere             p200300DCD3E0EF000000000000000000.dip0.t-ipconnect.de/64
+15      74 21413 DROP       all      any    eth0    anywhere             anywhere
+				*/
+				// verify line 6: ACCEPT tun0 anywhere anywhere
+				// verify line 7: ACCEPT eth0 anywhere p2003*
+				// verify line 15: DROP eth0 anywhere anywhere
 			case <-timeoutIPTables:
 				fmt.Println("Timed out on `iptables -L OUTPUT`!")
 			}
