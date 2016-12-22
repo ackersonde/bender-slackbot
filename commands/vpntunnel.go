@@ -18,7 +18,7 @@ var tunnelOnTime time.Time
 var tunnelIdleSince time.Time
 var maxTunnelIdleTime = float64(5 * 60) // 5 mins in seconds
 
-func executeRemoteCmd(command string) string {
+func executeRemoteCmd(command string) (stdoutStr string, stderrStr string) {
 	defer func() { //catch or finally
 		if err := recover(); err != nil { //catch
 			fmt.Fprintf(os.Stderr, "Exception: %v\n", err)
@@ -55,7 +55,7 @@ func executeRemoteCmd(command string) string {
 		errors = "ERR `" + errStr + "`"
 	}
 
-	return stdoutBuf.String() + errors
+	return stdoutBuf.String(), errors
 }
 
 // RaspberryPIPrivateTunnelChecks ensures PrivateTunnel vpn connection
@@ -73,7 +73,8 @@ func RaspberryPIPrivateTunnelChecks(userCall bool) string {
 			/*
 			curl https://ipleak.net/json/
 			*/
-			results <- executeRemoteCmd("https://ipleak.net/json/")
+			stdout, _ := executeRemoteCmd("https://ipleak.net/json/")
+			results <- stdout
 		}()
 
 		type IPInfoResponse struct {
@@ -87,14 +88,15 @@ func RaspberryPIPrivateTunnelChecks(userCall bool) string {
 			if res != "" {
 				err := json.Unmarshal([]byte(res), &jsonRes)
 				if err != nil {
-					fmt.Printf("unable to parse JSON string %s\n", res)
+					fmt.Printf("unable to parse JSON string (%v)\n%s\n", err, res)
 				}
 				if jsonRes.CountryCode == "NL" {
 					resultsDig := make(chan string, 10)
 					timeoutDig := time.After(5 * time.Second)
 					// ensure home.ackerson.de is DIFFERENT than PI IP address!
 					go func() {
-						resultsDig <- executeRemoteCmd("dig home.ackerson.de A home.ackerson.de AAAA +short")
+						stdout, _ := executeRemoteCmd("ddig home.ackerson.de A home.ackerson.de AAAA +short")
+						resultsDig <- stdout
 					}()
 					select {
 					case resComp := <-resultsDig:
@@ -107,6 +109,8 @@ func RaspberryPIPrivateTunnelChecks(userCall bool) string {
 						*/
 						if resComp != jsonRes.IP {
 							tunnelUp = jsonRes.IP
+						} else {
+							fmt.Println("OVPN IP is same as home.ackerson.de :(")
 						}
 					case <-timeoutDig:
 						fmt.Println("Timed out on dig home.ackerson.de!")
@@ -124,7 +128,8 @@ func RaspberryPIPrivateTunnelChecks(userCall bool) string {
 			timeoutIPTables := time.After(5 * time.Second)
 			// ensure home.ackerson.de is DIFFERENT than PI IP address!
 			go func() {
-				resultsIPTables <- executeRemoteCmd("sudo iptables -L OUTPUT -v --line-numbers | grep all")
+				stdout, _ := executeRemoteCmd("sudo iptables -L OUTPUT -v --line-numbers | grep all")
+				resultsIPTables <- stdout
 			}()
 			select {
 			case resIPTables := <-resultsIPTables:
@@ -188,8 +193,9 @@ func CheckPiDiskSpace(path string) string {
 		userCall = false
 	}
 
-	response := executeRemoteCmd("du -sh \""+piSDCardPath+path+"\"/*") + "\n\n"
-	response += executeRemoteCmd("df -h /root/")
+	response, _ := executeRemoteCmd("du -sh \"" + piSDCardPath + path + "\"/*")
+	df, _ := executeRemoteCmd("df -h /root/")
+	response += "\n\n" + df
 
 	if !userCall {
 		customEvent := slack.RTMEvent{Type: "CheckPiDiskSpace", Data: response}
@@ -208,14 +214,14 @@ func DeleteTorrentFile(filename string) string {
 		path := piSDCardPath + filename
 
 		deleteCmd := ""
-		isDir := executeRemoteCmd("test -d \"" + path + "\" && echo 'Yes'")
+		isDir, _ := executeRemoteCmd("test -d \"" + path + "\" && echo 'Yes'")
 		if strings.HasPrefix(isDir, "Yes") {
 			deleteCmd = "rm -Rf \"" + path + "\""
 		} else {
 			deleteCmd = "rm \"" + path + "\""
 		}
 
-		response = executeRemoteCmd(deleteCmd)
+		response, _ = executeRemoteCmd(deleteCmd)
 	}
 
 	return response
@@ -229,7 +235,7 @@ func MoveTorrentFile(filename string) {
 		moveCmd := "mv \"" + piSDCardPath + filename + "\" " + piUSBMountPath
 
 		go func() {
-			result := executeRemoteCmd(moveCmd)
+			result, _ := executeRemoteCmd(moveCmd)
 			fmt.Printf("mv ? %v", result)
 			if result == "" {
 				result = "Successfully moved " + filename + " to " + piUSBMountPath
