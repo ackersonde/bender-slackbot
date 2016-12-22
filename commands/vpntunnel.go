@@ -168,7 +168,10 @@ func CheckPiDiskSpace(path string) string {
 		userCall = false
 	}
 
-	response, _ := executeRemoteCmd("du -sh \"" + piSDCardPath + path + "\"/*")
+	response, err := executeRemoteCmd("du -sh \"" + piSDCardPath + path + "\"/*")
+	if err != "" {
+		response = err
+	}
 	df, _ := executeRemoteCmd("df -h /root/")
 	response += "\n\n" + df
 
@@ -183,6 +186,7 @@ func CheckPiDiskSpace(path string) string {
 // DeleteTorrentFile now exported
 func DeleteTorrentFile(filename string) string {
 	response := ""
+	err := ""
 	if filename == "*" || filename == "" || strings.Contains(filename, "../") {
 		response = "Please enter an existing filename - try `fsck`"
 	} else {
@@ -196,7 +200,10 @@ func DeleteTorrentFile(filename string) string {
 			deleteCmd = "rm \"" + path + "\""
 		}
 
-		response, _ = executeRemoteCmd(deleteCmd)
+		response, err = executeRemoteCmd(deleteCmd)
+		if err != "" {
+			response = err
+		}
 	}
 
 	return response
@@ -210,9 +217,10 @@ func MoveTorrentFile(filename string) {
 		moveCmd := "mv \"" + piSDCardPath + filename + "\" " + piUSBMountPath
 
 		go func() {
-			result, _ := executeRemoteCmd(moveCmd)
-			fmt.Printf("mv ? %v", result)
-			if result == "" {
+			result, err := executeRemoteCmd(moveCmd)
+			if err != "" {
+				result = err
+			} else if result == "" {
 				result = "Successfully moved " + filename + " to " + piUSBMountPath
 			}
 			rtm.IncomingEvents <- slack.RTMEvent{Type: "MoveTorrent", Data: result}

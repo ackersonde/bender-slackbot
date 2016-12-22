@@ -11,6 +11,7 @@ var raspberryPIIP = os.Getenv("raspberryPIIP")
 var rtm *slack.RTM
 var piSDCardPath = "/home/pi/torrents/"
 var piUSBMountPath = "/mnt/usb_1/DLNA/torrents/"
+var tranc = "tranc"
 
 // SlackReportChannel default reporting channel for bot crons
 var SlackReportChannel = os.Getenv("slackReportChannel") // C33QYV3PW is #remote_network_report
@@ -37,7 +38,7 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 			} else {
 				response += CheckPiDiskSpace("")
 			}
-		
+
 			rtm.SendMessage(rtm.NewOutgoingMessage(response, slackMessage.Channel))
 		}
 	} else if args[0] == "mv" || args[0] == "rm" {
@@ -66,9 +67,9 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 				cat = 300
 			}
 
-			response = SearchFor(args[1], Category(cat))
+			_, response = SearchFor(args[1], Category(cat))
 		} else {
-			response = SearchFor("", Category(cat))
+			_, response = SearchFor("", Category(cat))
 		}
 		params := slack.PostMessageParameters{AsUser: true}
 		api.PostMessage(slackMessage.Channel, response, params)
@@ -89,7 +90,7 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 	} else if args[0] == "vpns" {
 		result := vpnTunnelCmds("status")
 		rtm.SendMessage(rtm.NewOutgoingMessage(result, slackMessage.Channel))
-	} else if args[0] == "trans" || args[0] == "trand" || args[0] == "tranc" {
+	} else if args[0] == "trans" || args[0] == "trand" || args[0] == tranc {
 		if runningFritzboxTunnel() {
 			response := torrentCommand(args)
 			rtm.SendMessage(rtm.NewOutgoingMessage(response, slackMessage.Channel))
@@ -111,3 +112,26 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 			slackMessage.Channel))
 	}
 }
+
+/* DownloadFile is now exported
+func DownloadFile(search string) {
+	torrents, results := SearchFor(search, 200)
+	for num, torrent := range torrents {
+		if num < 20 {
+			fmt.Println(torrent.Title)
+			// TODO figure out date of game and compare to today's date
+			// type1: NFL.2016.RS.W12.(28 nov).GB
+			// type2: NFL.2016.12.11.Cowboys
+			// type3: NFL.2016.RS.W13.KC.
+
+		}
+	}
+
+	var tor []string
+	tor[0] = tranc
+	tor[1] = results
+	if runningFritzboxTunnel() {
+		trans := torrentCommand(tor)
+		fmt.Println(trans)
+	}
+}*/

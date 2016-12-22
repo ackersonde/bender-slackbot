@@ -47,8 +47,9 @@ type Torrent struct {
 }
 
 // SearchFor is now commented
-func SearchFor(term string, cat Category) string {
+func SearchFor(term string, cat Category) ([]Torrent, string) {
 	response := ""
+	var torrents []Torrent
 	torrents, err := search(term, cat)
 	found := 0
 	if err == nil {
@@ -67,7 +68,7 @@ func SearchFor(term string, cat Category) string {
 		response = "unable to find torrents with enough Seeders for '" + term
 	}
 
-	return response
+	return torrents, response
 }
 
 // search returns the torrents found with the given search string and categories.

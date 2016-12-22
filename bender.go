@@ -17,9 +17,10 @@ var botID = "N/A" // U2NQSPHHD bender bot userID
 
 func prepareScheduler() {
 	scheduler := gocron.NewScheduler()
-	scheduler.Every(1).Day().At("09:03").Do(commands.ListDODroplets, false)
-	scheduler.Every(1).Day().At("09:04").Do(commands.RaspberryPIPrivateTunnelChecks, false)
-	scheduler.Every(1).Day().At("09:05").Do(commands.CheckPiDiskSpace, "---")
+	scheduler.Every(1).Friday().At("09:03").Do(commands.ListDODroplets, false)
+	scheduler.Every(1).Friday().At("09:04").Do(commands.RaspberryPIPrivateTunnelChecks, false)
+	scheduler.Every(1).Friday().At("09:05").Do(commands.CheckPiDiskSpace, "---")
+	//scheduler.Every(1).Friday().At("09:06").Do(commands.DownloadFile, "nfl")
 	scheduler.Every(10).Minutes().Do(commands.DisconnectIdleTunnel)
 	<-scheduler.Start()
 
