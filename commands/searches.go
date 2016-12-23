@@ -2,7 +2,6 @@ package commands
 
 // forked from https://github.com/jasonrhansen/piratebay
 import (
-	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -74,7 +73,7 @@ func SearchFor(term string, cat Category) ([]Torrent, string) {
 // search returns the torrents found with the given search string and categories.
 func search(query string, cats ...Category) ([]Torrent, error) {
 	resp := new(http.Response)
-	err := errors.New("")
+	var err error
 
 	if query != "" {
 		if len(cats) == 0 {
@@ -101,8 +100,7 @@ func search(query string, cats ...Category) ([]Torrent, error) {
 			return nil, err
 		}
 	} else {
-		resp, err = http.Get(
-			pirateURL + "/browse/207/0/7/0")
+		resp, _ = http.Get(pirateURL + "/browse/207/0/7/0")
 	}
 
 	doc, err := html.Parse(resp.Body)

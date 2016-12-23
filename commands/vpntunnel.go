@@ -65,21 +65,17 @@ func RaspberryPIPrivateTunnelChecks(userCall bool) string {
 	response := ":openvpn: PI status: DOWN :rotating_light:"
 
 	if runningFritzboxTunnel() {
-		// `curl ipinfo.io` (if this doesn't work, just `curl icanhazip.com`)
 		results := make(chan string, 10)
-		timeout := time.After(5 * time.Second)
+		timeout := time.After(10 * time.Second)
 		go func() {
-			// TODO: get both ipv4+ipv6 internet addresses
-			/*
-			curl https://ipleak.net/json/
-			*/
-			stdout, _ := executeRemoteCmd("https://ipleak.net/json/")
+			// get both ipv4+ipv6 internet addresses
+			stdout, _ := executeRemoteCmd("curl https://ipleak.net/json/")
 			results <- stdout
 		}()
 
 		type IPInfoResponse struct {
-			IP      string
-			CountryCode string
+			IP          string
+			CountryCode string `json:"country_code"`
 		}
 		var jsonRes IPInfoResponse
 
@@ -89,28 +85,23 @@ func RaspberryPIPrivateTunnelChecks(userCall bool) string {
 				err := json.Unmarshal([]byte(res), &jsonRes)
 				if err != nil {
 					fmt.Printf("unable to parse JSON string (%v)\n%s\n", err, res)
+				} else {
+					fmt.Printf("ipleak.net: %v\n", jsonRes)
 				}
 				if jsonRes.CountryCode == "NL" {
 					resultsDig := make(chan string, 10)
-					timeoutDig := time.After(5 * time.Second)
+					timeoutDig := time.After(10 * time.Second)
 					// ensure home.ackerson.de is DIFFERENT than PI IP address!
 					go func() {
-						stdout, _ := executeRemoteCmd("ddig home.ackerson.de A home.ackerson.de AAAA +short")
+						stdout, _ := executeRemoteCmd("dig home.ackerson.de A home.ackerson.de AAAA +short")
 						resultsDig <- stdout
 					}()
 					select {
 					case resComp := <-resultsDig:
-						// TODO: ipv4 + ipv6 means multiline parse
-						/*
-						  ackerson.dynv6.net.
-							93.227.143.65
-							ackerson.dynv6.net.
-							2003:dc:d3bf:20f0:a96:d7ff:fe12:7ee7
-						*/
-						if resComp != jsonRes.IP {
+						fmt.Println("dig results: " + resComp)
+						lines := strings.Split(resComp, "\n")
+						if lines[1] != jsonRes.IP && lines[3] != jsonRes.IP {
 							tunnelUp = jsonRes.IP
-						} else {
-							fmt.Println("OVPN IP is same as home.ackerson.de :(")
 						}
 					case <-timeoutDig:
 						fmt.Println("Timed out on dig home.ackerson.de!")
@@ -151,20 +142,6 @@ func RaspberryPIPrivateTunnelChecks(userCall bool) string {
 						}
 					}
 				}
-
-				// TODO: ip6tables -L OUTPUT -v --line-numbers
-				/*
-1        0     0 DROP       all      any    any     anywhere             anywhere             rt type:0 segsleft:0
-2      161 20197 ACCEPT     all      any    any     fe80::/10            anywhere
-3       23  2830 ACCEPT     all      any    any     anywhere             ff00::/8
-5       19  2311 ACCEPT     all      any    lo      anywhere             anywhere
-6    41090 3333K ACCEPT     all      any    tun0    anywhere             anywhere
-7     1211  624K ACCEPT     all      any    eth0    anywhere             p200300DCD3E0EF000000000000000000.dip0.t-ipconnect.de/64
-15      74 21413 DROP       all      any    eth0    anywhere             anywhere
-				*/
-				// verify line 6: ACCEPT tun0 anywhere anywhere
-				// verify line 7: ACCEPT eth0 anywhere p2003*
-				// verify line 15: DROP eth0 anywhere anywhere
 			case <-timeoutIPTables:
 				fmt.Println("Timed out on `iptables -L OUTPUT`!")
 			}
@@ -196,6 +173,8 @@ func CheckPiDiskSpace(path string) string {
 	response, err := executeRemoteCmd("du -sh \"" + piSDCardPath + path + "\"/*")
 	if err != "" {
 		response = err
+	} else {
+		response = ":raspberry_pi: *SD Card Disk Usage*\n" + response
 	}
 	df, _ := executeRemoteCmd("df -h /root/")
 	response += "\n\n" + df
@@ -210,14 +189,15 @@ func CheckPiDiskSpace(path string) string {
 
 // DeleteTorrentFile now exported
 func DeleteTorrentFile(filename string) string {
-	response := ""
-	err := ""
+	var response string
+	var err string
+
 	if filename == "*" || filename == "" || strings.Contains(filename, "../") {
 		response = "Please enter an existing filename - try `fsck`"
 	} else {
 		path := piSDCardPath + filename
 
-		deleteCmd := ""
+		var deleteCmd string
 		isDir, _ := executeRemoteCmd("test -d \"" + path + "\" && echo 'Yes'")
 		if strings.HasPrefix(isDir, "Yes") {
 			deleteCmd = "rm -Rf \"" + path + "\""
@@ -322,7 +302,7 @@ func vpnTunnelCmds(command ...string) string {
 
 func runningFritzboxTunnel() bool {
 	up := isFritzboxTunnelUp()
-
+	// up := true
 	if !up { // attempt to establish connection
 		vpnTunnelCmds("/usr/sbin/vpnc-connect", "fritzbox")
 		if up = isFritzboxTunnelUp(); !up {
@@ -331,7 +311,7 @@ func runningFritzboxTunnel() bool {
 		}
 	}
 
-	return up // if running locally, change to true
+	return up
 }
 
 func isFritzboxTunnelUp() bool {

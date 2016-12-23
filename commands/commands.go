@@ -30,7 +30,7 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 		api.PostMessage(slackMessage.Channel, response, params)
 	} else if args[0] == "fsck" {
 		if runningFritzboxTunnel() {
-			response := ":raspberry_pi: *SD Card Disk Usage*\n"
+			response := ""
 
 			if len(args) > 1 {
 				path := strings.Join(args[1:], " ")
@@ -58,7 +58,7 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 			rtm.SendMessage(rtm.NewOutgoingMessage("Please provide a filename", slackMessage.Channel))
 		}
 	} else if args[0] == "torq" {
-		response := ""
+		var response string
 		cat := 207
 		if len(args) > 1 {
 			if args[1] == "nfl" {
