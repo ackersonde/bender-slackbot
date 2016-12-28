@@ -88,7 +88,7 @@ func RaspberryPIPrivateTunnelChecks(userCall bool) string {
 				} else {
 					fmt.Printf("ipleak.net: %v\n", jsonRes)
 				}
-				if jsonRes.CountryCode == "NL" {
+				if jsonRes.CountryCode == "NL" || jsonRes.CountryCode == "SE" {
 					resultsDig := make(chan string, 10)
 					timeoutDig := time.After(10 * time.Second)
 					// ensure home.ackerson.de is DIFFERENT than PI IP address!
