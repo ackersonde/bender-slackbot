@@ -1,42 +1,66 @@
-machine:
-  services:
-    - docker
-  environment:
-    GODIST: "go1.7.3.linux-amd64.tar.gz"
-    IMPORT_PATH: "github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME"
-  post:
-    - mkdir -p download
-    - test -e download/$GODIST || curl -o download/$GODIST https://storage.googleapis.com/golang/$GODIST
-    - sudo rm -rf /usr/local/go
-    - sudo tar -C /usr/local -xzf download/$GODIST
+version: 2
+executorType: docker
+containerInfo:
+  - image: golang:1.7
+stages:
+  build:
+    workDir: /go/src/github.com/danackerson/bender-slackbot
+    steps:
+      - type: checkout
+      # Build & Test: https://discuss.circleci.com/t/sample-rails-app-running-docker-in-a-container/9066
+      - type: shell
+        name: "Fetch dependencies and build bender app"
+        command: |
+          set -eu
+          rm -Rf /go/src/github.com/danackerson/vendor
+          go get -t -d -v ./...
+          rm -Rf /go/src/github.com/danackerson/vendor
+          env GOOS=linux GOARCH=amd64 go build bender.go
 
-dependencies:
-  override:
-    - docker version && go version
-    - rm -Rf /home/ubuntu/$CIRCLE_PROJECT_REPONAME/vendor
-    - rm -Rf /home/ubuntu/.go_workspace/src/$IMPORT_PATH/vendor
-    - go get -t -d -v ./...
-    - rm -Rf /home/ubuntu/$CIRCLE_PROJECT_REPONAME/vendor
-    - rm -Rf /home/ubuntu/.go_workspace/src/$IMPORT_PATH/vendor
-    - env GOOS=linux GOARCH=amd64 go build bender.go
-    - docker build -t danackerson/bender:vc$CIRCLE_BUILD_NUM --build-arg vpnc_gateway=$VPNC_GATEWAY --build-arg vpnc_id=$VPNC_ID --build-arg vpnc_secret=$VPNC_SECRET --build-arg vpnc_username=$VPNC_USERNAME --build-arg vpnc_password=$VPNC_PASSWORD .
+      - type: shell
+        name: "Install Docker Engine"
+        command: |
+          curl -L -o /tmp/docker.tgz https://get.docker.com/builds/Linux/x86_64/docker-1.12.5.tgz
+          tar -xz -C /tmp -f /tmp/docker.tgz
+          mv /tmp/docker/docker* /usr/bin/
+
+          curl -L "https://github.com/docker/compose/releases/download/1.9.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/bin/docker-compose
+          chmod +x /usr/bin/docker-compose
+
+      - type: setup-docker-engine
+      - type: shell
+        name: "Build, run and test docker image"
+        command: |
+          docker build -t danackerson/bender:vc$CIRCLE_BUILD_NUM --build-arg vpnc_gateway=$VPNC_GATEWAY --build-arg vpnc_id=$VPNC_ID --build-arg vpnc_secret=$VPNC_SECRET --build-arg vpnc_username=$VPNC_USERNAME --build-arg vpnc_password=$VPNC_PASSWORD .
+          docker run -d -e slackToken=$(echo $slackTokenEncoded | base64 --decode) -e raspberryPIIP=$raspberryPIIP -e slackReportChannel=$slackReportChannel -e piUser=$piUser -e piPass=$piPass -e digitalOceanToken=$digitalOceanToken --name bender danackerson/bender:vc$CIRCLE_BUILD_NUM; sleep 5
+          docker logs bender | grep "Presence:active User:U2NQSPHHD"
+
+      - type: add-ssh-keys
+        name: "Load key"
+        fingerprints:
+          - "93:c4:61:21:a6:82:d8:6d:4f:73:11:79:37:23:83:07"
+      - type: shell
+        name: Start ssh-agent
+        command: |
+          ssh-agent -s > ~/.ssh_agent_conf
+          source ~/.ssh_agent_conf
+          for _k in $(ls ${HOME}/.ssh/id_*); do
+            ssh-add ${_k} || true
+          done
+
+      - type: deploy
+        name: "Upload to DockerHub & deploy to DigitalOcean Droplet"
+        command: |
+          docker login -u $DOCKER_USER -p $DOCKER_PASS
+          docker push danackerson/bender:vc$CIRCLE_BUILD_NUM
+          source ~/.ssh_agent_conf
+          ssh -o "StrictHostKeyChecking no" ackersond@deploy.ackerson.de docker login -u $DOCKER_USER -p $DOCKER_PASS
+          ssh -o "StrictHostKeyChecking no" ackersond@deploy.ackerson.de docker pull danackerson/bender:vc$CIRCLE_BUILD_NUM
+          ssh -o "StrictHostKeyChecking no" ackersond@deploy.ackerson.de docker rm -f bender; true
+          ssh -o "StrictHostKeyChecking no" ackersond@deploy.ackerson.de docker run -d --restart=always --privileged=true -e raspberryPIIP=$raspberryPIIP -e slackReportChannel=$slackReportChannel -e piUser=$piUser -e piPass=$piPass -e digitalOceanToken=$digitalOceanToken -e CIRCLE_BUILD_NUM=$CIRCLE_BUILD_NUM -e slackToken=$(echo $slackTokenEncoded | base64 --decode) --name bender danackerson/bender:vc$CIRCLE_BUILD_NUM
 
 # not all Env vars are created equal - some have ':' or '{}' or <shudder> '\/'s
 # in this case we base64 encode the parameter: `base64 <<< [string in question]`
 # taking the result and pasting it into the environment variable of this CircleCI project
-# below is an example how to decode this on the fly (e.g. slackToken)
-test:
-  override:
-    - docker run -d -e slackToken=$(echo $slackTokenEncoded | base64 --decode) -e raspberryPIIP=$raspberryPIIP -e slackReportChannel=$slackReportChannel -e piUser=$piUser -e piPass=$piPass -e digitalOceanToken=$digitalOceanToken --name bender danackerson/bender:vc$CIRCLE_BUILD_NUM
-    - docker logs bender | grep "Presence:active User:U2NQSPHHD"
-
-deployment:
-  live:
-    branch: master
-    commands:
-      - docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
-      - docker push danackerson/bender:vc$CIRCLE_BUILD_NUM
-      - ssh ackersond@deploy.ackerson.de docker login -u $DOCKER_USER -p $DOCKER_PASS
-      - ssh ackersond@deploy.ackerson.de docker pull danackerson/bender:vc$CIRCLE_BUILD_NUM
-      - ssh ackersond@deploy.ackerson.de docker rm -f bender; true
-      - ssh ackersond@deploy.ackerson.de docker run -d --restart=always --privileged=true -e raspberryPIIP=$raspberryPIIP -e slackReportChannel=$slackReportChannel -e piUser=$piUser -e piPass=$piPass -e digitalOceanToken=$digitalOceanToken -e CIRCLE_BUILD_NUM=$CIRCLE_BUILD_NUM -e slackToken=$(echo $slackTokenEncoded | base64 --decode) --name bender danackerson/bender:vc$CIRCLE_BUILD_NUM
+# above is an example how to decode this on the fly (e.g. slackToken)
+# what is this .go_workspace?!? rm -Rf /home/ubuntu/.go_workspace/src/$IMPORT_PATH/vendor
