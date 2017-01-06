@@ -9,19 +9,6 @@ stages:
       - type: checkout
       # Build & Test: https://discuss.circleci.com/t/sample-rails-app-running-docker-in-a-container/9066
       - type: shell
-        name: "Install Docker Engine, JUnit, Setup Test Path"
-        command: |
-          curl -L -o /tmp/docker.tgz https://get.docker.com/builds/Linux/x86_64/docker-1.12.5.tgz
-          tar -xz -C /tmp -f /tmp/docker.tgz
-          mv /tmp/docker/docker* /usr/bin/
-
-          curl -L "https://github.com/docker/compose/releases/download/1.9.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/bin/docker-compose
-          chmod +x /usr/bin/docker-compose
-
-          go get github.com/jstemmer/go-junit-report
-          mkdir -p /tmp/test-results
-
-      - type: shell
         name: "Fetch dependencies and build bender app"
         command: |
           set -eu
@@ -31,12 +18,22 @@ stages:
           rm -Rf /go/src/github.com/danackerson/vendor
           env GOOS=linux GOARCH=amd64 go build bender.go
 
+      - type: shell
+        name: "Install Docker Engine"
+        command: |
+          curl -L -o /tmp/docker.tgz https://get.docker.com/builds/Linux/x86_64/docker-1.12.5.tgz
+          tar -xz -C /tmp -f /tmp/docker.tgz
+          mv /tmp/docker/docker* /usr/bin/
+
+          curl -L "https://github.com/docker/compose/releases/download/1.9.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/bin/docker-compose
+          chmod +x /usr/bin/docker-compose
+
       - type: setup-docker-engine
       - type: shell
         name: "Build, run and test docker image"
         command: |
           docker build -t danackerson/bender:vc$CIRCLE_BUILD_NUM --build-arg vpnc_gateway=$VPNC_GATEWAY --build-arg vpnc_id=$VPNC_ID --build-arg vpnc_secret=$VPNC_SECRET --build-arg vpnc_username=$VPNC_USERNAME --build-arg vpnc_password=$VPNC_PASSWORD .
-          docker run -d -e slackToken=$(echo $slackTokenEncoded | base64 --decode) -e raspberryPIIP=$raspberryPIIP -e slackReportChannel=$slackReportChannel -e piUser=$piUser -e piPass=$piPass -e digitalOceanToken=$digitalOceanToken --name bender danackerson/bender:vc$CIRCLE_BUILD_NUM
+          docker run -d -e slackToken=$(echo $slackTokenEncoded | base64 --decode) -e raspberryPIIP=$raspberryPIIP -e slackReportChannel=$slackReportChannel -e piUser=$piUser -e piPass=$piPass -e digitalOceanToken=$digitalOceanToken --name bender danackerson/bender:vc$CIRCLE_BUILD_NUM; sleep 5
           docker logs bender | grep "Presence:active User:U2NQSPHHD"
 
       - type: add-ssh-keys
@@ -53,7 +50,7 @@ stages:
           done
 
       - type: deploy
-        name: "Upload to DockerHub, deploy container to Digital Ocean Droplet & launch"
+        name: "Upload to DockerHub & deploy to DigitalOcean Droplet"
         command: |
           docker login -u $DOCKER_USER -p $DOCKER_PASS
           docker push danackerson/bender:vc$CIRCLE_BUILD_NUM
