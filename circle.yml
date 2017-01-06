@@ -12,7 +12,6 @@ stages:
         name: "Fetch dependencies and build bender app"
         command: |
           set -eu
-          echo "GOPATH: $GOPATH"
           rm -Rf /go/src/github.com/danackerson/vendor
           go get -t -d -v ./...
           rm -Rf /go/src/github.com/danackerson/vendor
