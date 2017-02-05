@@ -109,7 +109,7 @@ func RaspberryPIPrivateTunnelChecks(userCall bool) string {
 				}
 			}
 		case <-timeout:
-			fmt.Println("Timed out on curl ipinfo.io!")
+			fmt.Println("Timed out on curl ipleak.net!")
 		}
 
 		// Tunnel should be OK. Now double check iptables to ensure that
@@ -117,7 +117,6 @@ func RaspberryPIPrivateTunnelChecks(userCall bool) string {
 		if tunnelUp != "" {
 			resultsIPTables := make(chan string, 10)
 			timeoutIPTables := time.After(5 * time.Second)
-			// ensure home.ackerson.de is DIFFERENT than PI IP address!
 			go func() {
 				stdout, _ := executeRemoteCmd("sudo iptables -L OUTPUT -v --line-numbers | grep all")
 				resultsIPTables <- stdout
@@ -137,6 +136,10 @@ func RaspberryPIPrivateTunnelChecks(userCall bool) string {
 							tunnelUp = ""
 						}
 					case 2:
+						if !strings.Contains(oneLine, "ACCEPT     all  --  any    eth0    anywhere             192.168.1.0/24") {
+							tunnelUp = ""
+						}
+					case 3:
 						if !strings.Contains(oneLine, "DROP       all  --  any    eth0    anywhere             anywhere") {
 							tunnelUp = ""
 						}
