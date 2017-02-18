@@ -64,7 +64,7 @@ func SearchFor(term string, cat Category) ([]Torrent, string) {
 	}
 
 	if found < 1 {
-		response = "unable to find torrents with enough Seeders for '" + term
+		response = "Unable to find torrents with enough Seeders for '" + term + "'"
 	}
 
 	return torrents, response
@@ -90,12 +90,10 @@ func search(query string, cats ...Category) ([]Torrent, error) {
 		if catStr == "" {
 			catStr = "0"
 		}
-		resp, err = http.Get(
-			pirateURL +
-				"/search/" +
-				url.QueryEscape(query) +
-				"/0/99/" +
-				catStr)
+
+	  searchStringURL :=pirateURL + "/search/" + url.QueryEscape(query) + "/0/99/" + catStr
+	  fmt.Println("searching for: " + searchStringURL)
+		resp, err = http.Get(searchStringURL)
 		if err != nil {
 			return nil, err
 		}

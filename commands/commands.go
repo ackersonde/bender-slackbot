@@ -2,6 +2,7 @@ package commands
 
 import (
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/nlopes/slack"
@@ -11,6 +12,8 @@ var raspberryPIIP = os.Getenv("raspberryPIIP")
 var rtm *slack.RTM
 var piSDCardPath = "/home/pi/torrents/"
 var piUSBMountPath = "/mnt/usb_1/DLNA/torrents/"
+var routerIP = "192.168.1.1"
+var routerUSBMountPath = "/mnt/TOSHIBA_EXT/DLNA/torrents/"
 var tranc = "tranc"
 
 // SlackReportChannel default reporting channel for bot crons
@@ -28,6 +31,20 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 		response := ListDODroplets(true)
 		params := slack.PostMessageParameters{AsUser: true}
 		api.PostMessage(slackMessage.Channel, response, params)
+	} else if args[0] == "dd" {
+		params := slack.PostMessageParameters{AsUser: true}
+		
+		if len(args) > 1 {
+			number, err := strconv.Atoi(args[1])
+			if err != nil {
+				api.PostMessage(slackMessage.Channel, "Invalid integer value for ID!", params)
+			} else {
+				result := DeleteDODroplet(number)
+				api.PostMessage(slackMessage.Channel, result, params)
+			}
+		} else {
+			api.PostMessage(slackMessage.Channel, "Please provide Droplet ID from `do` cmd!", params)
+		}
 	} else if args[0] == "fsck" {
 		if runningFritzboxTunnel() {
 			response := ""
@@ -59,7 +76,7 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 		}
 	} else if args[0] == "torq" {
 		var response string
-		cat := 207
+		cat := 0
 		if len(args) > 1 {
 			if args[1] == "nfl" {
 				cat = 200
@@ -67,7 +84,9 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 				cat = 300
 			}
 
-			_, response = SearchFor(args[1], Category(cat))
+			searchString := strings.Join(args, " ")
+			searchString = strings.TrimLeft(searchString, "torq ")
+			_, response = SearchFor(searchString, Category(cat))
 		} else {
 			_, response = SearchFor("", Category(cat))
 		}
@@ -99,11 +118,11 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 		response := ":sun_behind_rain_cloud: `sw`: Schwabhausen weather\n" +
 			":do_droplet: `do`: show current DigitalOcean droplets\n" +
 			":closed_lock_with_key: `vpn[c|s|d]`: [C]onnect, [S]tatus, [D]rop VPN tunnel to Fritz!Box\n" +
+			":pirate_bay: `torq <search term>`\n" +
 			":openvpn: `ovpn`: show status of PrivateTunnel on :raspberry_pi:\n" +
 			":transmission: `tran[c|s|d]`: [C]reate <URL>, [S]tatus, [D]elete <ID> torrents on :raspberry_pi:\n" +
-			":pirate_bay: `torq <search term>`\n" +
 			":floppy_disk: `fsck`: show disk space on :raspberry_pi:\n" +
-			":recycle: `[mv|rm] <filename>`: move or delete torrent file from `" + piSDCardPath + "` (to `" + piUSBMountPath + "`) on :raspberry_pi:\n"
+			":recycle: `rm(|mv) <filename>` from :raspberry_pi: (to `" + routerUSBMountPath + "` on :asus:)\n"
 		params := slack.PostMessageParameters{AsUser: true}
 		api.PostMessage(slackMessage.Channel, response, params)
 	} else {

@@ -24,6 +24,26 @@ func (t *TokenSource) Token() (*oauth2.Token, error) {
 	return token, nil
 }
 
+// DeleteDODroplet more here https://developers.digitalocean.com/documentation/v2/#delete-a-droplet
+func DeleteDODroplet(ID int) string {
+	result := ""
+
+	doPersonalAccessToken := os.Getenv("digitalOceanToken")
+	tokenSource := &TokenSource{
+		AccessToken: doPersonalAccessToken,
+	}
+	oauthClient := oauth2.NewClient(oauth2.NoContext, tokenSource)
+	client := godo.NewClient(oauthClient)
+
+	_, err := client.Droplets.Delete(ID)
+	if err == nil {
+		result = "Successfully deleted Droplet `" + strconv.Itoa(ID) + "`"
+	} else {
+		result = err.Error()
+	}
+
+	return result
+}
 // ListDODroplets is now commented
 func ListDODroplets(userCall bool) string {
 	doDropletInfoSite := "https://cloud.digitalocean.com/droplets/"
@@ -43,7 +63,7 @@ func ListDODroplets(userCall bool) string {
 		for _, droplet := range droplets {
 			ipv4, _ := droplet.PublicIPv4()
 			addr := doDropletInfoSite + strconv.Itoa(droplet.ID)
-			response += fmt.Sprintf(":do_droplet: <%s|%s> (%s)\n", addr, droplet.Name, ipv4)
+			response += fmt.Sprintf(":do_droplet: <%s|%s> (%s) [ID: %d]\n", addr, droplet.Name, ipv4, droplet.ID)
 		}
 	}
 

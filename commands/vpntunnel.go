@@ -171,13 +171,16 @@ func CheckPiDiskSpace(path string) string {
 	if path == "---" {
 		path = ""
 		userCall = false
+	} else {
+		path = strings.TrimPrefix(path, "/")
 	}
 
 	response, err := executeRemoteCmd("du -sh \"" + piSDCardPath + path + "\"/*")
 	if err != "" {
 		response = err
 	} else {
-		response = ":raspberry_pi: *SD Card Disk Usage*\n" + response
+		response = strings.Replace(response, piSDCardPath + path, "", -1)
+		response = ":raspberry_pi: *SD Card Disk Usage* @ `" + piSDCardPath + path + "`\n" + response
 	}
 	df, _ := executeRemoteCmd("df -h /root/")
 	response += "\n\n" + df
@@ -219,18 +222,22 @@ func DeleteTorrentFile(filename string) string {
 
 // MoveTorrentFile now exported
 func MoveTorrentFile(filename string) {
-	if filename == "*" || filename == "" || strings.Contains(filename, "../") {
+	remoteDirectory := routerIP + ":" + routerUSBMountPath
+
+	if filename == "*" || filename == "" || strings.Contains(filename, "../") || strings.HasPrefix(filename, "/") {
 		rtm.IncomingEvents <- slack.RTMEvent{Type: "MoveTorrent", Data: "Please enter an existing filename - try `fsck`"}
 	} else {
-		moveCmd := "mv \"" + piSDCardPath + filename + "\" " + piUSBMountPath
+		moveCmd := "scp -r \"" + piSDCardPath + filename + "\" admin@" + remoteDirectory
 
 		go func() {
 			result, err := executeRemoteCmd(moveCmd)
+
 			if err != "" {
 				result = err
 			} else if result == "" {
-				result = "Successfully moved " + filename + " to " + piUSBMountPath
+				result = "Successfully moved `" + filename + "` to " + remoteDirectory
 			}
+			
 			rtm.IncomingEvents <- slack.RTMEvent{Type: "MoveTorrent", Data: result}
 		}()
 	}
@@ -246,11 +253,8 @@ func DisconnectIdleTunnel() {
 		if currentIdleTime.Seconds() > maxTunnelIdleTime {
 			vpnTunnelCmds("/usr/sbin/vpnc-disconnect")
 			msg += stringCurrentIdleTimeSecs + "secs => disconnected!"
-		} else {
-			msg += stringCurrentIdleTimeSecs + "secs"
+			rtm.SendMessage(rtm.NewOutgoingMessage(msg, SlackReportChannel))
 		}
-
-		rtm.SendMessage(rtm.NewOutgoingMessage(msg, SlackReportChannel))
 	}
 }
 
@@ -304,8 +308,8 @@ func vpnTunnelCmds(command ...string) string {
 }
 
 func runningFritzboxTunnel() bool {
-	up := isFritzboxTunnelUp()
-	// up := true
+	//up := isFritzboxTunnelUp()
+	up := true
 	if !up { // attempt to establish connection
 		vpnTunnelCmds("/usr/sbin/vpnc-connect", "fritzbox")
 		if up = isFritzboxTunnelUp(); !up {
