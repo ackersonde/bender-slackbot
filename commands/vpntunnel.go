@@ -308,8 +308,8 @@ func vpnTunnelCmds(command ...string) string {
 }
 
 func runningFritzboxTunnel() bool {
-	//up := isFritzboxTunnelUp()
-	up := true
+	up := isFritzboxTunnelUp()
+	//up := true
 	if !up { // attempt to establish connection
 		vpnTunnelCmds("/usr/sbin/vpnc-connect", "fritzbox")
 		if up = isFritzboxTunnelUp(); !up {
