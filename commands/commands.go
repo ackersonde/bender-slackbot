@@ -1,6 +1,7 @@
 package commands
 
 import (
+  "fmt"
 	"os"
 	"strconv"
 	"strings"
@@ -85,7 +86,8 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 			}
 
 			searchString := strings.Join(args, " ")
-			searchString = strings.TrimLeft(searchString, "torq ")
+			searchString = strings.TrimLeft(searchString, "torq")
+			fmt.Println("searching for: " + searchString)
 			_, response = SearchFor(searchString, Category(cat))
 		} else {
 			_, response = SearchFor("", Category(cat))
