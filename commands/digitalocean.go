@@ -26,7 +26,7 @@ func (t *TokenSource) Token() (*oauth2.Token, error) {
 
 // DeleteDODroplet more here https://developers.digitalocean.com/documentation/v2/#delete-a-droplet
 func DeleteDODroplet(ID int) string {
-	result := ""
+	var result string
 
 	doPersonalAccessToken := os.Getenv("digitalOceanToken")
 	tokenSource := &TokenSource{
@@ -44,6 +44,7 @@ func DeleteDODroplet(ID int) string {
 
 	return result
 }
+
 // ListDODroplets is now commented
 func ListDODroplets(userCall bool) string {
 	doDropletInfoSite := "https://cloud.digitalocean.com/droplets/"

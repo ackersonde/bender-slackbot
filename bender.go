@@ -57,7 +57,9 @@ Loop:
 
 				// only respond to messages sent to me by others on the same channel:
 				if ev.Msg.Type == "message" && callerID != botID && ev.Msg.SubType != "message_deleted" &&
-					(strings.Contains(ev.Msg.Text, "<@"+botID+">") || strings.HasPrefix(ev.Msg.Channel, "D")) {
+					(strings.Contains(ev.Msg.Text, "<@"+botID+">") ||
+						strings.HasPrefix(ev.Msg.Channel, "D") ||
+						ev.Msg.Channel == commands.SlackReportChannel) {
 					logger.Printf("Message: %+v\n", ev.Msg)
 					originalMessage := ev.Msg.Text
 					// strip out bot's name and spaces

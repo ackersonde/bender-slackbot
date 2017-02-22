@@ -1,7 +1,7 @@
 package commands
 
 import (
-  "fmt"
+	"fmt"
 	"os"
 	"strconv"
 	"strings"
@@ -34,7 +34,7 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 		api.PostMessage(slackMessage.Channel, response, params)
 	} else if args[0] == "dd" {
 		params := slack.PostMessageParameters{AsUser: true}
-		
+
 		if len(args) > 1 {
 			number, err := strconv.Atoi(args[1])
 			if err != nil {

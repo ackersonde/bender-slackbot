@@ -179,7 +179,7 @@ func CheckPiDiskSpace(path string) string {
 	if err != "" {
 		response = err
 	} else {
-		response = strings.Replace(response, piSDCardPath + path, "", -1)
+		response = strings.Replace(response, piSDCardPath+path, "", -1)
 		response = ":raspberry_pi: *SD Card Disk Usage* @ `" + piSDCardPath + path + "`\n" + response
 	}
 	df, _ := executeRemoteCmd("df -h /root/")
@@ -237,7 +237,7 @@ func MoveTorrentFile(filename string) {
 			} else if result == "" {
 				result = "Successfully moved `" + filename + "` to " + remoteDirectory
 			}
-			
+
 			rtm.IncomingEvents <- slack.RTMEvent{Type: "MoveTorrent", Data: result}
 		}()
 	}
