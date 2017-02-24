@@ -28,7 +28,17 @@ func SetRTM(rtmPassed *slack.RTM) {
 // CheckCommand is now commented
 func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 	args := strings.Fields(command)
-	if args[0] == "do" {
+	if args[0] == "ms" {
+		response := "Failed to restart miniDLNA on :asus:"
+
+		result := ResetMediaServer()
+		if result {
+			response = "Successfully restarted miniDLNA on :asus:"
+		}
+
+		params := slack.PostMessageParameters{AsUser: true}
+		api.PostMessage(slackMessage.Channel, response, params)
+	} else if args[0] == "do" {
 		response := ListDODroplets(true)
 		params := slack.PostMessageParameters{AsUser: true}
 		api.PostMessage(slackMessage.Channel, response, params)
@@ -118,13 +128,14 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 		}
 	} else if args[0] == "help" {
 		response := ":sun_behind_rain_cloud: `sw`: Schwabhausen weather\n" +
-			":do_droplet: `do`: show current DigitalOcean droplets\n" +
+			":do_droplet: `do|dd <id>`: show|delete DigitalOcean droplet(s)\n" +
 			":closed_lock_with_key: `vpn[c|s|d]`: [C]onnect, [S]tatus, [D]rop VPN tunnel to Fritz!Box\n" +
 			":pirate_bay: `torq <search term>`\n" +
 			":openvpn: `ovpn`: show status of PrivateTunnel on :raspberry_pi:\n" +
 			":transmission: `tran[c|s|d]`: [C]reate <URL>, [S]tatus, [D]elete <ID> torrents on :raspberry_pi:\n" +
 			":floppy_disk: `fsck`: show disk space on :raspberry_pi:\n" +
-			":recycle: `rm(|mv) <filename>` from :raspberry_pi: (to `" + routerUSBMountPath + "` on :asus:)\n"
+			":recycle: `rm(|mv) <filename>` from :raspberry_pi: (to `" + routerUSBMountPath + "` on :asus:)\n" +
+			":movie_camera: `ms`: restart miniDLNA media server on :asus:\n"
 		params := slack.PostMessageParameters{AsUser: true}
 		api.PostMessage(slackMessage.Channel, response, params)
 	} else {
