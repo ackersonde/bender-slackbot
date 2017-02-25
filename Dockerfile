@@ -1,5 +1,5 @@
 FROM ubuntu:16.10
-RUN apt-get update && apt-get install -y --no-install-recommends openssh-client vpnc curl ca-certificates
+RUN apt-get update && apt-get install -y --no-install-recommends openssh-client net-tools vpnc curl ca-certificates
 # prepare build environment
 ARG vpnc_gateway
 ARG vpnc_id
@@ -7,7 +7,7 @@ ARG vpnc_secret
 ARG vpnc_username
 ARG vpnc_password
 
-# setup vpnc post-hook scripts
+# setup vpnc config & scripts
 WORKDIR /etc/vpnc
 COPY fritzbox.conf .
 COPY fritzbox-script.sh .

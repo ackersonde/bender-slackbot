@@ -12,6 +12,7 @@ case "$reason" in
     $IPROUTE addr add "$INTERNAL_IP4_ADDRESS/255.255.255.0" peer "$INTERNAL_IP4_ADDRESS" dev "$TUNDEV"
     $IPROUTE route replace "$INTERNAL_IP4_PREFIX.0/255.255.255.0" dev "$TUNDEV"
     $IPROUTE route flush cache
+    route add -net 192.168.1.0/24 gw 192.168.178.1 dev tun0
     ;;
   disconnect)
     $IPROUTE link set dev "$TUNDEV" down
