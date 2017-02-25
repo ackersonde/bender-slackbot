@@ -35,7 +35,7 @@ func DeleteDODroplet(ID int) string {
 	oauthClient := oauth2.NewClient(oauth2.NoContext, tokenSource)
 	client := godo.NewClient(oauthClient)
 
-	_, err := client.Droplets.Delete(ID)
+	_, err := client.Droplets.Delete(oauth2.NoContext, ID)
 	if err == nil {
 		result = "Successfully deleted Droplet `" + strconv.Itoa(ID) + "`"
 	} else {
@@ -83,7 +83,7 @@ func DropletList(client *godo.Client) ([]godo.Droplet, error) {
 	// create options. initially, these will be blank
 	opt := &godo.ListOptions{}
 	for {
-		droplets, resp, err := client.Droplets.List(opt)
+		droplets, resp, err := client.Droplets.List(oauth2.NoContext, opt)
 		if err != nil {
 			return nil, err
 		}
