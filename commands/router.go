@@ -37,9 +37,9 @@ func loginToRouter(client *http.Client) string {
 // ResetMediaServer is now commented
 func ResetMediaServer() bool {
 	result := false
+	client := accessInsecureHTTPClient()
 
 	if runningFritzboxTunnel() {
-		client := accessInsecureHTTPClient()
 		asusToken := loginToRouter(client)
 
 		// Restart Media Server
@@ -73,52 +73,55 @@ func ResetMediaServer() bool {
 func ToggleWLANPower(powerFlag string) bool {
 	result := false
 	client := accessInsecureHTTPClient()
-	asusToken := loginToRouter(client)
 
-	// wl_unit is "tab" of WLAN Band selector 0:2.4GHz, 1:5.0GHz
-	// wl_radio is 0|1 toggle off|on
+	if runningFritzboxTunnel() {
+		asusToken := loginToRouter(client)
 
-	// Disable 2.4G Wireless Radio Transmitter
-	body := strings.NewReader(`wl_unit=` + powerFlag + `&wl_radio=1&productid=RT-AC88U&wl_nmode_x=0&wl_gmode_protection_x=&current_page=Advanced_WAdvanced_Content.asp&next_page=Advanced_WAdvanced_Content.asp&group_id=&modified=0&first_time=&action_mode=apply_new&action_script=restart_wireless&action_wait=10&preferred_lang=EN&firmver=3.0.0.4&wl_subunit=-1&wl_amsdu=auto&wl_TxPower=&wl1_80211h_orig=&acs_dfs=1&w_Setting=1&wl_sched=010500%3C120500%3C230500%3C340500%3C450500%3C560500%3C600500&wl_txpower=100&wl_timesched=1&wl_ap_isolate=0&wl_rate=0&wl_user_rssi=0&wl_igs=0&wl_mrate_x=0&wl_rateset=default&wl_plcphdr=long&wl_ampdu_rts=1&wl_rts=2347&wl_dtim=3&wl_bcn=100&wl_frameburst=on&wl_PktAggregate=0&wl_wme_apsd=on&wl_DLSCapable=0&wl_btc_mode=0&usb_usb3=1&wl_ampdu_mpdu=0&wl_turbo_qam=2&wl1_80211h=0&wl_atf=1&wl_mumimo=0&wl_txbf=1&wl_itxbf=1`)
-	req, err := http.NewRequest("POST", "https://192.168.1.1:8443/start_apply.htm", body)
-	if err != nil {
-		logger.Printf("Err Toggle 2.4G Request: %+v\n", err)
-	}
-	req.Header.Set("Cookie", asusToken)
-	req.Header.Set("Referer", "https://192.168.1.1:8443/Advanced_WAdvanced_Content.asp")
+		// wl_unit is "tab" of WLAN Band selector 0:2.4GHz, 1:5.0GHz
+		// wl_radio is 0|1 toggle off|on
 
-	resp, err2 := client.Do(req)
-	if err2 != nil {
-		logger.Printf("Err Toggle 2.4G Do: %+v\n", err2)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode == 200 { // OK
-		bodyBytes, _ := ioutil.ReadAll(resp.Body)
-		bodyString := string(bodyBytes)
-		if strings.Contains(bodyString, "done_committing()") {
-			result = true
+		// Disable 2.4G Wireless Radio Transmitter
+		body := strings.NewReader(`wl_unit=` + powerFlag + `&wl_radio=1&productid=RT-AC88U&wl_nmode_x=0&wl_gmode_protection_x=&current_page=Advanced_WAdvanced_Content.asp&next_page=Advanced_WAdvanced_Content.asp&group_id=&modified=0&first_time=&action_mode=apply_new&action_script=restart_wireless&action_wait=10&preferred_lang=EN&firmver=3.0.0.4&wl_subunit=-1&wl_amsdu=auto&wl_TxPower=&wl1_80211h_orig=&acs_dfs=1&w_Setting=1&wl_sched=010500%3C120500%3C230500%3C340500%3C450500%3C560500%3C600500&wl_txpower=100&wl_timesched=1&wl_ap_isolate=0&wl_rate=0&wl_user_rssi=0&wl_igs=0&wl_mrate_x=0&wl_rateset=default&wl_plcphdr=long&wl_ampdu_rts=1&wl_rts=2347&wl_dtim=3&wl_bcn=100&wl_frameburst=on&wl_PktAggregate=0&wl_wme_apsd=on&wl_DLSCapable=0&wl_btc_mode=0&usb_usb3=1&wl_ampdu_mpdu=0&wl_turbo_qam=2&wl1_80211h=0&wl_atf=1&wl_mumimo=0&wl_txbf=1&wl_itxbf=1`)
+		req, err := http.NewRequest("POST", "https://192.168.1.1:8443/start_apply.htm", body)
+		if err != nil {
+			logger.Printf("Err Toggle 2.4G Request: %+v\n", err)
 		}
-	}
+		req.Header.Set("Cookie", asusToken)
+		req.Header.Set("Referer", "https://192.168.1.1:8443/Advanced_WAdvanced_Content.asp")
 
-	// Disable 5G Wireless Radio Transmitter
-	body2 := strings.NewReader(`wl_unit=` + powerFlag + `&wl_radio=0&productid=RT-AC88U&wl_nmode_x=0&wl_gmode_protection_x=&current_page=Advanced_WAdvanced_Content.asp&next_page=Advanced_WAdvanced_Content.asp&group_id=&modified=0&first_time=&action_mode=apply_new&action_script=restart_wireless&action_wait=10&preferred_lang=EN&firmver=3.0.0.4&wl_subunit=-1&wl_amsdu=auto&wl_TxPower=&wl1_80211h_orig=&acs_dfs=1&w_Setting=1&wl_sched=010500%3C120500%3C230500%3C340500%3C450500%3C560500%3C600500&wl_txpower=100&wl_timesched=1&wl_ap_isolate=0&wl_rate=0&wl_user_rssi=0&wl_igs=0&wl_mrate_x=0&wl_rateset=default&wl_plcphdr=long&wl_ampdu_rts=1&wl_rts=2347&wl_dtim=3&wl_bcn=100&wl_frameburst=on&wl_PktAggregate=0&wl_wme_apsd=on&wl_DLSCapable=0&wl_ampdu_mpdu=0&wl_turbo_qam=2&wl1_80211h=0&wl_atf=1&wl_mumimo=0&wl_txbf=1&wl_itxbf=1`)
-	req2, err3 := http.NewRequest("POST", "https://192.168.1.1:8443/start_apply.htm", body2)
-	if err3 != nil {
-		logger.Printf("Err Toggle 5G Request: %+v\n", err3)
-	}
-	req2.Header.Set("Cookie", asusToken)
-	req2.Header.Set("Referer", "https://192.168.1.1:8443/Advanced_WAdvanced_Content.asp")
+		resp, err2 := client.Do(req)
+		if err2 != nil {
+			logger.Printf("Err Toggle 2.4G Do: %+v\n", err2)
+		}
+		defer resp.Body.Close()
+		if resp.StatusCode == 200 { // OK
+			bodyBytes, _ := ioutil.ReadAll(resp.Body)
+			bodyString := string(bodyBytes)
+			if strings.Contains(bodyString, "done_committing()") {
+				result = true
+			}
+		}
 
-	resp2, err4 := client.Do(req2)
-	if err4 != nil {
-		logger.Printf("Err Toggle 5G Do: %+v\n", err4)
-	}
-	defer resp2.Body.Close()
-	if resp2.StatusCode == 200 { // OK
-		bodyBytes, _ := ioutil.ReadAll(resp2.Body)
-		bodyString := string(bodyBytes)
-		if strings.Contains(bodyString, "done_committing()") {
-			result = true
+		// Disable 5G Wireless Radio Transmitter
+		body2 := strings.NewReader(`wl_unit=` + powerFlag + `&wl_radio=0&productid=RT-AC88U&wl_nmode_x=0&wl_gmode_protection_x=&current_page=Advanced_WAdvanced_Content.asp&next_page=Advanced_WAdvanced_Content.asp&group_id=&modified=0&first_time=&action_mode=apply_new&action_script=restart_wireless&action_wait=10&preferred_lang=EN&firmver=3.0.0.4&wl_subunit=-1&wl_amsdu=auto&wl_TxPower=&wl1_80211h_orig=&acs_dfs=1&w_Setting=1&wl_sched=010500%3C120500%3C230500%3C340500%3C450500%3C560500%3C600500&wl_txpower=100&wl_timesched=1&wl_ap_isolate=0&wl_rate=0&wl_user_rssi=0&wl_igs=0&wl_mrate_x=0&wl_rateset=default&wl_plcphdr=long&wl_ampdu_rts=1&wl_rts=2347&wl_dtim=3&wl_bcn=100&wl_frameburst=on&wl_PktAggregate=0&wl_wme_apsd=on&wl_DLSCapable=0&wl_ampdu_mpdu=0&wl_turbo_qam=2&wl1_80211h=0&wl_atf=1&wl_mumimo=0&wl_txbf=1&wl_itxbf=1`)
+		req2, err3 := http.NewRequest("POST", "https://192.168.1.1:8443/start_apply.htm", body2)
+		if err3 != nil {
+			logger.Printf("Err Toggle 5G Request: %+v\n", err3)
+		}
+		req2.Header.Set("Cookie", asusToken)
+		req2.Header.Set("Referer", "https://192.168.1.1:8443/Advanced_WAdvanced_Content.asp")
+
+		resp2, err4 := client.Do(req2)
+		if err4 != nil {
+			logger.Printf("Err Toggle 5G Do: %+v\n", err4)
+		}
+		defer resp2.Body.Close()
+		if resp2.StatusCode == 200 { // OK
+			bodyBytes, _ := ioutil.ReadAll(resp2.Body)
+			bodyString := string(bodyBytes)
+			if strings.Contains(bodyString, "done_committing()") {
+				result = true
+			}
 		}
 	}
 
