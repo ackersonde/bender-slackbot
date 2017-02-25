@@ -28,7 +28,17 @@ func SetRTM(rtmPassed *slack.RTM) {
 // CheckCommand is now commented
 func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 	args := strings.Fields(command)
-	if args[0] == "ms" {
+	if args[0] == "wl" {
+		response := "Failed to enable Wireless"
+
+		result := ToggleWLANPower(`1`)
+		if result {
+			response = "Successfully turned on Wireless"
+		}
+
+		params := slack.PostMessageParameters{AsUser: true}
+		api.PostMessage(slackMessage.Channel, response, params)
+	} else if args[0] == "ms" {
 		response := "Failed to restart miniDLNA on :asus:"
 
 		result := ResetMediaServer()
@@ -135,7 +145,8 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 			":transmission: `tran[c|s|d]`: [C]reate <URL>, [S]tatus, [D]elete <ID> torrents on :raspberry_pi:\n" +
 			":floppy_disk: `fsck`: show disk space on :raspberry_pi:\n" +
 			":recycle: `rm(|mv) <filename>` from :raspberry_pi: (to `" + routerUSBMountPath + "` on :asus:)\n" +
-			":movie_camera: `ms`: restart miniDLNA media server on :asus:\n"
+			":movie_camera: `ms`: restart miniDLNA media server on :asus:\n" +
+			":wifi: `wl`: turn on WireLess radio transmitter on :asus:\n"
 		params := slack.PostMessageParameters{AsUser: true}
 		api.PostMessage(slackMessage.Channel, response, params)
 	} else {
