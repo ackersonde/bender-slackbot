@@ -9,8 +9,6 @@ import (
 	"strings"
 )
 
-var logger = log.New(os.Stderr, "ASUS_Router: ", log.Lshortfile|log.LstdFlags)
-
 func accessInsecureHTTPClient() *http.Client {
 	tlsConfig := &tls.Config{InsecureSkipVerify: true}
 	transport := &http.Transport{TLSClientConfig: tlsConfig}
@@ -18,6 +16,8 @@ func accessInsecureHTTPClient() *http.Client {
 }
 
 func loginToRouter(client *http.Client) string {
+	var logger = log.New(os.Stdout, "ASUS_Router: ", log.Lshortfile|log.LstdFlags)
+
 	// Login to Router
 	body := strings.NewReader(`group_id=&action_mode=&action_script=&action_wait=5&current_page=Main_Login.asp&next_page=index.asp&login_authorization=YWRtaW46UnVtcDEzU3RpMXoh`)
 	req, err := http.NewRequest("POST", "https://192.168.1.1:8443/login.cgi", body)
@@ -36,6 +36,8 @@ func loginToRouter(client *http.Client) string {
 
 // ResetMediaServer is now commented
 func ResetMediaServer() bool {
+	var logger = log.New(os.Stdout, "ASUS_Router: ", log.Lshortfile|log.LstdFlags)
+
 	result := false
 	client := accessInsecureHTTPClient()
 
@@ -71,6 +73,7 @@ func ResetMediaServer() bool {
 
 /* ToggleWLANPower is now commented
 func ToggleWLANPower(powerFlag string) bool {
+	var logger = log.New(os.Stdout, "ASUS_Router: ", log.Lshortfile|log.LstdFlags)
 	result := false
 	client := accessInsecureHTTPClient()
 
