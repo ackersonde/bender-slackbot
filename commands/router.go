@@ -69,7 +69,7 @@ func ResetMediaServer() bool {
 	return result
 }
 
-// ToggleWLANPower is now commented
+/* ToggleWLANPower is now commented
 func ToggleWLANPower(powerFlag string) bool {
 	result := false
 	client := accessInsecureHTTPClient()
@@ -126,4 +126,4 @@ func ToggleWLANPower(powerFlag string) bool {
 	}
 
 	return result
-}
+}*/
