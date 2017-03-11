@@ -28,18 +28,55 @@ func SetRTM(rtmPassed *slack.RTM) {
 // CheckCommand is now commented
 func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 	args := strings.Fields(command)
-	/*if args[0] == "wl" {
-		response := "Failed to enable Wireless"
+	callingUserProfile, _ := api.GetUserInfo(slackMessage.User)
 
-		result := ToggleWLANPower(`1`)
-		if result {
-			response = "Successfully turned on Wireless"
+	if args[0] == "mlb" {
+		// TODO pass yesterday's date
+		response := ShowBaseBallGames()
+		result := "Ball games from " + response.ReadableDate + ":\n"
+
+		// TODO split game results out into string
+		for _, gameMetaData := range response.Games {
+			/*
+							{{ $away_team := index $gameMetaData 0}}
+				      {{ $away_hp := index $gameMetaData 1}}
+				      {{ $away_id := index $gameMetaData 2}}
+				      {{ $away_abbrev := index $gameMetaData 3}}
+				      {{ $home_team := index $gameMetaData 4}}
+				      {{ $home_hp := index $gameMetaData 5}}
+				      {{ $home_id := index $gameMetaData 6}}
+				      {{ $home_abbrev := index $gameMetaData 7}}
+				      {{ $id := index $gameMetaData 8}}
+				      {{ $game_url := index $gameMetaData 10}}
+							<div style="display: table-cell;padding:5px;">
+				        <a href="/bbFavoriteTeam?id={{ $away_id }}" title="{{ $away_team }}"><img class="logo logo-small logo{{ $away_id }}" src="images/img_trans.gif"></a>
+				      </div>
+				      <div style="display:table-cell;padding:5px;text-align:center;vertical-align:middle;"><a href="/bbStream?url={{ $game_url }}">{{ $away_abbrev }}@{{ $home_abbrev }}</a></div>
+				      <div style="display:table-cell;padding:5px;">
+				        <a href="/bbFavoriteTeam?id={{ $home_id }}" title="{{ $home_team }}"><img class="logo logo-small logo{{ $home_id }}" src="images/img_trans.gif"></a>
+				      </div>
+			*/
+			// TODO: paint 2 urls, one for watching, one for telling ackerson.de
+			// server to download appropriately named bbGame.mp4 to ~/bb_games/
+			// TODO2: send ~/bb_games/bbGame.mp4 to Join Push app to send file to cell
+			watchURL := "<" + gameMetaData[10] + "|" + gameMetaData[0] + " @ " + gameMetaData[4] + ">    "
+			downloadURL := "<https://ackerson.de/bb_download?gameTitle=" + gameMetaData[2] + "-" + gameMetaData[6] + "__" + response.ReadableDate + "&gameURL=" + gameMetaData[10] + " | [ send to " + callingUserProfile.Name + "'s :smartphone: ]>"
+
+			result += watchURL + downloadURL + "\n"
 		}
 
 		params := slack.PostMessageParameters{AsUser: true}
-		api.PostMessage(slackMessage.Channel, response, params)
-	} else*/
-	if args[0] == "ms" {
+		api.PostMessage(slackMessage.Channel, result, params)
+	} else if args[0] == "bbg" {
+		params := slack.PostMessageParameters{AsUser: true}
+
+		if len(args) > 1 {
+			result := GetBaseBallGame(args[1])
+			api.PostMessage(slackMessage.Channel, result, params)
+		} else {
+			api.PostMessage(slackMessage.Channel, "Please provide Game ID from `mlb` cmd!", params)
+		}
+	} else if args[0] == "ms" {
 		response := "Failed to restart miniDLNA on :asus:"
 
 		result := ResetMediaServer()
@@ -146,12 +183,11 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 			":transmission: `tran[c|s|d]`: [C]reate <URL>, [S]tatus, [D]elete <ID> torrents on :raspberry_pi:\n" +
 			":floppy_disk: `fsck`: show disk space on :raspberry_pi:\n" +
 			":recycle: `rm(|mv) <filename>` from :raspberry_pi: (to `" + routerUSBMountPath + "` on :asus:)\n" +
-			":movie_camera: `ms`: restart miniDLNA media server on :asus:\n"
-			//":wifi: `wl`: turn on WireLess radio transmitter on :asus:\n"
+			":movie_camera: `ms`: restart miniDLNA media server on :asus:\n" +
+			":baseball: `mlb`: show yesterday's baseball games\n"
 		params := slack.PostMessageParameters{AsUser: true}
 		api.PostMessage(slackMessage.Channel, response, params)
 	} else {
-		callingUserProfile, _ := api.GetUserInfo(slackMessage.User)
 		rtm.SendMessage(rtm.NewOutgoingMessage("whaddya say <@"+callingUserProfile.Name+">? Try `help` instead...",
 			slackMessage.Channel))
 	}
