@@ -30,7 +30,7 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 	args := strings.Fields(command)
 	callingUserProfile, _ := api.GetUserInfo(slackMessage.User)
 
-	if args[0] == "mlb" {
+	if args[0] == "bb" {
 		// TODO pass yesterday's date
 		response := ShowBaseBallGames()
 		result := "Ball games from " + response.ReadableDate + ":\n"
@@ -74,7 +74,7 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 			result := GetBaseBallGame(args[1])
 			api.PostMessage(slackMessage.Channel, result, params)
 		} else {
-			api.PostMessage(slackMessage.Channel, "Please provide Game ID from `mlb` cmd!", params)
+			api.PostMessage(slackMessage.Channel, "Please provide Game ID from `bb` cmd!", params)
 		}
 	} else if args[0] == "ms" {
 		response := "Failed to restart miniDLNA on :asus:"
@@ -184,7 +184,7 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 			":floppy_disk: `fsck`: show disk space on :raspberry_pi:\n" +
 			":recycle: `rm(|mv) <filename>` from :raspberry_pi: (to `" + routerUSBMountPath + "` on :asus:)\n" +
 			":movie_camera: `ms`: restart miniDLNA media server on :asus:\n" +
-			":baseball: `mlb`: show yesterday's baseball games\n"
+			":baseball: `bb`: show yesterday's baseball games\n"
 		params := slack.PostMessageParameters{AsUser: true}
 		api.PostMessage(slackMessage.Channel, response, params)
 	} else {
