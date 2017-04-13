@@ -33,7 +33,7 @@ stages:
         command: |
           docker build -t danackerson/bender:vc$CIRCLE_BUILD_NUM --build-arg vpnc_gateway=$VPNC_GATEWAY --build-arg vpnc_id=$VPNC_ID --build-arg vpnc_secret=$VPNC_SECRET --build-arg vpnc_username=$VPNC_USERNAME --build-arg vpnc_password=$VPNC_PASSWORD .
           docker run -d -e slackToken=$(echo $slackTokenEncoded | base64 --decode) -e raspberryPIIP=$raspberryPIIP -e slackReportChannel=$slackReportChannel -e piUser=$piUser -e piPass=$piPass -e digitalOceanToken=$digitalOceanToken --name bender danackerson/bender:vc$CIRCLE_BUILD_NUM; sleep 15
-          docker logs bender
+          docker logs bender | grep "Presence:active User:U2NQSPHHD"
 
       - type: add-ssh-keys
         name: "Load key"
