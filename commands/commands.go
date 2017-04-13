@@ -155,7 +155,6 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 	} else if args[0] == "help" {
 		response := ":sun_behind_rain_cloud: `sw`: Schwabhausen weather\n" +
 			":metro: `mvv (s|m)`: no args->show status, `s`->come home, `m`->goto MUC\n" +
-			":globe_with_meridians: `ip`: display user's current IP address\n" +
 			":do_droplet: `do|dd <id>`: show|delete DigitalOcean droplet(s)\n" +
 			":closed_lock_with_key: `vpn[c|s|d]`: [C]onnect, [S]tatus, [D]rop VPN tunnel to Fritz!Box\n" +
 			":pirate_bay: `torq <search term>`\n" +
