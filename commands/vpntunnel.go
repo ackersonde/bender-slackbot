@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
 	"strconv"
@@ -25,9 +26,16 @@ func executeRemoteCmd(command string) (stdoutStr string, stderrStr string) {
 		}
 	}()
 
+	raspberryPIPubKey := "ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBKqLtosnMy7YnC+FXAxqevMgOGPkz0tPHYcfZlA+sfWLW49wCbzdYon3F47QjqzYA8Bx8J/FAdU6VB3UHKfmgYg="
+	hostKey, _, _, _, err := ssh.ParseAuthorizedKey([]byte(raspberryPIPubKey))
+	if err != nil {
+		log.Fatalf("error parsing: %v", err)
+	}
+
 	config := &ssh.ClientConfig{
-		User: os.Getenv("piUser"),
-		Auth: []ssh.AuthMethod{ssh.Password(os.Getenv("piPass"))},
+		User:            os.Getenv("piUser"),
+		Auth:            []ssh.AuthMethod{ssh.Password(os.Getenv("piPass"))},
+		HostKeyCallback: ssh.FixedHostKey(hostKey),
 	}
 
 	if raspberryPIIP == "" {
