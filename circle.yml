@@ -62,7 +62,8 @@ stages:
           echo "Deploy to $DEPLOY_SERVER"
           ssh -o "StrictHostKeyChecking no" ackersond@$DEPLOY_SERVER docker login -u $DOCKER_USER -p $DOCKER_PASS
           ssh -o "StrictHostKeyChecking no" ackersond@$DEPLOY_SERVER docker pull danackerson/bender:vc$CIRCLE_BUILD_NUM
-          ssh -o "StrictHostKeyChecking no" ackersond@$DEPLOY_SERVER docker rm -f bender; true
+          ssh -o "StrictHostKeyChecking no" ackersond@$DEPLOY_SERVER docker rm -f bender || true
+          echo "Made it to here...now run the damn container"
           ssh -o "StrictHostKeyChecking no" ackersond@$DEPLOY_SERVER docker run -d --restart=always --privileged=true -e raspberryPIIP=$raspberryPIIP -e slackReportChannel=$slackReportChannel -e piUser=$piUser -e piPass=$piPass -e digitalOceanToken=$digitalOceanToken -e CIRCLE_BUILD_NUM=$CIRCLE_BUILD_NUM -e slackToken=$(echo $slackTokenEncoded | base64 --decode) --name bender danackerson/bender:vc$CIRCLE_BUILD_NUM
 
 # not all Env vars are created equal - some have ':' or '{}' or <shudder> '\/'s
