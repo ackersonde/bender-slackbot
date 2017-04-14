@@ -57,9 +57,9 @@ stages:
 
           export DEPLOY_SERVER=deploy.ackerson.de
           if [ $DEPLOY_SERVER_IP ]; then
-            export DEPLOY_SERVER=$DEPLOY_SERVER
+            export DEPLOY_SERVER=$DEPLOY_SERVER_IP
           fi
-          echo "Deploying to $DEPLOY_SERVER"
+          echo "Deploy to $DEPLOY_SERVER"
           ssh -o "StrictHostKeyChecking no" ackersond@$DEPLOY_SERVER docker login -u $DOCKER_USER -p $DOCKER_PASS
           ssh -o "StrictHostKeyChecking no" ackersond@$DEPLOY_SERVER docker pull danackerson/bender:vc$CIRCLE_BUILD_NUM
           ssh -o "StrictHostKeyChecking no" ackersond@$DEPLOY_SERVER docker rm -f bender; true
