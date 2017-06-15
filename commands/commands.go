@@ -143,7 +143,8 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 		}
 	} else if args[0] == "mvv" {
 		response := "<https://img.srv2.de/customer/sbahnMuenchen/newsticker/newsticker.html|Aktuelles>"
-		rtm.SendMessage(rtm.NewOutgoingMessage(response, slackMessage.Channel))
+		params := slack.PostMessageParameters{AsUser: true}
+		api.PostMessage(slackMessage.Channel, response, params)
 	} else if args[0] == "help" {
 		response := ":sun_behind_rain_cloud: `sw`: Schwabhausen weather\n" +
 			":metro: `mvv (s|m)`: no args->show status, `s`->come home, `m`->goto MUC\n" +

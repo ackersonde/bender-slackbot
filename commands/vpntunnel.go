@@ -241,7 +241,7 @@ func MoveTorrentFile(filename string) {
 			if err != "" {
 				result = err
 			} else if result == "" {
-				result = "Successfully moved `" + filename + "` to " + piUSBMountPath
+				result = "Successfully moved `" + filename + "` to `" + piUSBMountPath + "`"
 			}
 
 			rtm.IncomingEvents <- slack.RTMEvent{Type: "MoveTorrent", Data: result}
