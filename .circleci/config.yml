@@ -16,16 +16,16 @@ jobs:
       - run:
           name: "Install Docker Engine"
           command: |
-          set -x
-          VER="17.05.0"
-          curl -fsSLO https://get.docker.com/builds/Linux/x86_64/docker-$VER-ce.tgz && tar --strip-components=1 -xvzf docker-$VER-ce.tgz -C /usr/local/bin
+            set -x
+            VER="17.05.0"
+            curl -fsSLO https://get.docker.com/builds/Linux/x86_64/docker-$VER-ce.tgz && tar --strip-components=1 -xvzf docker-$VER-ce.tgz -C /usr/local/bin
 
       - run:
           name: "Build, run and test docker image"
           command: |
-          docker build -t danackerson/bender:vc$CIRCLE_BUILD_NUM --build-arg vpnc_gateway=$VPNC_GATEWAY --build-arg vpnc_id=$VPNC_ID --build-arg vpnc_secret=$VPNC_SECRET --build-arg vpnc_username=$VPNC_USERNAME --build-arg vpnc_password=$VPNC_PASSWORD .
-          docker run -d -e slackToken=$(echo $slackTokenEncoded | base64 --decode) -e raspberryPIIP=$raspberryPIIP -e slackReportChannel=$slackReportChannel -e piUser=$piUser -e piPass=$piPass -e digitalOceanToken=$digitalOceanToken --name bender danackerson/bender:vc$CIRCLE_BUILD_NUM
-          echo `docker logs bender`
+            docker build -t danackerson/bender:vc$CIRCLE_BUILD_NUM --build-arg vpnc_gateway=$VPNC_GATEWAY --build-arg vpnc_id=$VPNC_ID --build-arg vpnc_secret=$VPNC_SECRET --build-arg vpnc_username=$VPNC_USERNAME --build-arg vpnc_password=$VPNC_PASSWORD .
+            docker run -d -e slackToken=$(echo $slackTokenEncoded | base64 --decode) -e raspberryPIIP=$raspberryPIIP -e slackReportChannel=$slackReportChannel -e piUser=$piUser -e piPass=$piPass -e digitalOceanToken=$digitalOceanToken --name bender danackerson/bender:vc$CIRCLE_BUILD_NUM
+            echo `docker logs bender`
 
       - type: add-ssh-keys
         name: "Load key"
@@ -35,11 +35,11 @@ jobs:
       - run:
           name: Start ssh-agent
           command: |
-          ssh-agent -s > ~/.ssh_agent_conf
-          source ~/.ssh_agent_conf
-          for _k in $(ls ${HOME}/.ssh/id_*); do
-            ssh-add ${_k} || true
-          done
+            ssh-agent -s > ~/.ssh_agent_conf
+            source ~/.ssh_agent_conf
+            for _k in $(ls ${HOME}/.ssh/id_*); do
+              ssh-add ${_k} || true
+            done
 
       - deploy:
           name: "Upload to DockerHub & deploy to DigitalOcean Droplet"
