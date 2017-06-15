@@ -14,7 +14,6 @@ var rtm *slack.RTM
 var piSDCardPath = "/home/pi/torrents/"
 var piUSBMountPath = "/mnt/usb_1/DLNA/torrents/"
 var routerIP = "192.168.1.1"
-var routerUSBMountPath = "/mnt/TOSHIBA_EXT/DLNA/torrents/"
 var tranc = "tranc"
 
 // SlackReportChannel default reporting channel for bot crons
@@ -38,7 +37,7 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 		// TODO split game results out into string
 		for _, gameMetaData := range response.Games {
 			watchURL := "<" + gameMetaData[10] + "|" + gameMetaData[0] + " @ " + gameMetaData[4] + ">    "
-			downloadURL := "<https://ackerson.de/bb_download?gameTitle=" + gameMetaData[2] + "-" + gameMetaData[6] + "__" + response.ReadableDate + "&gameURL=" + gameMetaData[10] + " | [ send to " + callingUserProfile.Name + "'s :smartphone: ]>"
+			downloadURL := "<https://ackerson.de/bb_download?gameTitle=" + gameMetaData[2] + "-" + gameMetaData[6] + "__" + response.ReadableDate + "&gameURL=" + gameMetaData[10] + " | :smartphone:>"
 
 			result += watchURL + downloadURL + "\n"
 		}
@@ -54,16 +53,6 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 		} else {
 			api.PostMessage(slackMessage.Channel, "Please provide Game ID from `bb` cmd!", params)
 		}
-	} else if args[0] == "ms" {
-		response := "Failed to restart miniDLNA on :asus:"
-
-		result := ResetMediaServer()
-		if result {
-			response = "Successfully restarted miniDLNA on :asus:"
-		}
-
-		params := slack.PostMessageParameters{AsUser: true}
-		api.PostMessage(slackMessage.Channel, response, params)
 	} else if args[0] == "do" {
 		response := ListDODroplets(true)
 		params := slack.PostMessageParameters{AsUser: true}
@@ -152,6 +141,9 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 			response := torrentCommand(args)
 			rtm.SendMessage(rtm.NewOutgoingMessage(response, slackMessage.Channel))
 		}
+	} else if args[0] == "mvv" {
+		response := "<https://img.srv2.de/customer/sbahnMuenchen/newsticker/newsticker.html|Aktuelles>"
+		rtm.SendMessage(rtm.NewOutgoingMessage(response, slackMessage.Channel))
 	} else if args[0] == "help" {
 		response := ":sun_behind_rain_cloud: `sw`: Schwabhausen weather\n" +
 			":metro: `mvv (s|m)`: no args->show status, `s`->come home, `m`->goto MUC\n" +
@@ -161,7 +153,7 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 			":openvpn: `ovpn`: show status of PrivateTunnel on :raspberry_pi:\n" +
 			":transmission: `tran[c|s|d]`: [C]reate <URL>, [S]tatus, [D]elete <ID> torrents on :raspberry_pi:\n" +
 			":floppy_disk: `fsck`: show disk space on :raspberry_pi:\n" +
-			":recycle: `rm(|mv) <filename>` from :raspberry_pi: (to `" + routerUSBMountPath + "` on :asus:)\n" +
+			":recycle: `rm(|mv) <filename>` from :raspberry_pi: (to `" + piUSBMountPath + "`)\n" +
 			":baseball: `bb`: show yesterday's baseball games\n"
 		params := slack.PostMessageParameters{AsUser: true}
 		api.PostMessage(slackMessage.Channel, response, params)

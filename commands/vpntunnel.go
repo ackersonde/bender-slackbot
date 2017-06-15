@@ -230,12 +230,10 @@ func DeleteTorrentFile(filename string) string {
 
 // MoveTorrentFile now exported
 func MoveTorrentFile(filename string) {
-	remoteDirectory := routerIP + ":" + routerUSBMountPath
-
 	if filename == "*" || filename == "" || strings.Contains(filename, "../") || strings.HasPrefix(filename, "/") {
 		rtm.IncomingEvents <- slack.RTMEvent{Type: "MoveTorrent", Data: "Please enter an existing filename - try `fsck`"}
 	} else {
-		moveCmd := "scp -r \"" + piSDCardPath + filename + "\" admin@" + remoteDirectory
+		moveCmd := "mv \"" + piSDCardPath + filename + "\" " + piUSBMountPath
 
 		go func() {
 			result, err := executeRemoteCmd(moveCmd)
@@ -243,7 +241,7 @@ func MoveTorrentFile(filename string) {
 			if err != "" {
 				result = err
 			} else if result == "" {
-				result = "Successfully moved `" + filename + "` to " + remoteDirectory
+				result = "Successfully moved `" + filename + "` to " + piUSBMountPath
 			}
 
 			rtm.IncomingEvents <- slack.RTMEvent{Type: "MoveTorrent", Data: result}

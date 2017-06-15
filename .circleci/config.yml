@@ -1,0 +1,65 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: golang:1.8
+    working_directory: /go/src/github.com/danackerson/bender-slackbot
+    steps:
+      - checkout
+      - run:
+          name: "Fetch dependencies and build bender app"
+          command: |
+            go get -t -d -v ./...
+            env GOOS=linux GOARCH=amd64 go build bender.go
+
+      - setup_remote_docker
+      - run:
+          name: "Install Docker Engine"
+          command: |
+          set -x
+          VER="17.05.0"
+          curl -fsSLO https://get.docker.com/builds/Linux/x86_64/docker-$VER-ce.tgz && tar --strip-components=1 -xvzf docker-$VER-ce.tgz -C /usr/local/bin
+
+      - run:
+          name: "Build, run and test docker image"
+          command: |
+          docker build -t danackerson/bender:vc$CIRCLE_BUILD_NUM --build-arg vpnc_gateway=$VPNC_GATEWAY --build-arg vpnc_id=$VPNC_ID --build-arg vpnc_secret=$VPNC_SECRET --build-arg vpnc_username=$VPNC_USERNAME --build-arg vpnc_password=$VPNC_PASSWORD .
+          docker run -d -e slackToken=$(echo $slackTokenEncoded | base64 --decode) -e raspberryPIIP=$raspberryPIIP -e slackReportChannel=$slackReportChannel -e piUser=$piUser -e piPass=$piPass -e digitalOceanToken=$digitalOceanToken --name bender danackerson/bender:vc$CIRCLE_BUILD_NUM
+          echo `docker logs bender`
+
+      - type: add-ssh-keys
+        name: "Load key"
+        fingerprints:
+          - "93:c4:61:21:a6:82:d8:6d:4f:73:11:79:37:23:83:07"
+
+      - run:
+          name: Start ssh-agent
+          command: |
+          ssh-agent -s > ~/.ssh_agent_conf
+          source ~/.ssh_agent_conf
+          for _k in $(ls ${HOME}/.ssh/id_*); do
+            ssh-add ${_k} || true
+          done
+
+      - deploy:
+          name: "Upload to DockerHub & deploy to DigitalOcean Droplet"
+          command: |
+            docker login -u $DOCKER_USER -p $DOCKER_PASS
+            docker push danackerson/bender:vc$CIRCLE_BUILD_NUM
+            source ~/.ssh_agent_conf
+
+            export DEPLOY_SERVER=deploy.ackerson.de
+            if [ $DEPLOY_SERVER_IP ]; then
+              export DEPLOY_SERVER=$DEPLOY_SERVER_IP
+            fi
+            echo "Deploy to $DEPLOY_SERVER"
+            ssh -o "StrictHostKeyChecking no" ackersond@$DEPLOY_SERVER docker login -u $DOCKER_USER -p $DOCKER_PASS
+            ssh -o "StrictHostKeyChecking no" ackersond@$DEPLOY_SERVER docker pull danackerson/bender:vc$CIRCLE_BUILD_NUM
+            ssh -o "StrictHostKeyChecking no" ackersond@$DEPLOY_SERVER docker rm -f bender || true
+            ssh -o "StrictHostKeyChecking no" ackersond@$DEPLOY_SERVER docker run -d --restart=always --privileged=true -e raspberryPIIP=$raspberryPIIP -e slackReportChannel=$slackReportChannel -e piUser=$piUser -e piPass=$piPass -e digitalOceanToken=$digitalOceanToken -e CIRCLE_BUILD_NUM=$CIRCLE_BUILD_NUM -e slackToken=$(echo $slackTokenEncoded | base64 --decode) --name bender danackerson/bender:vc$CIRCLE_BUILD_NUM
+
+# not all Env vars are created equal - some have ':' or '{}' or <shudder> '\/'s
+# in this case we base64 encode the parameter: `base64 <<< [string in question]`
+# taking the result and pasting it into the environment variable of this CircleCI project
+# above is an example how to decode this on the fly (e.g. slackToken)
+# what is this .go_workspace?!? rm -Rf /home/ubuntu/.go_workspace/src/$IMPORT_PATH/vendor
