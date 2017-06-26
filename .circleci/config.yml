@@ -12,7 +12,9 @@ jobs:
             go get -t -d -v ./...
             env GOOS=linux GOARCH=amd64 go build bender.go
 
-      - setup_remote_docker
+      - setup_remote_docker:
+          reusable: true
+
       - run:
           name: "Install Docker Engine"
           command: |
