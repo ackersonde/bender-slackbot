@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -36,8 +37,15 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 
 	if args[0] == "yt" {
 		if len(args) > 1 {
-			result := sendPayloadToJoinAPI(args[1])
-			api.PostMessage(slackMessage.Channel, result, params)
+			// strip '<>' off url
+			downloadURL := strings.Trim(args[1], "<>")
+			uri, err := url.ParseRequestURI(downloadURL)
+			if err != nil {
+				api.PostMessage(slackMessage.Channel, "Invalid URL for downloading! ("+err.Error()+")", params)
+			} else {
+				result := sendPayloadToJoinAPI(uri.String())
+				api.PostMessage(slackMessage.Channel, result, params)
+			}
 		} else {
 			api.PostMessage(slackMessage.Channel, "Please provide YouTube video URL!", params)
 		}
