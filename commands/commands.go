@@ -208,6 +208,7 @@ func sendPayloadToJoinAPI(downloadFilename string) string {
 	response := "Sorry, couldn't download URL..."
 
 	vid, _ := ytdl.GetVideoInfo(downloadFilename)
+	resp, _ := http.Head(downloadFilename)
 
 	// NOW send this URL to the Join Push App API
 	pushURL := "https://joinjoaomgcd.appspot.com/_ah/api/messaging/v1/sendPush"
@@ -226,6 +227,7 @@ func sendPayloadToJoinAPI(downloadFilename string) string {
 	defer resp.Body.Close()
 	if resp.StatusCode == 200 {
 		response = "Sending '" + vid.Title + "' to Papa's handy..."
+		log.Printf("YouTube video " + vid.Title + " has " + strconv.FormatInt(resp.ContentLength, 10) + " bytes")
 	}
 
 	return response
