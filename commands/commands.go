@@ -208,13 +208,14 @@ func sendPayloadToJoinAPI(downloadFilename string) string {
 	response := "Sorry, couldn't download URL..."
 
 	vid, _ := ytdl.GetVideoInfo(downloadFilename)
-	resp, _ := http.Head(downloadFilename)
+	downloadURL, _ := vid.GetDownloadURL(vid.Formats[0])
+	resp, _ := http.Head(downloadURL.String())
 
 	// NOW send this URL to the Join Push App API
 	pushURL := "https://joinjoaomgcd.appspot.com/_ah/api/messaging/v1/sendPush"
-	defaultParams := "?deviceId=007e5b72192c420d9115334d1f177c4c&icon=https://emoji.slack-edge.com/T092UA8PR/youtube/a9a89483b7536f8a.png&smallicon=https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR1IVXeyHHqhrZF48iK4bxzAjy3vlDoW9nVvTQoEL-tjOXygr-GWQ"
-	fileOnPhone := "&title=" + vid.Title
-	fileURL := "&file=" + downloadFilename
+	defaultParams := "?deviceId=007e5b72192c420d9115334d1f177c4c&icon=" + url.QueryEscape("https://emoji.slack-edge.com/T092UA8PR/youtube/a9a89483b7536f8a.png") + "&smallicon=" + url.QueryEscape("https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR1IVXeyHHqhrZF48iK4bxzAjy3vlDoW9nVvTQoEL-tjOXygr-GWQ")
+	fileOnPhone := "&title=" + url.QueryEscape(vid.Title)
+	fileURL := "&file=" + downloadURL.String()
 	apiKey := "&apikey=" + joinAPIKey
 
 	completeURL := pushURL + defaultParams + fileOnPhone + fileURL + apiKey
