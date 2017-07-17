@@ -2,6 +2,9 @@ package commands
 
 import (
 	"fmt"
+	"log"
+	"net/http"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -10,6 +13,7 @@ import (
 	"github.com/nlopes/slack"
 )
 
+var joinAPIKey = os.Getenv("joinAPIKey")
 var raspberryPIIP = os.Getenv("raspberryPIIP")
 var rtm *slack.RTM
 var piSDCardPath = "/home/pi/torrents/"
@@ -29,13 +33,25 @@ func SetRTM(rtmPassed *slack.RTM) {
 func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 	args := strings.Fields(command)
 	callingUserProfile, _ := api.GetUserInfo(slackMessage.User)
+	params := slack.PostMessageParameters{AsUser: true}
 
-	if args[0] == "bb" {
+	if args[0] == "yt" {
+		if len(args) > 1 {
+			url, err := url.ParseRequestURI(args[1])
+			if err != nil {
+				api.PostMessage(slackMessage.Channel, "Invalid URL for downloading!", params)
+			} else {
+				result := sendPayloadToJoinAPI(url.String())
+				api.PostMessage(slackMessage.Channel, result, params)
+			}
+		} else {
+			api.PostMessage(slackMessage.Channel, "Please provide YouTube video URL!", params)
+		}
+	} else if args[0] == "bb" {
 		// TODO pass yesterday's date
 		response := ShowBaseBallGames()
 		result := "Ball games from " + response.ReadableDate + ":\n"
 
-		// TODO split game results out into string
 		for _, gameMetaData := range response.Games {
 			watchURL := "<" + gameMetaData[10] + "|" + gameMetaData[0] + " @ " + gameMetaData[4] + ">    "
 			downloadURL := "<https://ackerson.de/bb_download?gameTitle=" + gameMetaData[2] + "-" + gameMetaData[6] + "__" + response.ReadableDate + "&gameURL=" + gameMetaData[10] + " | :smartphone:>"
@@ -43,23 +59,11 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 			result += watchURL + downloadURL + "\n"
 		}
 
-		params := slack.PostMessageParameters{AsUser: true}
 		api.PostMessage(slackMessage.Channel, result, params)
-	} else if args[0] == "bbg" {
-		params := slack.PostMessageParameters{AsUser: true}
-
-		if len(args) > 1 {
-			result := GetBaseBallGame(args[1])
-			api.PostMessage(slackMessage.Channel, result, params)
-		} else {
-			api.PostMessage(slackMessage.Channel, "Please provide Game ID from `bb` cmd!", params)
-		}
 	} else if args[0] == "do" {
 		response := ListDODroplets(true)
-		params := slack.PostMessageParameters{AsUser: true}
 		api.PostMessage(slackMessage.Channel, response, params)
 	} else if args[0] == "dd" {
-		params := slack.PostMessageParameters{AsUser: true}
 
 		if len(args) > 1 {
 			number, err := strconv.Atoi(args[1])
@@ -118,7 +122,6 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 		} else {
 			_, response = SearchFor("", Category(cat))
 		}
-		params := slack.PostMessageParameters{AsUser: true}
 		api.PostMessage(slackMessage.Channel, response, params)
 	} else if args[0] == "ovpn" {
 		response := RaspberryPIPrivateTunnelChecks(true)
@@ -126,7 +129,6 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 	} else if args[0] == "sw" {
 		response := ":partly_sunny_rain: <https://www.wunderground.com/cgi-bin/findweather/getForecast?query=" +
 			"48.3,11.35#forecast-graph|10-day forecast Schwabhausen>"
-		params := slack.PostMessageParameters{AsUser: true}
 		api.PostMessage(slackMessage.Channel, response, params)
 	} else if args[0] == "vpnc" {
 		result := vpnTunnelCmds("/usr/sbin/vpnc-connect", "fritzbox")
@@ -144,7 +146,6 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 		}
 	} else if args[0] == "mvv" {
 		response := "<https://img.srv2.de/customer/sbahnMuenchen/newsticker/newsticker.html|Aktuelles>"
-		params := slack.PostMessageParameters{AsUser: true}
 
 		if len(args) > 1 {
 			if args[1] == "m" {
@@ -167,8 +168,8 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 			":transmission: `tran[c|s|d]`: [C]reate <URL>, [S]tatus, [D]elete <ID> torrents on :raspberry_pi:\n" +
 			":floppy_disk: `fsck`: show disk space on :raspberry_pi:\n" +
 			":recycle: `rm(|mv) <filename>` from :raspberry_pi: (to `" + piUSBMountPath + "`)\n" +
-			":baseball: `bb`: show yesterday's baseball games\n"
-		params := slack.PostMessageParameters{AsUser: true}
+			":baseball: `bb`: show yesterday's baseball games\n" +
+			":youtube: `yt <video url>`: Download Youtube video to Papa's handy\n"
 		api.PostMessage(slackMessage.Channel, response, params)
 	} else {
 		rtm.SendMessage(rtm.NewOutgoingMessage("whaddya say <@"+callingUserProfile.Name+">? Try `help` instead...",
@@ -198,6 +199,32 @@ func mvvRoute(origin string, destination string) string {
 		"&locationServerActive=1&name_origin=" + origin + "&itdDateDay=" + day + "&type_origin=any" +
 		"&name_destination=" + destination + "&itdTimeMinute=" + minute + "&Session=0&stateless=1" +
 		"&SpEncId=0&itdDateYear=" + year
+}
+
+func sendPayloadToJoinAPI(downloadFilename string) string {
+	response := "Sorry, couldn't resend..."
+
+	// NOW send this URL to the Join Push App API
+	pushURL := "https://joinjoaomgcd.appspot.com/_ah/api/messaging/v1/sendPush"
+	defaultParams := "?deviceId=007e5b72192c420d9115334d1f177c4c&icon=https://emoji.slack-edge.com/T092UA8PR/youtube/a9a89483b7536f8a.png&smallicon=https://emoji.slack-edge.com/T092UA8PR/youtube/a9a89483b7536f8a.png"
+	fileOnPhone := "&title=" + downloadFilename
+	fileURL := "&file=" + downloadFilename
+	apiKey := "&apikey=" + joinAPIKey
+
+	completeURL := pushURL + defaultParams + fileOnPhone + fileURL + apiKey
+	// Get the data
+	log.Printf("joinPushURL: %s\n", completeURL)
+	resp, err := http.Get(completeURL)
+	if err != nil {
+		log.Printf("ERR: unable to call Join Push")
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode == 200 {
+		log.Printf("successfully sent payload to Join!")
+		response = "Success!"
+	}
+
+	return response
 }
 
 /* DownloadFile is now exported
