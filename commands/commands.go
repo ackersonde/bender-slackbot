@@ -37,11 +37,11 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 
 	if args[0] == "yt" {
 		if len(args) > 1 {
-			url, err := url.ParseRequestURI(args[1])
+			uri, err := url.ParseRequestURI(args[1])
 			if err != nil {
-				api.PostMessage(slackMessage.Channel, "Invalid URL for downloading!", params)
+				api.PostMessage(slackMessage.Channel, "Invalid URL for downloading! ("+err.Error()+")", params)
 			} else {
-				result := sendPayloadToJoinAPI(url.String())
+				result := sendPayloadToJoinAPI(uri.String())
 				api.PostMessage(slackMessage.Channel, result, params)
 			}
 		} else {
@@ -202,7 +202,7 @@ func mvvRoute(origin string, destination string) string {
 }
 
 func sendPayloadToJoinAPI(downloadFilename string) string {
-	response := "Sorry, couldn't resend..."
+	response := "Sorry, couldn't download URL..."
 
 	// NOW send this URL to the Join Push App API
 	pushURL := "https://joinjoaomgcd.appspot.com/_ah/api/messaging/v1/sendPush"
@@ -220,8 +220,7 @@ func sendPayloadToJoinAPI(downloadFilename string) string {
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode == 200 {
-		log.Printf("successfully sent payload to Join!")
-		response = "Success!"
+		response = "Successfully sent payload to Join"
 	}
 
 	return response
