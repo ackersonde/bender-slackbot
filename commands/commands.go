@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/nlopes/slack"
+	"github.com/otium/ytdl"
 )
 
 var joinAPIKey = os.Getenv("joinAPIKey")
@@ -206,10 +207,12 @@ func mvvRoute(origin string, destination string) string {
 func sendPayloadToJoinAPI(downloadFilename string) string {
 	response := "Sorry, couldn't download URL..."
 
+	vid, _ := ytdl.GetVideoInfo(downloadFilename)
+
 	// NOW send this URL to the Join Push App API
 	pushURL := "https://joinjoaomgcd.appspot.com/_ah/api/messaging/v1/sendPush"
-	defaultParams := "?deviceId=007e5b72192c420d9115334d1f177c4c&icon=https://emoji.slack-edge.com/T092UA8PR/youtube/a9a89483b7536f8a.png&smallicon=https://emoji.slack-edge.com/T092UA8PR/youtube/a9a89483b7536f8a.png"
-	fileOnPhone := "&title=" + downloadFilename
+	defaultParams := "?deviceId=007e5b72192c420d9115334d1f177c4c&icon=https://emoji.slack-edge.com/T092UA8PR/youtube/a9a89483b7536f8a.png&smallicon=https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR1IVXeyHHqhrZF48iK4bxzAjy3vlDoW9nVvTQoEL-tjOXygr-GWQ"
+	fileOnPhone := "&title=" + vid.Title
 	fileURL := "&file=" + downloadFilename
 	apiKey := "&apikey=" + joinAPIKey
 
@@ -222,7 +225,7 @@ func sendPayloadToJoinAPI(downloadFilename string) string {
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode == 200 {
-		response = "Successfully sent payload to Join"
+		response = "Sending '" + vid.Title + "' to Papa's handy..."
 	}
 
 	return response
