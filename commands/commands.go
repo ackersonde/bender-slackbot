@@ -2,7 +2,6 @@ package commands
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -11,7 +10,6 @@ import (
 	"time"
 
 	"github.com/nlopes/slack"
-	"github.com/otium/ytdl"
 )
 
 var joinAPIKey = os.Getenv("joinAPIKey")
@@ -44,8 +42,8 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 			if err != nil {
 				api.PostMessage(slackMessage.Channel, "Invalid URL for downloading! ("+err.Error()+")", params)
 			} else {
-				result := sendPayloadToJoinAPI(uri.String())
-				api.PostMessage(slackMessage.Channel, result, params)
+				downloadYoutubeVideo(uri.String())
+				api.PostMessage(slackMessage.Channel, "Requested YouTube video...", params)
 			}
 		} else {
 			api.PostMessage(slackMessage.Channel, "Please provide YouTube video URL!", params)
@@ -57,7 +55,7 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 
 		for _, gameMetaData := range response.Games {
 			watchURL := "<" + gameMetaData[10] + "|" + gameMetaData[0] + " @ " + gameMetaData[4] + ">    "
-			downloadURL := "<https://ackerson.de/bb_download?gameTitle=" + gameMetaData[2] + "-" + gameMetaData[6] + "__" + response.ReadableDate + "&gameURL=" + gameMetaData[10] + " | :smartphone:>"
+			downloadURL := "<https://ackerson.de/bb_download?fileType=bb&gameTitle=" + gameMetaData[2] + "-" + gameMetaData[6] + "__" + response.ReadableDate + "&gameURL=" + gameMetaData[10] + " | :smartphone:>"
 
 			result += watchURL + downloadURL + "\n"
 		}
@@ -204,55 +202,11 @@ func mvvRoute(origin string, destination string) string {
 		"&SpEncId=0&itdDateYear=" + year
 }
 
-func sendPayloadToJoinAPI(downloadFilename string) string {
-	response := "Sorry, couldn't download URL..."
-
-	vid, _ := ytdl.GetVideoInfo(downloadFilename)
-	downloadURL, _ := vid.GetDownloadURL(vid.Formats[0])
-	resp, _ := http.Head(downloadURL.String())
-
-	// NOW send this URL to the Join Push App API
-	pushURL := "https://joinjoaomgcd.appspot.com/_ah/api/messaging/v1/sendPush"
-	defaultParams := "?deviceId=007e5b72192c420d9115334d1f177c4c&icon=" + url.QueryEscape("https://emoji.slack-edge.com/T092UA8PR/youtube/a9a89483b7536f8a.png") + "&smallicon=" + url.QueryEscape("https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR1IVXeyHHqhrZF48iK4bxzAjy3vlDoW9nVvTQoEL-tjOXygr-GWQ")
-	fileOnPhone := "&title=" + url.QueryEscape(vid.Title)
-	fileURL := "&file=" + downloadURL.String()
-	apiKey := "&apikey=" + joinAPIKey
-
-	completeURL := pushURL + defaultParams + fileOnPhone + fileURL + apiKey
-	// Get the data
-	log.Printf("joinPushURL: %s\n", completeURL)
-	resp, err := http.Get(completeURL)
-	if err != nil {
-		log.Printf("ERR: unable to call Join Push")
-	}
-	defer resp.Body.Close()
+func downloadYoutubeVideo(origURL string) bool {
+	resp, _ := http.Get("https://ackerson.de/bb_download?gameURL=" + origURL)
 	if resp.StatusCode == 200 {
-		response = "Sending '" + vid.Title + "' to Papa's handy..."
-		log.Printf("YouTube video " + vid.Title + " has " + strconv.FormatInt(resp.ContentLength, 10) + " bytes")
+		return true
 	}
 
-	return response
+	return false
 }
-
-/* DownloadFile is now exported
-func DownloadFile(search string) {
-	torrents, results := SearchFor(search, 200)
-	for num, torrent := range torrents {
-		if num < 20 {
-			fmt.Println(torrent.Title)
-			// TODO figure out date of game and compare to today's date
-			// type1: NFL.2016.RS.W12.(28 nov).GB
-			// type2: NFL.2016.12.11.Cowboys
-			// type3: NFL.2016.RS.W13.KC.
-
-		}
-	}
-
-	var tor []string
-	tor[0] = tranc
-	tor[1] = results
-	if runningFritzboxTunnel() {
-		trans := torrentCommand(tor)
-		fmt.Println(trans)
-	}
-}*/
