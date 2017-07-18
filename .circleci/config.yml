@@ -26,7 +26,7 @@ jobs:
           name: "Build, run and test docker image"
           command: |
             docker build -t danackerson/bender:vc$CIRCLE_BUILD_NUM --build-arg vpnc_gateway=$VPNC_GATEWAY --build-arg vpnc_id=$VPNC_ID --build-arg vpnc_secret=$VPNC_SECRET --build-arg vpnc_username=$VPNC_USERNAME --build-arg vpnc_password=$VPNC_PASSWORD .
-            docker run -d -e slackToken=$(echo $slackTokenEncoded | base64 --decode) -e joinAPIKey=$joinAPIKey -e raspberryPIIP=$raspberryPIIP -e slackReportChannel=$slackReportChannel -e piUser=$piUser -e piPass=$piPass -e digitalOceanToken=$digitalOceanToken --name bender danackerson/bender:vc$CIRCLE_BUILD_NUM
+            docker run -d -e slackToken=$(echo $slackTokenEncoded | base64 --decode) -e raspberryPIIP=$raspberryPIIP -e slackReportChannel=$slackReportChannel -e piUser=$piUser -e piPass=$piPass -e digitalOceanToken=$digitalOceanToken --name bender danackerson/bender:vc$CIRCLE_BUILD_NUM
             echo `docker logs bender`
 
       - type: add-ssh-keys
@@ -58,7 +58,7 @@ jobs:
             ssh -o "StrictHostKeyChecking no" ackersond@$DEPLOY_SERVER docker login -u $DOCKER_USER -p $DOCKER_PASS
             ssh -o "StrictHostKeyChecking no" ackersond@$DEPLOY_SERVER docker pull danackerson/bender:vc$CIRCLE_BUILD_NUM
             ssh -o "StrictHostKeyChecking no" ackersond@$DEPLOY_SERVER docker rm -f bender || true
-            ssh -o "StrictHostKeyChecking no" ackersond@$DEPLOY_SERVER docker run -d --restart=always --privileged=true -e joinAPIKey=$joinAPIKey -e raspberryPIIP=$raspberryPIIP -e slackReportChannel=$slackReportChannel -e piUser=$piUser -e piPass=$piPass -e digitalOceanToken=$digitalOceanToken -e CIRCLE_BUILD_NUM=$CIRCLE_BUILD_NUM -e slackToken=$(echo $slackTokenEncoded | base64 --decode) --name bender danackerson/bender:vc$CIRCLE_BUILD_NUM
+            ssh -o "StrictHostKeyChecking no" ackersond@$DEPLOY_SERVER docker run -d --restart=always --privileged=true -e raspberryPIIP=$raspberryPIIP -e slackReportChannel=$slackReportChannel -e piUser=$piUser -e piPass=$piPass -e digitalOceanToken=$digitalOceanToken -e CIRCLE_BUILD_NUM=$CIRCLE_BUILD_NUM -e slackToken=$(echo $slackTokenEncoded | base64 --decode) --name bender danackerson/bender:vc$CIRCLE_BUILD_NUM
 
 # not all Env vars are created equal - some have ':' or '{}' or <shudder> '\/'s
 # in this case we base64 encode the parameter: `base64 <<< [string in question]`

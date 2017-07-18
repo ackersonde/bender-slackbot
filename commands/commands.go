@@ -12,7 +12,6 @@ import (
 	"github.com/nlopes/slack"
 )
 
-var joinAPIKey = os.Getenv("joinAPIKey")
 var raspberryPIIP = os.Getenv("raspberryPIIP")
 var rtm *slack.RTM
 var piSDCardPath = "/home/pi/torrents/"
