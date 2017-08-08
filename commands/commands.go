@@ -21,6 +21,7 @@ var piSDCardPath = "/home/pi/torrents/"
 var piUSBMountPath = "/mnt/usb_1/DLNA/torrents/"
 var routerIP = "192.168.1.1"
 var tranc = "tranc"
+var circleAPIToken = os.Getenv("CIRCLE_API_TOKEN")
 
 // SlackReportChannel default reporting channel for bot crons
 var SlackReportChannel = os.Getenv("slackReportChannel") // C33QYV3PW is #remote_network_report
@@ -77,7 +78,7 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 				// handle err
 				log.Println("Failed to gen CircleCI URL build for do-algo: ", err)
 			}
-			req.SetBasicAuth(os.ExpandEnv("CIRCLE_API_TOKEN"), "")
+			req.SetBasicAuth(circleAPIToken, "")
 
 			resp, err := http.DefaultClient.Do(req)
 			if err != nil {
@@ -93,11 +94,10 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 
 			// TODO: get build num and then POLL it every minute up to 15 mins for SUCCESS or FAIL
 			content, _ := ioutil.ReadAll(resp.Body)
-			fmt.Printf("-----------------------------------\n%s\n-----------------------------------\n", content)
 			var data map[string]interface{}
 			err = json.Unmarshal([]byte(content), &data)
 			if err != nil {
-				panic(err)
+				fmt.Printf("-----------------------------------\n%s\n-----------------------------------\n", content)
 			}
 			var buildNum = data["build_num"].(string)
 			fmt.Println(data["build_num"])
