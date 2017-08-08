@@ -21,7 +21,6 @@ var piSDCardPath = "/home/pi/torrents/"
 var piUSBMountPath = "/mnt/usb_1/DLNA/torrents/"
 var routerIP = "192.168.1.1"
 var tranc = "tranc"
-var CIRCLE_API_TOKEN = os.Getenv("CIRCLE_API_TOKEN")
 
 // SlackReportChannel default reporting channel for bot crons
 var SlackReportChannel = os.Getenv("slackReportChannel") // C33QYV3PW is #remote_network_report
@@ -78,7 +77,7 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 				// handle err
 				log.Println("Failed to gen CircleCI URL build for do-algo: ", err)
 			}
-			req.SetBasicAuth(os.ExpandEnv("${CIRCLE_API_TOKEN}"), "")
+			req.SetBasicAuth(os.ExpandEnv("CIRCLE_API_TOKEN"), "")
 
 			resp, err := http.DefaultClient.Do(req)
 			if err != nil {
