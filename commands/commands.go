@@ -93,7 +93,7 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 
 			// TODO: get build num and then POLL it every minute up to 15 mins for SUCCESS or FAIL
 			content, _ := ioutil.ReadAll(resp.Body)
-
+			fmt.Printf("-----------------------------------\n%s\n-----------------------------------\n", content)
 			var data map[string]interface{}
 			err = json.Unmarshal([]byte(content), &data)
 			if err != nil {
