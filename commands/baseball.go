@@ -21,7 +21,6 @@ var homePageMap map[int]baseball.Team
 
 // GetBaseBallGame is now commented
 func GetBaseBallGame(gameID string) string {
-	// TODO download this damn thing to /home/ackersond/bb_games/
 	return baseball.FetchGameURLFromID(gameID)
 }
 
