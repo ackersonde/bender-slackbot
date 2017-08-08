@@ -91,17 +91,14 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 			// TODO: get build num and then POLL it every minute up to 15 mins for SUCCESS or FAIL
 			contentBytes, _ := ioutil.ReadAll(resp.Body)
 			contentString := string(contentBytes)
-			fmt.Printf("-----------------------------------\n%s\n-----------------------------------\n", contentString)
+			//fmt.Printf("-----------------------------------\n%s\n-----------------------------------\n", contentString)
 
-			var data map[string]interface{}
+			var data []map[string]interface{}
 			err2 := json.Unmarshal([]byte(contentString), &data)
 			if err2 != nil {
 				fmt.Printf("-----------------------------------\n%s\n-----------------------------------\n", err2.Error())
 			}
-			var buildNum = data["build_num"].(string)
-			fmt.Println(data["build_num"])
-			fmt.Println(data["failed"])
-
+			var buildNum = data[0]["build_num"].(string)
 			response = ":circleci: <https://circleci.com/gh/danackerson/do-algo/" + buildNum + "|do-algo Build " + buildNum + ">"
 		}
 		api.PostMessage(slackMessage.Channel, response, params)
