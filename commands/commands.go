@@ -93,13 +93,13 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 			contentString := string(contentBytes)
 			//fmt.Printf("-----------------------------------\n%s\n-----------------------------------\n", contentString)
 
-			var data []map[string]interface{}
+			var data map[string]interface{}
 			err2 := json.Unmarshal([]byte(contentString), &data)
 			if err2 != nil {
 				fmt.Printf("-----------------------------------\n%s\n-----------------------------------\n", err2.Error())
 			}
 
-			var buildNum = strconv.FormatFloat(data[0]["build_num"].(float64), 'f', -1, 64)
+			var buildNum = strconv.FormatFloat(data["build_num"].(float64), 'f', -1, 64)
 			response = ":circleci: <https://circleci.com/gh/danackerson/do-algo/" + buildNum + "|do-algo Build " + buildNum + ">"
 		}
 		api.PostMessage(slackMessage.Channel, response, params)
