@@ -28,8 +28,6 @@ func prepareScheduler() {
 }
 
 func main() {
-	fmt.Println(os.Getenv("harhar"))
-	fmt.Println(os.Getenv("CIRCLE_API_TOKEN"))
 	api := slack.New(os.Getenv("slackToken"))
 	logger := log.New(os.Stdout, "slack-bot: ", log.Lshortfile|log.LstdFlags)
 	slack.SetLogger(logger)
