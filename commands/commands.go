@@ -98,7 +98,8 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 			if err2 != nil {
 				fmt.Printf("-----------------------------------\n%s\n-----------------------------------\n", err2.Error())
 			}
-			var buildNum = data[0]["build_num"].(string)
+
+			var buildNum = strconv.FormatFloat(data[0]["build_num"].(float64), 'f', -1, 64)
 			response = ":circleci: <https://circleci.com/gh/danackerson/do-algo/" + buildNum + "|do-algo Build " + buildNum + ">"
 		}
 		api.PostMessage(slackMessage.Channel, response, params)
