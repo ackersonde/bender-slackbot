@@ -15,6 +15,7 @@ RUN sed -i -e "s/{{gateway}}/$vpnc_gateway/" -e "s/{{id}}/$vpnc_id/" -e "s/{{sec
 
 # get slackbot in place
 RUN mkdir /app
+RUN mkdir /algo_vpn
 COPY bender /app/
 WORKDIR /app
 ENTRYPOINT ["./bender"]

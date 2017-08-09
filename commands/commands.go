@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"os/exec"
 	"regexp"
 	"strconv"
 	"strings"
@@ -220,22 +221,36 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 }
 
 func findAndReturnVPNConfigs(doServers string) string {
-	response := "No such host"
-	parts := strings.Split(doServers, "\n")
-	for i := range parts {
-		// FORMAT => ":do_droplet: <addr|name> (IPv4) [ID: DO_ID]"
-		if strings.Contains(parts[i], "york.shire") {
-			reIPv4, _ := regexp.Compile(`(?:[0-9]{1,3}\.){3}[0-9]{1,3}`)
-			ipV4 := reIPv4.Find([]byte(parts[i]))
-			response = parts[i] + " (IPv4 => " + string(ipV4) + ")"
-		}
+	ipv4 := getIPv4Address(doServers)
+
+	algoDirCmd := "sudo ls -lrt /algo_vpn/" + ipv4
+	algoDir, err := exec.Command("/bin/bash", "-c", algoDirCmd).Output()
+	if err != nil {
+		fmt.Printf("Failed to execute command: %s", algoDirCmd)
 	}
 
+	algoDirContents := string(algoDir)
 	// TODO: provide IP address, password and
 	// URLs to download sswan & mobileconfig files
 	// maybe `docker logs algo_vpn` ?
 
-	return response
+	return algoDirContents
+}
+
+func getIPv4Address(serverList string) string {
+	var ipV4 []byte
+
+	parts := strings.Split(serverList, "\n")
+	for i := range parts {
+		// FORMAT => ":do_droplet: <addr|name> (IPv4) [ID: DO_ID]"
+		if strings.Contains(parts[i], "york.shire") {
+			reIPv4, _ := regexp.Compile(`(?:[0-9]{1,3}\.){3}[0-9]{1,3}`)
+			ipV4 = reIPv4.Find([]byte(parts[i]))
+			break
+		}
+	}
+
+	return string(ipV4)
 }
 
 func mvvRoute(origin string, destination string) string {

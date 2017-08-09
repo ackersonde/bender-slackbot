@@ -1,10 +1,8 @@
 package commands
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
 	"strconv"
@@ -12,59 +10,12 @@ import (
 	"time"
 
 	"github.com/nlopes/slack"
-	"golang.org/x/crypto/ssh"
 )
 
 var tunnelOnTime time.Time
 var tunnelIdleSince time.Time
 var maxTunnelIdleTime = float64(5 * 60) // 5 mins in seconds
-
-func executeRemoteCmd(command string) (stdoutStr string, stderrStr string) {
-	defer func() { //catch or finally
-		if err := recover(); err != nil { //catch
-			fmt.Fprintf(os.Stderr, "Exception: %v\n", err)
-		}
-	}()
-
-	raspberryPIPubKey := "ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBKqLtosnMy7YnC+FXAxqevMgOGPkz0tPHYcfZlA+sfWLW49wCbzdYon3F47QjqzYA8Bx8J/FAdU6VB3UHKfmgYg="
-	hostKey, _, _, _, err := ssh.ParseAuthorizedKey([]byte(raspberryPIPubKey))
-	if err != nil {
-		log.Fatalf("error parsing: %v", err)
-	}
-
-	config := &ssh.ClientConfig{
-		User:            os.Getenv("piUser"),
-		Auth:            []ssh.AuthMethod{ssh.Password(os.Getenv("piPass"))},
-		HostKeyCallback: ssh.FixedHostKey(hostKey),
-	}
-
-	if raspberryPIIP == "" {
-		raspberryPIIP = "raspberrypi.fritz.box"
-	}
-	connectionString := fmt.Sprintf("%s:%s", raspberryPIIP, "22")
-	conn, errConn := ssh.Dial("tcp", connectionString, config)
-	if errConn != nil { //catch
-		fmt.Fprintf(os.Stderr, "Exception: %v\n", errConn)
-	}
-	session, _ := conn.NewSession()
-	defer session.Close()
-
-	var stdoutBuf bytes.Buffer
-	session.Stdout = &stdoutBuf
-	var stderrBuf bytes.Buffer // hmmm
-	session.Stderr = &stderrBuf
-	session.Run(command)
-
-	tunnelIdleSince = time.Now()
-
-	errors := ""
-	if stderrBuf.String() != "" {
-		errStr := strings.TrimSpace(stderrBuf.String())
-		errors = "ERR `" + errStr + "`"
-	}
-
-	return stdoutBuf.String(), errors
-}
+var piHostKey = "ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBKqLtosnMy7YnC+FXAxqevMgOGPkz0tPHYcfZlA+sfWLW49wCbzdYon3F47QjqzYA8Bx8J/FAdU6VB3UHKfmgYg="
 
 // RaspberryPIPrivateTunnelChecks ensures PrivateTunnel vpn connection
 // on PI is up and working properly
@@ -77,7 +28,12 @@ func RaspberryPIPrivateTunnelChecks(userCall bool) string {
 		timeout := time.After(10 * time.Second)
 		go func() {
 			// get both ipv4+ipv6 internet addresses
-			stdout, _ := executeRemoteCmd("curl https://ipleak.net/json/")
+			cmd := "curl https://ipleak.net/json/"
+			details := RemoteCmd{Host: raspberryPIIP, HostKey: piHostKey, Username: os.Getenv("piUser"), Password: os.Getenv("piPass"), Cmd: cmd}
+
+			stdout, _ := executeRemoteCmd(details)
+
+			tunnelIdleSince = time.Now()
 			results <- stdout
 		}()
 
@@ -101,7 +57,12 @@ func RaspberryPIPrivateTunnelChecks(userCall bool) string {
 					timeoutDig := time.After(10 * time.Second)
 					// ensure home.ackerson.de is DIFFERENT than PI IP address!
 					go func() {
-						stdout, _ := executeRemoteCmd("dig home.ackerson.de A home.ackerson.de AAAA +short")
+						cmd := "dig home.ackerson.de A home.ackerson.de AAAA +short"
+						details := RemoteCmd{Host: raspberryPIIP, HostKey: piHostKey, Username: os.Getenv("piUser"), Password: os.Getenv("piPass"), Cmd: cmd}
+
+						stdout, _ := executeRemoteCmd(details)
+
+						tunnelIdleSince = time.Now()
 						resultsDig <- stdout
 					}()
 					select {
@@ -126,7 +87,12 @@ func RaspberryPIPrivateTunnelChecks(userCall bool) string {
 			resultsIPTables := make(chan string, 10)
 			timeoutIPTables := time.After(5 * time.Second)
 			go func() {
-				stdout, _ := executeRemoteCmd("sudo iptables -L OUTPUT -v --line-numbers | grep all")
+				cmd := "sudo iptables -L OUTPUT -v --line-numbers | grep all"
+				details := RemoteCmd{Host: raspberryPIIP, HostKey: piHostKey, Username: os.Getenv("piUser"), Password: os.Getenv("piPass"), Cmd: cmd}
+
+				stdout, _ := executeRemoteCmd(details)
+
+				tunnelIdleSince = time.Now()
 				resultsIPTables <- stdout
 			}()
 			select {
@@ -183,14 +149,22 @@ func CheckPiDiskSpace(path string) string {
 		path = strings.TrimPrefix(path, "/")
 	}
 
-	response, err := executeRemoteCmd("du -sh \"" + piSDCardPath + path + "\"/*")
+	cmd := "du -sh \"" + piSDCardPath + path + "\"/*"
+	details := RemoteCmd{Host: raspberryPIIP, HostKey: piHostKey, Username: os.Getenv("piUser"), Password: os.Getenv("piPass"), Cmd: cmd}
+
+	response, err := executeRemoteCmd(details)
+	tunnelIdleSince = time.Now()
 	if err != "" {
 		response = err
 	} else {
 		response = strings.Replace(response, piSDCardPath+path, "", -1)
 		response = ":raspberry_pi: *SD Card Disk Usage* @ `" + piSDCardPath + path + "`\n" + response
 	}
-	df, _ := executeRemoteCmd("df -h /root/")
+	cmd = "df -h /root/"
+	details = RemoteCmd{Host: raspberryPIIP, HostKey: piHostKey, Username: os.Getenv("piUser"), Password: os.Getenv("piPass"), Cmd: cmd}
+
+	df, _ := executeRemoteCmd(details)
+	tunnelIdleSince = time.Now()
 	response += "\n\n" + df
 
 	if !userCall {
@@ -212,14 +186,21 @@ func DeleteTorrentFile(filename string) string {
 		path := piSDCardPath + filename
 
 		var deleteCmd string
-		isDir, _ := executeRemoteCmd("test -d \"" + path + "\" && echo 'Yes'")
+		cmd := "test -d \"" + path + "\" && echo 'Yes'"
+		details := RemoteCmd{Host: raspberryPIIP, HostKey: piHostKey, Username: os.Getenv("piUser"), Password: os.Getenv("piPass"), Cmd: cmd}
+
+		isDir, _ := executeRemoteCmd(details)
+		tunnelIdleSince = time.Now()
 		if strings.HasPrefix(isDir, "Yes") {
 			deleteCmd = "rm -Rf \"" + path + "\""
 		} else {
 			deleteCmd = "rm \"" + path + "\""
 		}
 
-		response, err = executeRemoteCmd(deleteCmd)
+		details = RemoteCmd{Host: raspberryPIIP, HostKey: piHostKey, Username: os.Getenv("piUser"), Password: os.Getenv("piPass"), Cmd: deleteCmd}
+
+		response, err = executeRemoteCmd(details)
+		tunnelIdleSince = time.Now()
 		if err != "" {
 			response = err
 		}
@@ -236,8 +217,10 @@ func MoveTorrentFile(filename string) {
 		moveCmd := "mv \"" + piSDCardPath + filename + "\" " + piUSBMountPath
 
 		go func() {
-			result, err := executeRemoteCmd(moveCmd)
+			details := RemoteCmd{Host: raspberryPIIP, HostKey: piHostKey, Username: os.Getenv("piUser"), Password: os.Getenv("piPass"), Cmd: moveCmd}
 
+			result, err := executeRemoteCmd(details)
+			tunnelIdleSince = time.Now()
 			if err != "" {
 				result = err
 			} else if result == "" {
