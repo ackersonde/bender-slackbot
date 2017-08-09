@@ -14,6 +14,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/elgs/gojq"
 	"github.com/nlopes/slack"
 )
 
@@ -223,14 +224,11 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 func findAndReturnVPNConfigs(doServers string) string {
 	ipv4 := getIPv4Address(doServers)
 	log.Println(ipv4)
-	algoDirCmd := "ls -lrt /algo_vpn/" + ipv4
-	algoDir, err := exec.Command("/bin/bash", "-c", algoDirCmd).Output()
+	copyCmd := "cp /algo_vpn/" + ipv4 + "/dan.mobileconfig /uploads/ && cp /algo_vpn/" + ipv4 + "/android_dan.sswan /uploads"
+	_, err := exec.Command("/bin/bash", "-c", copyCmd).Output()
 	if err != nil {
-		fmt.Printf("Failed to execute command: %s", algoDirCmd)
+		fmt.Printf("Failed to execute command: %s", copyCmd)
 	}
-
-	algoDirContents := string(algoDir)
-	log.Println(algoDirContents)
 
 	uploadsDirCmd := "ls -lrt /uploads/"
 	uploadsDir, err := exec.Command("/bin/bash", "-c", uploadsDirCmd).Output()
@@ -241,7 +239,93 @@ func findAndReturnVPNConfigs(doServers string) string {
 	uploadDirContents := string(uploadsDir)
 	log.Println(uploadDirContents)
 
-	return ":sswan: Contents of " + ipv4 + ":\n" + algoDirContents
+	// parse build logs of finished algo_vpn deploy for SSH password (android sswan)
+	doAlgoCircleCIBuilds := "https://circleci.com/api/v1.1/project/github/danackerson/do-algo?circle-token=" + os.Getenv("circleAPIToken")
+	req, _ := http.NewRequest("GET", doAlgoCircleCIBuilds, nil)
+	req.Header.Set("Accept", "application/json")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		log.Println("Failed to call CircleCI build for do-algo: ", err)
+	}
+	defer resp.Body.Close()
+	/* at top of bottom 13 lines
+	"    \"#                The p12 and SSH keys password for new users is 03342cb3       #\"\n",
+	"    \"#                  The CA key password is 2fd428350ad528ab427728a02ac9500a     #\"\n",
+	"    \"#      Shell access: ssh -i configs/algo.pem root@165.227.71.180        #\"\n" */
+
+	contentBytes, _ := ioutil.ReadAll(resp.Body)
+	contentString := string(contentBytes)
+	buildsParser, _ := gojq.NewStringQuery(contentString)
+	var buildNum string
+	buildNumParse, errParse := buildsParser.Query("[0].build_num")
+	if errParse != nil {
+		log.Println("err: " + errParse.Error())
+	} else {
+		buildNum = strconv.FormatFloat(buildNumParse.(float64), 'f', -1, 64)
+		log.Println("buildNum: " + buildNum)
+	}
+	// now get build details for this buildNum
+	// parse build logs of finished algo_vpn deploy for SSH password (android sswan)
+	doAlgoCircleCIBuild := "https://circleci.com/api/v1.1/project/github/danackerson/do-algo/" + buildNum + "?circle-token=" + os.Getenv("circleAPIToken")
+	req, _ = http.NewRequest("GET", doAlgoCircleCIBuild, nil)
+	req.Header.Set("Accept", "application/json")
+
+	resp, err = http.DefaultClient.Do(req)
+	if err != nil {
+		log.Println("Failed to call CircleCI build for do-algo: ", err)
+	}
+	defer resp.Body.Close()
+	/* at top of bottom 13 lines
+	"    \"#                The p12 and SSH keys password for new users is 03342cb3       #\"\n",
+	"    \"#                  The CA key password is 2fd428350ad528ab427728a02ac9500a     #\"\n",
+	"    \"#      Shell access: ssh -i configs/algo.pem root@165.227.71.180        #\"\n" */
+
+	var outputURL string
+	contentBytes, _ = ioutil.ReadAll(resp.Body)
+	contentString = string(contentBytes)
+	buildParser, _ := gojq.NewStringQuery(contentString)
+	for i := 0; i < 8; i++ {
+		stepName, errParseNames := buildParser.Query("steps.[" + strconv.Itoa(i) + "].name")
+		if errParseNames != nil {
+			log.Println("err: " + errParseNames.Error())
+		} else {
+			log.Println("stepName: " + stepName.(string))
+		}
+		if stepName == "Upload to DockerHub, deploy to Digital Ocean Droplet & launch VPN" {
+			actionsParser, errOutput := buildParser.Query("steps.[" + strconv.Itoa(i) + "].actions.[0].output_url")
+			if errOutput != nil {
+				log.Println("err2: " + errOutput.Error())
+			} else {
+				outputURL = actionsParser.(string)
+			}
+
+			break
+		}
+	}
+
+	req, _ = http.NewRequest("GET", outputURL, nil)
+	req.Header.Set("Accept", "application/json")
+
+	resp, err = http.DefaultClient.Do(req)
+	if err != nil {
+		log.Println("Failed to call CircleCI build for do-algo: ", err)
+	}
+	defer resp.Body.Close()
+	contentBytes, _ = ioutil.ReadAll(resp.Body)
+	contentString = string(contentBytes)
+	outputParser, _ := gojq.NewStringQuery(contentString)
+	message, errParse := outputParser.Query("[0].message")
+	msgs := strings.Split(message.(string), "\n")
+	log.Println("msgs has " + strconv.Itoa(len(msgs)) + " lines")
+	for k := len(msgs) - 1; k > len(msgs)-15; k-- {
+		log.Println(msgs[k])
+		// TODO
+		// parse out IP address from msgs[len(msgs)-13] (needed to copy certs/conn files)
+		// parse out password from msgs[len(msgs)-15] (needed for StrongSwan VPN passwd on mobile)
+	}
+
+	return ":algovpn: Contents of /uploads/:\n" + uploadDirContents
 }
 
 func getIPv4Address(serverList string) string {

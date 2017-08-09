@@ -56,6 +56,7 @@ jobs:
             fi
             echo "Deploy to $DEPLOY_SERVER"
             export UPLOAD_DIR=`ssh -o "StrictHostKeyChecking no" ackersond@deploy.ackerson.de docker inspect ackerson.de| grep "/var/lib/docker/volumes/" | sed 's/"//g' | sed 's/ //g' | sed 's/,//g' | awk -F : '{ print $2 }'`'/bb_games'
+            echo "Uploading to $UPLOAD_DIR"
             ssh -o "StrictHostKeyChecking no" ackersond@$DEPLOY_SERVER docker login -u $DOCKER_USER -p $DOCKER_PASS && docker pull danackerson/bender:vc$CIRCLE_BUILD_NUM
             ssh -o "StrictHostKeyChecking no" ackersond@$DEPLOY_SERVER docker rm -f bender || true
             ssh -o "StrictHostKeyChecking no" ackersond@$DEPLOY_SERVER mkdir /home/ackersond/algo_vpn || true
