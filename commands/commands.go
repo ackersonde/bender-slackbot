@@ -222,19 +222,26 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 
 func findAndReturnVPNConfigs(doServers string) string {
 	ipv4 := getIPv4Address(doServers)
-
-	algoDirCmd := "sudo ls -lrt /algo_vpn/" + ipv4
+	log.Println(ipv4)
+	algoDirCmd := "ls -lrt /algo_vpn/" + ipv4
 	algoDir, err := exec.Command("/bin/bash", "-c", algoDirCmd).Output()
 	if err != nil {
 		fmt.Printf("Failed to execute command: %s", algoDirCmd)
 	}
 
 	algoDirContents := string(algoDir)
-	// TODO: provide IP address, password and
-	// URLs to download sswan & mobileconfig files
-	// maybe `docker logs algo_vpn` ?
+	log.Println(algoDirContents)
 
-	return algoDirContents
+	uploadsDirCmd := "ls -lrt /uploads/"
+	uploadsDir, err := exec.Command("/bin/bash", "-c", uploadsDirCmd).Output()
+	if err != nil {
+		fmt.Printf("Failed to execute command: %s", uploadsDir)
+	}
+
+	uploadDirContents := string(uploadsDir)
+	log.Println(uploadDirContents)
+
+	return ":sswan: Contents of " + ipv4 + ":\n" + algoDirContents
 }
 
 func getIPv4Address(serverList string) string {
