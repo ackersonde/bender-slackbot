@@ -224,19 +224,19 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 func findAndReturnVPNConfigs(doServers string) string {
 	ipv4 := getIPv4Address(doServers)
 	log.Println(ipv4)
-	copyCmd := "cp /algo_vpn/" + ipv4 + "/dan.mobileconfig /uploads/ && cp /algo_vpn/" + ipv4 + "/android_dan.sswan /uploads"
+	copyCmd := "cp /algo_vpn/" + ipv4 + "/dan.mobileconfig /uploads/ && cp /algo_vpn/" + ipv4 + "/dan_" + ipv4 + ".p12 /uploads"
 	_, err := exec.Command("/bin/bash", "-c", copyCmd).Output()
 	if err != nil {
 		fmt.Printf("Failed to execute command: %s", copyCmd)
 	}
 
 	joinStatus := "sent to Papa's handy"
-	resp, _ := http.Get("https://ackerson.de/bb_download?fileType=vpn&gameTitle=android_dan.sswan&gameURL=" + "https://ackerson.de/bb_games/android_dan.sswan")
+	resp, _ := http.Get("https://ackerson.de/bb_download?fileType=vpn&gameTitle=dan_" + ipv4 + ".p12&gameURL=" + "https://ackerson.de/bb_games/dan_" + ipv4 + ".p12")
 	if resp.StatusCode != 200 {
 		joinStatus = "couldn't send to Papa's handy"
 	}
-	links := ":algovpn: <https://ackerson.de/bb_games/android_dan.sswan|android_dan.sswan> (" + joinStatus + ")\n"
-	links += ":algovpn: <https://ackerson.de/bb_games/dan.mobileconfig|dan.mobileconfig> (dbl click on Mac)\n"
+	links := ":link: <https://ackerson.de/bb_games/dan_" + ipv4 + ".p12|dan_" + ipv4 + ".p12> (" + joinStatus + ")\n"
+	links += ":link: <https://ackerson.de/bb_games/dan.mobileconfig|dan.mobileconfig> (dbl click on Mac)\n"
 	// TODO: delete these files after 15 mins expires!!!
 
 	// get last build (TODO: successful?)
@@ -312,13 +312,10 @@ func findAndReturnVPNConfigs(doServers string) string {
 	message, errParse := outputParser.Query("[0].message")
 	msgs := strings.Split(message.(string), "\n")
 
-	checkIPString, _ := regexp.Compile(`Shell access: ssh -i configs/algo.pem root@(?:[0-9]{1,3}\.){3}[0-9]{1,3}`)
-	ipV4AddressAlgoVPN := string(checkIPString.Find([]byte(msgs[len(msgs)-12])))
-
 	checkPassString, _ := regexp.Compile(`The p12 and SSH keys password for new users is (?:[0-9a-f]{8})`)
 	passAlgoVPN := string(checkPassString.Find([]byte(msgs[len(msgs)-14])))
 
-	return ":algovpn: @" + ipV4AddressAlgoVPN + ":" + passAlgoVPN + "\n" + links
+	return ":algovpn: " + passAlgoVPN + " for " + links
 }
 
 func getIPv4Address(serverList string) string {
