@@ -230,21 +230,21 @@ func findAndReturnVPNConfigs(doServers string) string {
 		fmt.Printf("Failed to execute command: %s", copyCmd)
 	}
 
-	uploadsDirCmd := "ls -lrt /uploads/"
-	uploadsDir, err := exec.Command("/bin/bash", "-c", uploadsDirCmd).Output()
-	if err != nil {
-		fmt.Printf("Failed to execute command: %s", uploadsDir)
+	joinStatus := "sent to Papa's handy"
+	resp, _ := http.Get("https://ackerson.de/bb_download?fileType=vpn&gameTitle=android_dan.sswan&gameURL=" + "https://ackerson.de/bb_games/android_dan.sswan")
+	if resp.StatusCode != 200 {
+		joinStatus = "couldn't send to Papa's handy"
 	}
-
-	uploadDirContents := string(uploadsDir)
-	log.Println(uploadDirContents)
+	links := ":algovpn: <https://ackerson.de/bb_games/android_dan.sswan|android_dan.sswan> (" + joinStatus + ")\n"
+	links += ":algovpn: <https://ackerson.de/bb_games/dan.mobileconfig|dan.mobileconfig> (dbl click on Mac)\n"
+	// TODO: delete these files after 15 mins expires!!!
 
 	// get last build (TODO: successful?)
 	doAlgoCircleCIBuilds := "https://circleci.com/api/v1.1/project/github/danackerson/do-algo?circle-token=" + os.Getenv("circleAPIToken")
 	req, _ := http.NewRequest("GET", doAlgoCircleCIBuilds, nil)
 	req.Header.Set("Accept", "application/json")
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err = http.DefaultClient.Do(req)
 	if err != nil {
 		log.Println("Failed to call CircleCI build for do-algo: ", err)
 	}
@@ -312,7 +312,13 @@ func findAndReturnVPNConfigs(doServers string) string {
 	message, errParse := outputParser.Query("[0].message")
 	msgs := strings.Split(message.(string), "\n")
 
-	return ":droplet: " + msgs[len(msgs)-12] + "\n" + msgs[len(msgs)-14] + "\n:algovpn: Contents of /uploads/:\n" + uploadDirContents
+	checkIPString, _ := regexp.Compile(`Shell access: ssh -i configs/algo.pem root@(?:[0-9]{1,3}\.){3}[0-9]{1,3}`)
+	ipV4AddressAlgoVPN := string(checkIPString.Find([]byte(msgs[len(msgs)-12])))
+
+	checkPassString, _ := regexp.Compile(`The p12 and SSH keys password for new users is (?:[0-9a-f]{8})`)
+	passAlgoVPN := string(checkPassString.Find([]byte(msgs[len(msgs)-14])))
+
+	return ":algovpn: @" + ipV4AddressAlgoVPN + ":" + passAlgoVPN + "\n" + links
 }
 
 func getIPv4Address(serverList string) string {

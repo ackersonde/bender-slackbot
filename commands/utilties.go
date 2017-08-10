@@ -13,9 +13,9 @@ import (
 // RemoteCmd for execution over SSH connection
 type RemoteCmd struct {
 	Host     string
+	HostKey  string
 	Username string
 	Password string
-	HostKey  string
 	Cmd      string
 }
 
