@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -13,6 +14,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"golang.org/x/crypto/scrypt"
 
 	"github.com/elgs/gojq"
 	"github.com/nlopes/slack"
@@ -85,9 +88,9 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 			/* TODO: POLL every minute for up to 15mins
 			// monitor this OR deploy.ackerson.de for successful finish
 			// then ` docker logs --tail 13 algo_vpn | sed -n -e '1,3p'` looking for bottom 13 lines
-			        "    \"#                The p12 and SSH keys password for new users is 03342cb3       #\"\n",
-			        "    \"#                  The CA key password is 2fd428350ad528ab427728a02ac9500a     #\"\n",
-			        "    \"#      Shell access: ssh -i configs/algo.pem root@165.227.71.180        #\"\n"*/
+			        "    \"#   The p12 and SSH keys password for new users is 03342cb3     #\"\n",
+			        "    \"#   The CA key password is 2fd428350ad528ab427728a02ac9500a     #\"\n",
+			        "    \"#   Shell access: ssh -i configs/algo.pem root@165.227.71.180   #\"\n"	*/
 
 			// TODO: get build num and then POLL it every minute up to 15 mins for SUCCESS or FAIL
 			contentBytes, _ := ioutil.ReadAll(resp.Body)
@@ -224,20 +227,30 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 func findAndReturnVPNConfigs(doServers string) string {
 	ipv4 := getIPv4Address(doServers)
 	log.Println(ipv4)
-	copyCmd := "cp /algo_vpn/" + ipv4 + "/dan.mobileconfig /uploads/ && cp /algo_vpn/" + ipv4 + "/android_dan.sswan /uploads"
+
+	// lets encrypt the filenames on disk
+	salt := []byte(ipv4)
+	desktopConfigFileHashed, _ := scrypt.Key([]byte("dan.mobileconfig"), salt, 16384, 8, 1, 32)
+	desktopConfigFileString := hex.EncodeToString(desktopConfigFileHashed)
+	fmt.Println(desktopConfigFileString)
+
+	mobileConfigFileHashed, _ := scrypt.Key([]byte("android_dan.sswan"), salt, 16384, 8, 1, 32)
+	mobileConfigFileString := hex.EncodeToString(mobileConfigFileHashed)
+	fmt.Println(mobileConfigFileString)
+
+	copyCmd := "cp /algo_vpn/" + ipv4 + "/dan.mobileconfig /uploads/" + desktopConfigFileString + " && cp /algo_vpn/" + ipv4 + "/android_dan.sswan /uploads/" + mobileConfigFileString
 	_, err := exec.Command("/bin/bash", "-c", copyCmd).Output()
 	if err != nil {
 		fmt.Printf("Failed to execute command: %s", copyCmd)
 	}
 
 	joinStatus := "*Import* VPN profile"
-	resp, _ := http.Get("https://ackerson.de/bb_download?fileType=vpn&gameTitle=android_dan.sswan&gameURL=" + "https://ackerson.de/bb_games/android_dan.sswan")
+	resp, _ := http.Get("https://ackerson.de/bb_download?fileType=vpn&gameTitle=android_dan.sswan&gameURL=" + "https://ackerson.de/bb_games/" + mobileConfigFileString)
 	if resp.StatusCode != 200 {
 		joinStatus = "couldn't send to Papa's handy"
 	}
-	links := ":link: <https://ackerson.de/bb_games/android_dan.sswan|android_dan_" + ipv4 + ".sswan> (" + joinStatus + ")\n"
-	links += ":link: <https://ackerson.de/bb_games/dan.mobileconfig|dan.mobileconfig> (dbl click on Mac)\n"
-	// TODO: delete these files after 15 mins expires!!!
+	links := ":link: <https://ackerson.de/bb_games/" + mobileConfigFileString + "|android_dan_" + ipv4 + ".sswan> (" + joinStatus + ")\n"
+	links += ":link: <https://ackerson.de/bb_games/" + desktopConfigFileString + "|dan.mobileconfig> (dbl click on Mac)\n"
 
 	// get last build (TODO: successful?)
 	doAlgoCircleCIBuilds := "https://circleci.com/api/v1.1/project/github/danackerson/do-algo?circle-token=" + os.Getenv("circleAPIToken")
