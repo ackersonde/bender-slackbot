@@ -235,7 +235,7 @@ func findAndReturnVPNConfigs(doServers string) string {
 	if resp.StatusCode != 200 {
 		joinStatus = "couldn't send to Papa's handy"
 	}
-	links := ":link: <https://ackerson.de/bb_games/android_dan.sswan|android_dan_" + ipv4 + "sswan> (" + joinStatus + ")\n"
+	links := ":link: <https://ackerson.de/bb_games/android_dan.sswan|android_dan_" + ipv4 + ".sswan> (" + joinStatus + ")\n"
 	links += ":link: <https://ackerson.de/bb_games/dan.mobileconfig|dan.mobileconfig> (dbl click on Mac)\n"
 	// TODO: delete these files after 15 mins expires!!!
 
