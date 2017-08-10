@@ -245,7 +245,7 @@ func findAndReturnVPNConfigs(doServers string) string {
 	}
 
 	joinStatus := "*Import* VPN profile"
-	resp, _ := http.Get("https://ackerson.de/bb_download?fileType=vpn&gameTitle=android_dan.sswan&gameURL=" + "https://ackerson.de/bb_games/" + mobileConfigFileString)
+	resp, _ := http.Get("https://ackerson.de/bb_download?fileType=vpn&gameTitle=android_dan.sswan&gameURL=" + mobileConfigFileString)
 	if resp.StatusCode != 200 {
 		joinStatus = "couldn't send to Papa's handy"
 	}
@@ -272,7 +272,6 @@ func findAndReturnVPNConfigs(doServers string) string {
 		log.Println("err: " + errParse.Error())
 	} else {
 		buildNum = strconv.FormatFloat(buildNumParse.(float64), 'f', -1, 64)
-		log.Println("buildNum: " + buildNum)
 	}
 
 	// now get build details for this buildNum
@@ -291,12 +290,7 @@ func findAndReturnVPNConfigs(doServers string) string {
 	contentString = string(contentBytes)
 	buildParser, _ := gojq.NewStringQuery(contentString)
 	for i := 0; i < 8; i++ {
-		stepName, errParseNames := buildParser.Query("steps.[" + strconv.Itoa(i) + "].name")
-		if errParseNames != nil {
-			log.Println("err: " + errParseNames.Error())
-		} else {
-			log.Println("stepName: " + stepName.(string))
-		}
+		stepName, _ := buildParser.Query("steps.[" + strconv.Itoa(i) + "].name")
 		if stepName == "Upload to DockerHub, deploy to Digital Ocean Droplet & launch VPN" {
 			actionsParser, errOutput := buildParser.Query("steps.[" + strconv.Itoa(i) + "].actions.[0].output_url")
 			if errOutput != nil {
