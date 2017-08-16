@@ -27,6 +27,9 @@ var piUSBMountPath = "/mnt/usb_1/DLNA/torrents/"
 var routerIP = "192.168.1.1"
 var tranc = "tranc"
 
+var circleCIDoAlgoURL = "https://circleci.com/api/v1.1/project/github/danackerson/do-algo"
+var circleCITokenParam = "?circle-token=" + os.Getenv("circleAPIToken")
+
 // SlackReportChannel default reporting channel for bot crons
 var SlackReportChannel = os.Getenv("slackReportChannel") // C33QYV3PW is #remote_network_report
 
@@ -75,18 +78,16 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 			response = findAndReturnVPNConfigs(response)
 			api.PostMessage(slackMessage.Channel, response, params)
 		} else {
-			circleCIDoAlgoURL := "https://circleci.com/api/v1.1/project/github/danackerson/do-algo"
-			circleCITokenParam := "?circle-token=" + os.Getenv("circleAPIToken")
+			building, buildNum, _ := circleCIDoAlgoBuildingAndBuildNums()
+			if !building {
+				buildsURL := circleCIDoAlgoURL + circleCITokenParam
+				buildsParser := getJSONFromRequestURL(buildsURL, "POST")
 
-			buildsURL := circleCIDoAlgoURL + circleCITokenParam
-			buildsParser := getJSONFromRequestURL(buildsURL, "POST")
-
-			buildNumParse, _ := buildsParser.Query("build_num")
-			buildNum := strconv.FormatFloat(buildNumParse.(float64), 'f', -1, 64)
-
+				buildNumParse, _ := buildsParser.Query("build_num")
+				buildNum = strconv.FormatFloat(buildNumParse.(float64), 'f', -1, 64)
+			}
 			response = ":circleci: <https://circleci.com/gh/danackerson/do-algo/" + buildNum + "|do-algo Build " + buildNum + ">"
 			api.PostMessage(slackMessage.Channel, response, params)
-			// TODO: poll this URL every 3 mins until outcome:success (and then invoke findAndReturnVPNConfigs())
 		}
 	} else if args[0] == "do" {
 		response := ListDODroplets(true)
@@ -205,6 +206,45 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 	}
 }
 
+func circleCIDoAlgoBuildingAndBuildNums() (bool, string, string) {
+	lastSuccessBuildNum := "-1"
+	currentBuildNum := "-1"
+	currentlyBuilding := true
+
+	buildsURL := circleCIDoAlgoURL + circleCITokenParam
+	buildsParser := getJSONFromRequestURL(buildsURL, "GET")
+	array, _ := buildsParser.QueryToArray(".")
+	for i := 0; i < len(array); i++ {
+		statusStr, _ := buildsParser.Query("[" + strconv.Itoa(i) + "].status")
+
+		if i == 0 {
+			log.Println("current status: " + statusStr.(string))
+			currentlyBuilding = !isFinishedStatus(statusStr.(string))
+			buildNumParse, _ := buildsParser.Query("[" + strconv.Itoa(i) + "].build_num")
+			currentBuildNum = strconv.FormatFloat(buildNumParse.(float64), 'f', -1, 64)
+		}
+
+		if statusStr.(string) == "success" {
+			buildNumParse, _ := buildsParser.Query("[" + strconv.Itoa(i) + "].build_num")
+			lastSuccessBuildNum = strconv.FormatFloat(buildNumParse.(float64), 'f', -1, 64)
+			break
+		}
+	}
+
+	return currentlyBuilding, currentBuildNum, lastSuccessBuildNum
+}
+
+func isFinishedStatus(status string) bool {
+	switch status {
+	case
+		"canceled",
+		"success",
+		"failed":
+		return true
+	}
+	return false
+}
+
 func getJSONFromRequestURL(url string, requestType string) *gojq.JQ {
 	req, _ := http.NewRequest(requestType, url, nil)
 	req.Header.Set("Accept", "application/json")
@@ -225,27 +265,12 @@ func findAndReturnVPNConfigs(doServers string) string {
 	passAlgoVPN := "No successful AlgoVPN deployments found."
 	links := ""
 
-	circleCIDoAlgoURL := "https://circleci.com/api/v1.1/project/github/danackerson/do-algo"
-	circleCITokenParam := "?circle-token=" + os.Getenv("circleAPIToken")
+	building, _, lastSuccessBuildNum := circleCIDoAlgoBuildingAndBuildNums()
 
-	// get last successful build
-	buildNum := "-1"
-	buildsURL := circleCIDoAlgoURL + circleCITokenParam
-	buildsParser := getJSONFromRequestURL(buildsURL, "GET")
-	array, _ := buildsParser.QueryToArray(".")
-	for i := 0; i < len(array); i++ {
-		outcomeStr, _ := buildsParser.Query("[" + strconv.Itoa(i) + "].outcome")
-		if outcomeStr.(string) == "success" {
-			buildNumParse, _ := buildsParser.Query("[" + strconv.Itoa(i) + "].build_num")
-			buildNum = strconv.FormatFloat(buildNumParse.(float64), 'f', -1, 64)
-			break
-		}
-	}
-
-	if buildNum != "-1" {
+	if !building && lastSuccessBuildNum != "-1" {
 		// now get build details for this buildNum
 		var outputURL string
-		buildURL := circleCIDoAlgoURL + "/" + buildNum + circleCITokenParam
+		buildURL := circleCIDoAlgoURL + "/" + lastSuccessBuildNum + circleCITokenParam
 		buildParser := getJSONFromRequestURL(buildURL, "GET")
 		for i := 0; i < 8; i++ {
 			stepName, _ := buildParser.Query("steps.[" + strconv.Itoa(i) + "].name")
