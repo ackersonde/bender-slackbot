@@ -263,10 +263,11 @@ func getJSONFromRequestURL(url string, requestType string) *gojq.JQ {
 	return contentParser
 }
 
-func waitAndRetrieveLogs(buildParser *gojq.JQ, index int) string {
+func waitAndRetrieveLogs(buildURL string, index int) string {
 	outputURL := "N/A"
 
 	for notReady := true; notReady; notReady = (outputURL == "N/A") {
+		buildParser := getJSONFromRequestURL(buildURL, "GET")
 		actionsParser, errOutput := buildParser.Query("steps.[" + strconv.Itoa(index) + "].actions.[0].output_url")
 
 		if errOutput != nil {
@@ -294,7 +295,7 @@ func findAndReturnVPNConfigs(doServers string) string {
 		for i := 0; i < 8; i++ {
 			stepName, _ := buildParser.Query("steps.[" + strconv.Itoa(i) + "].name")
 			if stepName == "Upload to DockerHub, deploy to Digital Ocean Droplet & launch VPN" {
-				outputURL = waitAndRetrieveLogs(buildParser, i)
+				outputURL = waitAndRetrieveLogs(buildURL, i)
 				break
 			}
 		}
