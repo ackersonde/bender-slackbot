@@ -252,6 +252,8 @@ func getJSONFromRequestURL(url string, requestType string) *gojq.JQ {
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		log.Println("failed to call "+url+": ", err)
+	} else {
+		log.Println("successfully called: " + url)
 	}
 	defer resp.Body.Close()
 
@@ -259,6 +261,23 @@ func getJSONFromRequestURL(url string, requestType string) *gojq.JQ {
 	contentParser, _ := gojq.NewStringQuery(string(contentBytes))
 
 	return contentParser
+}
+
+func waitAndRetrieveLogs(buildParser *gojq.JQ, index int) string {
+	outputURL := "N/A"
+
+	for notReady := true; notReady; notReady = (outputURL == "N/A") {
+		actionsParser, errOutput := buildParser.Query("steps.[" + strconv.Itoa(index) + "].actions.[0].output_url")
+
+		if errOutput != nil {
+			log.Println("waitAndRetrieveLogs: " + errOutput.Error())
+			time.Sleep(5000 * time.Millisecond)
+		} else {
+			outputURL = actionsParser.(string)
+		}
+	}
+
+	return outputURL
 }
 
 func findAndReturnVPNConfigs(doServers string) string {
@@ -275,13 +294,7 @@ func findAndReturnVPNConfigs(doServers string) string {
 		for i := 0; i < 8; i++ {
 			stepName, _ := buildParser.Query("steps.[" + strconv.Itoa(i) + "].name")
 			if stepName == "Upload to DockerHub, deploy to Digital Ocean Droplet & launch VPN" {
-				actionsParser, errOutput := buildParser.Query("steps.[" + strconv.Itoa(i) + "].actions.[0].output_url")
-				if errOutput != nil {
-					log.Println("err2: " + errOutput.Error())
-				} else {
-					outputURL = actionsParser.(string)
-				}
-
+				outputURL = waitAndRetrieveLogs(buildParser, i)
 				break
 			}
 		}
