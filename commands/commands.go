@@ -170,7 +170,7 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 	} else if args[0] == "trans" || args[0] == "trand" || args[0] == tranc {
 		if runningFritzboxTunnel() {
 			response := torrentCommand(args)
-			rtm.SendMessage(rtm.NewOutgoingMessage(response, slackMessage.Channel))
+			api.PostMessage(slackMessage.Channel, response, params)
 		}
 	} else if args[0] == "mvv" {
 		response := "<https://img.srv2.de/customer/sbahnMuenchen/newsticker/newsticker.html|Aktuelles>"
