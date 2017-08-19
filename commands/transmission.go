@@ -14,7 +14,7 @@ func getTorrents(t *transmission.Client) (result string) {
 	// Get all torrents
 	torrents, err := t.GetTorrents()
 	if err == nil {
-		result = ":transmission: Running RaspberryPI Torrent(s)\n"
+		result = ":transmission: <http://192.168.178.25:9091/transmission/web/|Running RaspberryPI Torrent(s)>\n"
 		for _, listTorrent := range torrents {
 			status := ":arrows_counterclockwise:"
 			switch listTorrent.Status {
