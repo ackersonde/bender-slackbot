@@ -58,8 +58,13 @@ func SearchFor(term string, cat Category) ([]Torrent, string) {
 		for i, t := range torrents {
 			if t.Seeders > 10 {
 				found++
-				humanSize := t.Size / (1024 * 1024)
-				response += fmt.Sprintf("%d: <http://%s|%s> Seeds:%d *%d MiB*\n", i, t.MagnetLink, t.Title, t.Seeders, humanSize)
+				sizeSuffix := "MiB"
+				humanSize := float64(t.Size / (1024 * 1024))
+				if humanSize > 1000 {
+					sizeSuffix = "GiB"
+					humanSize = humanSize / 1024
+				}
+				response += fmt.Sprintf("%d: <http://%s|%s> Seeds:%d *%.2f %s*\n", i, t.MagnetLink, t.Title, t.Seeders, humanSize, sizeSuffix)
 			}
 		}
 	} else {
