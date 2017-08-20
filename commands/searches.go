@@ -48,6 +48,9 @@ type Torrent struct {
 // SearchFor is now commented
 func SearchFor(term string, cat Category) ([]Torrent, string) {
 	response := ""
+
+	fmt.Printf("searching for: '%s' in category %v\n", term, cat)
+
 	var torrents []Torrent
 	torrents, err := search(term, cat)
 	found := 0
@@ -56,7 +59,7 @@ func SearchFor(term string, cat Category) ([]Torrent, string) {
 			if t.Seeders > 10 {
 				found++
 				humanSize := t.Size / (1024 * 1024)
-				response += fmt.Sprintf("%d: <http://%s|%s> SE:%d (%d MiB)\n", i, t.MagnetLink, t.Title, t.Seeders, humanSize)
+				response += fmt.Sprintf("%d: <http://%s|%s> Seeds:%d *%d MiB*\n", i, t.MagnetLink, t.Title, t.Seeders, humanSize)
 			}
 		}
 	} else {
@@ -91,8 +94,8 @@ func search(query string, cats ...Category) ([]Torrent, error) {
 			catStr = "0"
 		}
 
-	  searchStringURL :=pirateURL + "/search/" + url.QueryEscape(query) + "/0/99/" + catStr
-	  fmt.Println("searching for: " + searchStringURL)
+		searchStringURL := pirateURL + "/search/" + url.QueryEscape(query) + "/0/99/" + catStr
+		fmt.Println("searching for: " + searchStringURL)
 		resp, err = http.Get(searchStringURL)
 		if err != nil {
 			return nil, err

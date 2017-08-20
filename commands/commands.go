@@ -145,7 +145,6 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 
 			searchString := strings.Join(args, " ")
 			searchString = strings.TrimPrefix(searchString, "torq ")
-			fmt.Println("searching for: " + searchString)
 			_, response = SearchFor(searchString, Category(cat))
 		} else {
 			_, response = SearchFor("", Category(cat))
