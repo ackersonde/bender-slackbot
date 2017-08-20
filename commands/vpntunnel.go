@@ -267,8 +267,8 @@ func vpnTunnelCmds(command ...string) string {
 			now := time.Now()
 			tunnelOnTime, tunnelIdleSince = now, now
 		} else if strings.HasSuffix(command[0], "vpnc-disconnect") {
-			tunnelOnTime = *new(time.Time)
-			tunnelIdleSince = *new(time.Time)
+			emptyTime := *new(time.Time)
+			tunnelOnTime, tunnelIdleSince = emptyTime, emptyTime
 		}
 	}
 
