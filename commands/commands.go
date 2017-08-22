@@ -311,7 +311,8 @@ func findAndReturnVPNConfigs(doServers string) string {
 		log.Println(ipv4)
 
 		// lets encrypt the filenames on disk
-		salt := []byte(ipv4)
+		doPersonalAccessToken := os.Getenv("digitalOceanToken")
+		salt := []byte(ipv4 + ":" + doPersonalAccessToken)
 		desktopConfigFileHashed, _ := scrypt.Key([]byte("dan.mobileconfig"), salt, 16384, 8, 1, 32)
 		desktopConfigFileString := hex.EncodeToString(desktopConfigFileHashed)
 		fmt.Println(desktopConfigFileString)
