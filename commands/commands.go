@@ -173,21 +173,13 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 		}
 	} else if args[0] == "mvv" {
 		response := "<https://img.srv2.de/customer/sbahnMuenchen/newsticker/newsticker.html|Aktuelles>"
-
-		if len(args) > 1 {
-			if args[1] == "m" {
-				// show next train to MUC
-				response = "<" + mvvRoute("Schwabhausen", "München, Hauptbahnhof") + "|going to MUC>"
-			} else if args[1] == "s" {
-				// show next train to SCHWAB
-				response = "<" + mvvRoute("München, Hauptbahnhof", "Schwabhausen") + "|going home>"
-			}
-		}
+		response += " | <" + mvvRoute("Schwabhausen", "München, Hauptbahnhof") + "|Going in>"
+		response += " | <" + mvvRoute("München, Hauptbahnhof", "Schwabhausen") + "|Going home>"
 
 		api.PostMessage(slackMessage.Channel, response, params)
 	} else if args[0] == "help" {
 		response := ":sun_behind_rain_cloud: `sw`: Schwabhausen weather\n" +
-			":metro: `mvv (s|m)`: no args->show status, `s`->come home, `m`->goto MUC\n" +
+			":metro: `mvv`: Status | Trip In | Trip Home\n" +
 			":closed_lock_with_key: `vpn[c|s|d]`: [C]onnect, [S]tatus, [D]rop VPN tunnel to Fritz!Box\n" +
 			":openvpn: `ovpn`: show status of OVPN.se on :raspberry_pi:\n" +
 			":algovpn: `algo`: show|launch AlgoVPN droplet on :do_droplet:\n" +
