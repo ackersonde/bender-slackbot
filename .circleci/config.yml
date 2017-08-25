@@ -2,7 +2,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: golang:1.8
+      - image: golang:1.9
     working_directory: /go/src/github.com/danackerson/bender-slackbot
     steps:
       - checkout
@@ -12,15 +12,14 @@ jobs:
             go get -t -d -v ./...
             env GOOS=linux GOARCH=amd64 go build bender.go
 
-      - setup_remote_docker:
-          reusable: true
+      - setup_remote_docker
 
-      - run:
-          name: "Install Docker CE"
-          command: |
-            set -x
-            VER="17.05.0"
-            curl -fsSLO https://get.docker.com/builds/Linux/x86_64/docker-$VER-ce.tgz && tar --strip-components=1 -xvzf docker-$VER-ce.tgz -C /usr/local/bin
+#      - run:
+#          name: "Install Docker CE"
+#          command: |
+#            set -x
+#            VER="17.06.1"
+#            curl -fsSLO https://get.docker.com/builds/Linux/x86_64/docker-$VER-ce.tgz && tar --strip-components=1 -xvzf docker-$VER-ce.tgz -C /usr/local/bin
 
       - run:
           name: "Build, run and test docker image"
