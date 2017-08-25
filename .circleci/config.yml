@@ -14,12 +14,9 @@ jobs:
 
       - setup_remote_docker
 
-#      - run:
-#          name: "Install Docker CE"
-#          command: |
-#            set -x
-#            VER="17.06.1"
-#            curl -fsSLO https://get.docker.com/builds/Linux/x86_64/docker-$VER-ce.tgz && tar --strip-components=1 -xvzf docker-$VER-ce.tgz -C /usr/local/bin
+      - run:
+          name: "Install Docker CE"
+          command: curl -fsSL get.docker.com -o get-docker.sh && sh get-docker.sh
 
       - run:
           name: "Build, run and test docker image"
