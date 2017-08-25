@@ -16,7 +16,9 @@ jobs:
 
       - run:
           name: "Install Docker CE"
-          command: curl -fsSL get.docker.com -o get-docker.sh && sh get-docker.sh
+          command: |
+            VER="17.06.1"
+            curl -fsSLO https://download.docker.com/linux/static/stable/x86_64/docker-$VER-ce.tgz && tar --strip-components=1 -xvzf docker-$VER-ce.tgz -C /usr/local/bin
 
       - run:
           name: "Build, run and test docker image"
