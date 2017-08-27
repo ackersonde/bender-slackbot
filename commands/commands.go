@@ -23,7 +23,8 @@ import (
 var raspberryPIIP = os.Getenv("raspberryPIIP")
 var rtm *slack.RTM
 var piSDCardPath = "/home/pi/torrents/"
-var piUSBMountPath = "/mnt/usb_1/DLNA/torrents/"
+var piUSBMountPoint = "/mnt/usb_1"
+var piUSBMountPath = piUSBMountPoint + "/DLNA/torrents/"
 var routerIP = "192.168.1.1"
 var tranc = "tranc"
 

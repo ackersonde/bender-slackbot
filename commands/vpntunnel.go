@@ -214,7 +214,7 @@ func MoveTorrentFile(filename string) {
 	if filename == "*" || filename == "" || strings.Contains(filename, "../") || strings.HasPrefix(filename, "/") {
 		rtm.IncomingEvents <- slack.RTMEvent{Type: "MoveTorrent", Data: "Please enter an existing filename - try `fsck`"}
 	} else {
-		moveCmd := "mv \"" + piSDCardPath + filename + "\" " + piUSBMountPath
+		moveCmd := "(sudo mount " + piUSBMountPoint + "|| true) && mv \"" + piSDCardPath + filename + "\" " + piUSBMountPath + " && sudo umount " + piUSBMountPoint
 
 		go func() {
 			details := RemoteCmd{Host: raspberryPIIP, HostKey: piHostKey, Username: os.Getenv("piUser"), Password: os.Getenv("piPass"), Cmd: moveCmd}
