@@ -60,7 +60,7 @@ jobs:
             $DEPLOY_CONNECT docker login -u $DOCKER_USER -p $DOCKER_PASS && docker pull danackerson/bender:vc$CIRCLE_BUILD_NUM
             $DEPLOY_CONNECT docker rm -f bender || true
             $DEPLOY_CONNECT mkdir /home/ackersond/algo_vpn || true
-            $DEPLOY_CONNECT docker run -d --restart=always --privileged=true -v /home/ackersond/algo_vpn:/algo_vpn -v $UPLOAD_DIR:/uploads -e officeIP=$officeIP -e homeDomain=$homeDomain -e circleAPIToken=$CIRCLE_API_TOKEN -e raspberryPIIP=$raspberryPIIP -e slackReportChannel=$slackReportChannel -e piUser=$piUser -e piPass=$piPass -e digitalOceanToken=$digitalOceanToken -e CIRCLE_BUILD_NUM=$CIRCLE_BUILD_NUM -e slackToken=$(echo $slackTokenEncoded | base64 --decode) --name bender danackerson/bender:vc$CIRCLE_BUILD_NUM
+            $DEPLOY_CONNECT docker run -d --restart=always --privileged=true -v /home/ackersond/algo_vpn:/algo_vpn -v $UPLOAD_DIR:/uploads -e doFirewallID=$doFirewallID -e doFloatingIP=$doFloatingIP -e officeIP=$officeIP -e homeDomain=$homeDomain -e circleAPIToken=$CIRCLE_API_TOKEN -e raspberryPIIP=$raspberryPIIP -e slackReportChannel=$slackReportChannel -e piUser=$piUser -e piPass=$piPass -e digitalOceanToken=$digitalOceanToken -e CIRCLE_BUILD_NUM=$CIRCLE_BUILD_NUM -e slackToken=$(echo $slackTokenEncoded | base64 --decode) --name bender danackerson/bender:vc$CIRCLE_BUILD_NUM
 
 # not all Env vars are created equal - some have ':' or '{}' or <shudder> '\/'s
 # in this case we base64 encode the parameter: `base64 <<< [string in question]`

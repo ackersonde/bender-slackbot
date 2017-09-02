@@ -16,6 +16,7 @@ import (
 
 	"golang.org/x/crypto/scrypt"
 
+	"github.com/danackerson/digitalocean/common"
 	"github.com/elgs/gojq"
 	"github.com/nlopes/slack"
 )
@@ -99,7 +100,7 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 			if err != nil {
 				api.PostMessage(slackMessage.Channel, "Invalid integer value for ID!", params)
 			} else {
-				result := DeleteDODroplet(number)
+				result := common.DeleteDODroplet(number)
 				api.PostMessage(slackMessage.Channel, result, params)
 			}
 		} else {
