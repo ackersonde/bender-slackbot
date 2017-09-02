@@ -5,6 +5,7 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/danackerson/digitalocean/common"
 	"github.com/digitalocean/godo"
 	"github.com/nlopes/slack"
 
@@ -24,16 +25,20 @@ func (t *TokenSource) Token() (*oauth2.Token, error) {
 	return token, nil
 }
 
-// DeleteDODroplet more here https://developers.digitalocean.com/documentation/v2/#delete-a-droplet
-func DeleteDODroplet(ID int) string {
-	var result string
-
+func prepareDigitalOceanLogin() *godo.Client {
 	doPersonalAccessToken := os.Getenv("digitalOceanToken")
 	tokenSource := &TokenSource{
 		AccessToken: doPersonalAccessToken,
 	}
 	oauthClient := oauth2.NewClient(oauth2.NoContext, tokenSource)
-	client := godo.NewClient(oauthClient)
+	return godo.NewClient(oauthClient)
+}
+
+// DeleteDODroplet more here https://developers.digitalocean.com/documentation/v2/#delete-a-droplet
+func DeleteDODroplet(ID int) string {
+	var result string
+
+	client := prepareDigitalOceanLogin()
 
 	_, err := client.Droplets.Delete(oauth2.NoContext, ID)
 	if err == nil {
@@ -48,16 +53,11 @@ func DeleteDODroplet(ID int) string {
 // ListDODroplets is now commented
 func ListDODroplets(userCall bool) string {
 	doDropletInfoSite := "https://cloud.digitalocean.com/droplets/"
-	doPersonalAccessToken := os.Getenv("digitalOceanToken")
 	response := ""
 
-	tokenSource := &TokenSource{
-		AccessToken: doPersonalAccessToken,
-	}
-	oauthClient := oauth2.NewClient(oauth2.NoContext, tokenSource)
-	client := godo.NewClient(oauthClient)
+	client := prepareDigitalOceanLogin()
 
-	droplets, err := DropletList(client)
+	droplets, err := common.DropletList(client)
 	if err != nil {
 		response = fmt.Sprintf("Failed to list droplets: %s", err)
 	} else {
@@ -73,39 +73,4 @@ func ListDODroplets(userCall bool) string {
 	}
 
 	return response
-}
-
-// DropletList is now commented
-func DropletList(client *godo.Client) ([]godo.Droplet, error) {
-	// create a list to hold our droplets
-	list := []godo.Droplet{}
-
-	// create options. initially, these will be blank
-	opt := &godo.ListOptions{}
-	for {
-		droplets, resp, err := client.Droplets.List(oauth2.NoContext, opt)
-		if err != nil {
-			return nil, err
-		}
-
-		// append the current page's droplets to our list
-		for _, d := range droplets {
-			list = append(list, d)
-		}
-
-		// if we are at the last page, break out the for loop
-		if resp.Links == nil || resp.Links.IsLastPage() {
-			break
-		}
-
-		page, err := resp.Links.CurrentPage()
-		if err != nil {
-			return nil, err
-		}
-
-		// set the page we want for the next request
-		opt.Page = page + 1
-	}
-
-	return list, nil
 }
