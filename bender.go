@@ -10,8 +10,8 @@ import (
 
 	"github.com/danackerson/bender-slackbot/commands"
 	"github.com/danackerson/digitalocean/common"
-	"github.com/jasonlvhit/gocron"
 	"github.com/nlopes/slack"
+	"github.com/papa-stiflera/gocron"
 )
 
 var botID = "N/A" // U2NQSPHHD bender bot userID
