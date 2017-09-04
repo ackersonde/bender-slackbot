@@ -217,7 +217,7 @@ func circleCIDoAlgoBuildingAndBuildNums() (bool, string, string) {
 			currentBuildNum = strconv.FormatFloat(buildNumParse.(float64), 'f', -1, 64)
 		}
 
-		if statusStr.(string) == "success" {
+		if statusStr.(string) == "success" || statusStr.(string) == "fixed" {
 			buildNumParse, _ := buildsParser.Query("[" + strconv.Itoa(i) + "].build_num")
 			lastSuccessBuildNum = strconv.FormatFloat(buildNumParse.(float64), 'f', -1, 64)
 			break
@@ -232,6 +232,7 @@ func isFinishedStatus(status string) bool {
 	case
 		"canceled",
 		"success",
+		"fixed",
 		"failed":
 		return true
 	}
