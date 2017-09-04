@@ -285,7 +285,7 @@ func findAndReturnVPNConfigs(doServers string) string {
 		var outputURL string
 		buildURL := circleCIDoAlgoURL + "/" + lastSuccessBuildNum + circleCITokenParam
 		buildParser := getJSONFromRequestURL(buildURL, "GET")
-		for i := 0; i < 8; i++ {
+		for i := 0; i < 9; i++ {
 			stepName, _ := buildParser.Query("steps.[" + strconv.Itoa(i) + "].name")
 			if stepName == "Upload to DockerHub, deploy to Digital Ocean Droplet & launch VPN" {
 				outputURL = waitAndRetrieveLogs(buildURL, i)
