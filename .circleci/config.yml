@@ -41,6 +41,12 @@ jobs:
               ssh-add ${_k} || true
             done
 
+      - run:
+          name: Disable Digital Ocean firewall for deploy
+          command: |
+            apt-get update && apt-get -y install jq
+            sh <(curl -s https://raw.githubusercontent.com/danackerson/digitalocean/master/utils/disableFW.sh)
+
       - deploy:
           name: "Upload to DockerHub & deploy to DigitalOcean Droplet"
           command: |
@@ -53,14 +59,20 @@ jobs:
               export DEPLOY_SERVER=$DEPLOY_SERVER_IP
             fi
             echo "Deploy to $DEPLOY_SERVER"
-
-            export UPLOAD_DIR=`ssh -o StrictHostKeyChecking=no ackersond@deploy.ackerson.de docker inspect ackerson.de| grep "/var/lib/docker/volumes/" | sed 's/"//g' | sed 's/ //g' | sed 's/,//g' | awk -F : '{ print $2 }'`'/bb_games'
-
             export DEPLOY_CONNECT="ssh -o StrictHostKeyChecking=no ackersond@$DEPLOY_SERVER"
+
+            export UPLOAD_DIR=`$DEPLOY_CONNECT docker inspect ackerson.de| grep "/var/lib/docker/volumes/" | sed 's/"//g' | sed 's/ //g' | sed 's/,//g' | awk -F : '{ print $2 }'`'/bb_games'
+
             $DEPLOY_CONNECT docker login -u $DOCKER_USER -p $DOCKER_PASS && docker pull danackerson/bender:vc$CIRCLE_BUILD_NUM
             $DEPLOY_CONNECT docker rm -f bender || true
             $DEPLOY_CONNECT mkdir /home/ackersond/algo_vpn || true
             $DEPLOY_CONNECT docker run -d --restart=always --privileged=true -v /home/ackersond/algo_vpn:/algo_vpn -v $UPLOAD_DIR:/uploads -e doFirewallID=$doFirewallID -e doFloatingIP=$doFloatingIP -e officeIP=$officeIP -e homeDomain=$homeDomain -e circleAPIToken=$CIRCLE_API_TOKEN -e raspberryPIIP=$raspberryPIIP -e slackReportChannel=$slackReportChannel -e piUser=$piUser -e piPass=$piPass -e digitalOceanToken=$digitalOceanToken -e CIRCLE_BUILD_NUM=$CIRCLE_BUILD_NUM -e slackToken=$(echo $slackTokenEncoded | base64 --decode) --name bender danackerson/bender:vc$CIRCLE_BUILD_NUM
+
+      - run:
+          name: Reenable Digital Ocean firewall
+          command: |
+            sh <(curl -s https://raw.githubusercontent.com/danackerson/digitalocean/master/utils/reenableFW.sh)
+          when: always
 
 # not all Env vars are created equal - some have ':' or '{}' or <shudder> '\/'s
 # in this case we base64 encode the parameter: `base64 <<< [string in question]`
