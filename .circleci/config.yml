@@ -2,13 +2,14 @@ version: 2
 jobs:
   build:
     docker:
-      - image: golang:1.9
+      - image: golang:1.9-alpine
     working_directory: /go/src/github.com/danackerson/bender-slackbot
     steps:
       - checkout
       - run:
           name: "Fetch dependencies and build bender app"
           command: |
+            apk -U add git openssh-client curl
             go get -t -d -v ./...
             env GOOS=linux GOARCH=amd64 go build bender.go
 
@@ -17,14 +18,14 @@ jobs:
       - run:
           name: "Install Docker CE"
           command: |
-            VER="17.06.2"
+            VER="17.06.1"
             curl -fsSLO https://download.docker.com/linux/static/stable/x86_64/docker-$VER-ce.tgz && tar --strip-components=1 -xvzf docker-$VER-ce.tgz -C /usr/local/bin
 
       - run:
           name: "Build, run and test docker image"
           command: |
             docker build -t danackerson/bender:vc$CIRCLE_BUILD_NUM --build-arg vpnc_gateway=$VPNC_GATEWAY --build-arg vpnc_id=$VPNC_ID --build-arg vpnc_secret=$VPNC_SECRET --build-arg vpnc_username=$VPNC_USERNAME --build-arg vpnc_password=$VPNC_PASSWORD .
-            docker run -d -e slackToken=$(echo $slackTokenEncoded | base64 --decode) -e raspberryPIIP=$raspberryPIIP -e slackReportChannel=$slackReportChannel -e piUser=$piUser -e piPass=$piPass -e digitalOceanToken=$digitalOceanToken --name bender danackerson/bender:vc$CIRCLE_BUILD_NUM
+            docker run -d -e slackToken=$(echo $slackTokenEncoded | base64 -d) -e raspberryPIIP=$raspberryPIIP -e slackReportChannel=$slackReportChannel -e piUser=$piUser -e piPass=$piPass -e digitalOceanToken=$digitalOceanToken --name bender danackerson/bender:vc$CIRCLE_BUILD_NUM
             echo `docker logs bender`
 
       - type: add-ssh-keys
@@ -44,8 +45,8 @@ jobs:
       - run:
           name: Disable Digital Ocean firewall for deploy
           command: |
-            apt-get update && apt-get -y install jq
-            sh <(curl -s https://raw.githubusercontent.com/danackerson/digitalocean/master/utils/disableFW.sh)
+            apk -U add jq
+            curl -s https://raw.githubusercontent.com/danackerson/digitalocean/master/utils/disableFW.sh | sh
 
       - deploy:
           name: "Upload to DockerHub & deploy to DigitalOcean Droplet"
@@ -66,12 +67,12 @@ jobs:
             $DEPLOY_CONNECT docker login -u $DOCKER_USER -p $DOCKER_PASS && docker pull danackerson/bender:vc$CIRCLE_BUILD_NUM
             $DEPLOY_CONNECT docker rm -f bender || true
             $DEPLOY_CONNECT mkdir /home/ackersond/algo_vpn || true
-            $DEPLOY_CONNECT docker run -d --restart=always --privileged=true -v /home/ackersond/algo_vpn:/algo_vpn -v $UPLOAD_DIR:/uploads -e doFirewallID=$doFirewallID -e doFloatingIP=$doFloatingIP -e officeIP=$officeIP -e homeDomain=$homeDomain -e circleAPIToken=$CIRCLE_API_TOKEN -e raspberryPIIP=$raspberryPIIP -e slackReportChannel=$slackReportChannel -e piUser=$piUser -e piPass=$piPass -e digitalOceanToken=$digitalOceanToken -e CIRCLE_BUILD_NUM=$CIRCLE_BUILD_NUM -e slackToken=$(echo $slackTokenEncoded | base64 --decode) --name bender danackerson/bender:vc$CIRCLE_BUILD_NUM
+            $DEPLOY_CONNECT docker run -d --restart=always --privileged=true -v /home/ackersond/algo_vpn:/algo_vpn -v $UPLOAD_DIR:/uploads -e doFirewallID=$doFirewallID -e doFloatingIP=$doFloatingIP -e officeIP=$officeIP -e homeDomain=$homeDomain -e circleAPIToken=$CIRCLE_API_TOKEN -e raspberryPIIP=$raspberryPIIP -e slackReportChannel=$slackReportChannel -e piUser=$piUser -e piPass=$piPass -e digitalOceanToken=$digitalOceanToken -e CIRCLE_BUILD_NUM=$CIRCLE_BUILD_NUM -e slackToken=$(echo $slackTokenEncoded | base64 -d) --name bender danackerson/bender:vc$CIRCLE_BUILD_NUM
 
       - run:
           name: Reenable Digital Ocean firewall
           command: |
-            sh <(curl -s https://raw.githubusercontent.com/danackerson/digitalocean/master/utils/reenableFW.sh)
+            curl -s https://raw.githubusercontent.com/danackerson/digitalocean/master/utils/reenableFW.sh | sh
           when: always
 
 # not all Env vars are created equal - some have ':' or '{}' or <shudder> '\/'s
