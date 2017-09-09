@@ -155,7 +155,7 @@ func CheckPiDiskSpace(path string) string {
 		path = strings.TrimPrefix(path, "/")
 	}
 
-	diskUsage := "du -sh \"" + piSDCardPath + path
+	diskUsage := "du -Sh \"" + piSDCardPath + path
 	diskUsageAll := diskUsage + "*\""
 	diskUsageOne := diskUsage + "\""
 	cmd := "[ \"$(ls -A '" + piSDCardPath + "')\" ] && " + diskUsageAll + " || " + diskUsageOne
