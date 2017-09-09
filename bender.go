@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"strings"
@@ -62,18 +61,18 @@ Loop:
 					(strings.Contains(ev.Msg.Text, "<@"+botID+">") ||
 						strings.HasPrefix(ev.Msg.Channel, "D") ||
 						ev.Msg.Channel == commands.SlackReportChannel) {
-					logger.Printf("Message: %+v\n", ev.Msg)
 					originalMessage := ev.Msg.Text
 					// strip out bot's name and spaces
 					parsedMessage := strings.TrimSpace(strings.Replace(originalMessage, "<@"+botID+">", "", -1))
 					r, n := utf8.DecodeRuneInString(parsedMessage)
 					parsedMessage = string(unicode.ToLower(r)) + parsedMessage[n:]
+					userInfo, _ := rtm.GetUserInfo(ev.Msg.User)
+					logger.Printf("%s: %s\n", userInfo.Name, parsedMessage)
+
 					commands.CheckCommand(api, ev.Msg, parsedMessage)
 				}
 
 			case *slack.PresenceChangeEvent:
-				fmt.Printf("Presence Change: %+v\n", ev)
-
 				// bug in API sets "away" sometimes when user rejoins slack :(
 				/*if (ev.Presence == "away") {
 				  leavingUser, _ := api.GetUserInfo(ev.User)
