@@ -164,7 +164,7 @@ func CheckPiDiskSpace(path string) string {
 
 	response, err := executeRemoteCmd(details)
 	tunnelIdleSince = time.Now()
-	if err != "" {
+	if err != "" && err != "du: cannot access '/home/pi/torrents/*': No such file or directory" {
 		response = err
 	} else {
 		response = strings.Replace(response, piSDCardPath+path, "", -1)
