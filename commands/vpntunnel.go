@@ -123,6 +123,12 @@ func RaspberryPIPrivateTunnelChecks(userCall bool) string {
 				fmt.Println("Timed out on `iptables -L OUTPUT`!")
 			}
 			//  TODO if tunnelUp = "" shutdown transmission daemon, restart VPN and send RED ALERT msg!
+		} else {
+			cmd := "sudo service openvpn@AMD restart && sudo service transmission-daemon restart"
+			details := RemoteCmd{Host: raspberryPIIP, HostKey: piHostKey, Username: os.Getenv("piUser"), Password: os.Getenv("piPass"), Cmd: cmd}
+
+			stdout, _ := executeRemoteCmd(details)
+			fmt.Println("restarting VPN & Transmission: " + stdout)
 		}
 
 		if tunnelUp != "" {
@@ -219,11 +225,12 @@ func MoveTorrentFile(filename string) {
 		go func() {
 			details := RemoteCmd{Host: raspberryPIIP, HostKey: piHostKey, Username: os.Getenv("piUser"), Password: os.Getenv("piPass"), Cmd: moveCmd}
 
-			result, err := executeRemoteCmd(details)
+			var result string
+			_, err := executeRemoteCmd(details)
 			tunnelIdleSince = time.Now()
-			if err != "" {
+			if err != "" && !strings.Contains(err, "NTFS volume is already exclusively opened") {
 				result = err
-			} else if result == "" {
+			} else {
 				result = "Successfully moved `" + filename + "` to `" + piUSBMountPath + "`"
 			}
 
