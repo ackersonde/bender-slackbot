@@ -155,8 +155,10 @@ func CheckPiDiskSpace(path string) string {
 		path = strings.TrimPrefix(path, "/")
 	}
 
-	diskUsage := "du -sh \"" + piSDCardPath + path + "\""
-	cmd := "[ \"$(ls -A '" + piSDCardPath + "')\" ] && " + diskUsage + " || " + diskUsage + "*"
+	diskUsage := "du -sh \"" + piSDCardPath + path
+	diskUsageAll := diskUsage + "*\""
+	diskUsageOne := diskUsage + "\""
+	cmd := "[ \"$(ls -A '" + piSDCardPath + "')\" ] && " + diskUsageAll + " || " + diskUsageOne
 	fmt.Println("chk disk usage: " + cmd)
 	details := RemoteCmd{Host: raspberryPIIP, HostKey: piHostKey, Username: os.Getenv("piUser"), Password: os.Getenv("piPass"), Cmd: cmd}
 
