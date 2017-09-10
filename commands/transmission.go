@@ -41,7 +41,7 @@ func getTorrents(t *transmission.Client) (result string) {
 func addTorrents(t *transmission.Client, torrentLink string) (result string) {
 	// slack 'markdown's URLs with '<link|text>' so clip these off
 	if strings.HasPrefix(torrentLink, "<") {
-		torrentLink = strings.TrimLeft(torrentLink, "<")
+		torrentLink = strings.TrimLeft(torrentLink, "<http://")
 	}
 	if strings.HasSuffix(torrentLink, ">") {
 		torrentLink = strings.TrimRight(torrentLink, ">")
@@ -50,7 +50,7 @@ func addTorrents(t *transmission.Client, torrentLink string) (result string) {
 		torrentLink = torrentLink[:indexPipe]
 	}
 
-	torrentLink = strings.Replace(torrentLink, "http://magnet/", "magnet:", -1)
+	torrentLink = strings.Replace(torrentLink, "magnet/", "magnet:", -1)
 	result = fmt.Sprintf(":star2: adding %s\n", torrentLink)
 
 	// Add a torrent
