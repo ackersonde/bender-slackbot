@@ -235,12 +235,12 @@ func MoveTorrentFile(filename string) {
 			details := RemoteCmd{Host: raspberryPIIP, HostKey: piHostKey, Username: os.Getenv("piUser"), Password: os.Getenv("piPass"), Cmd: moveCmd}
 
 			var result string
-			cmdResult, err := executeRemoteCmd(details)
+			_, err := executeRemoteCmd(details)
 			tunnelIdleSince = time.Now()
 			if err != "" && !strings.Contains(err, "NTFS volume is already exclusively opened") {
-				result = err + ":" + cmdResult
+				result = err
 			} else {
-				result = "Successfully moved `" + filename + "` to `" + piUSBMountPath + "` : " + cmdResult
+				result = "Successfully moved `" + filename + "` to `" + piUSBMountPath + "`"
 			}
 
 			rtm.IncomingEvents <- slack.RTMEvent{Type: "MoveTorrent", Data: result}
