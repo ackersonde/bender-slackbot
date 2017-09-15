@@ -170,7 +170,7 @@ func CheckPiDiskSpace(path string) string {
 		response = strings.Replace(response, piSDCardPath+path, "", -1)
 		response = ":raspberry_pi: *SD Card Disk Usage* @ `" + piSDCardPath + path + "`\n" + response
 	}
-	cmd = "df -h /root/"
+	cmd = "df -h /root/ /mnt/usb_1/"
 	details = RemoteCmd{Host: raspberryPIIP, HostKey: piHostKey, Username: os.Getenv("piUser"), Password: os.Getenv("piPass"), Cmd: cmd}
 
 	df, _ := executeRemoteCmd(details)
@@ -221,7 +221,7 @@ func DeleteTorrentFile(filename string) string {
 
 // MoveTorrentFile now exported
 func MoveTorrentFile(filename string) {
-	if filename == "*" || filename == "" || strings.Contains(filename, "../") || strings.HasPrefix(filename, "/") {
+	if filename == "" || strings.Contains(filename, "../") || strings.HasPrefix(filename, "/") {
 		rtm.IncomingEvents <- slack.RTMEvent{Type: "MoveTorrent", Data: "Please enter an existing filename - try `fsck`"}
 	} else {
 		moveCmd := "(sudo mount " + piUSBMountPoint + "|| true) && mv \"" + piSDCardPath + filename + "\" " + piUSBMountPath + " && sudo umount " + piUSBMountPoint
