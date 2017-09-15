@@ -3,6 +3,7 @@ package commands
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
 	"strconv"
@@ -229,17 +230,17 @@ func MoveTorrentFile(filename string) {
 			fileToBeMoved = filename
 		}
 		moveCmd := "(sudo mount " + piUSBMountPoint + "|| true) && mv " + fileToBeMoved + piUSBMountPath + " && sudo umount " + piUSBMountPoint
-
+		log.Println(moveCmd)
 		go func() {
 			details := RemoteCmd{Host: raspberryPIIP, HostKey: piHostKey, Username: os.Getenv("piUser"), Password: os.Getenv("piPass"), Cmd: moveCmd}
 
 			var result string
-			_, err := executeRemoteCmd(details)
+			cmdResult, err := executeRemoteCmd(details)
 			tunnelIdleSince = time.Now()
 			if err != "" && !strings.Contains(err, "NTFS volume is already exclusively opened") {
-				result = err
+				result = err + ":" + cmdResult
 			} else {
-				result = "Successfully moved `" + filename + "` to `" + piUSBMountPath + "`"
+				result = "Successfully moved `" + filename + "` to `" + piUSBMountPath + "` : " + cmdResult
 			}
 
 			rtm.IncomingEvents <- slack.RTMEvent{Type: "MoveTorrent", Data: result}
