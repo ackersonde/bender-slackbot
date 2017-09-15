@@ -227,7 +227,7 @@ func MoveTorrentFile(filename string) {
 	} else {
 		fileToBeMoved := "\"" + piSDCardPath + filename + "\" "
 		if filename == "*" {
-			fileToBeMoved = filename
+			fileToBeMoved = filename + " "
 		}
 		moveCmd := "(sudo mount " + piUSBMountPoint + "|| true) && mv " + fileToBeMoved + piUSBMountPath + " && sudo umount " + piUSBMountPoint
 		log.Println(moveCmd)
