@@ -178,6 +178,7 @@ func CheckPiDiskSpace(path string) string {
 	remoteResultDF := executeRemoteCmd(details)
 	tunnelIdleSince = time.Now()
 	response += "\n\n" + remoteResultDF.stdout
+	// TODO: if the 2 lines in here are the same, delete the last!
 
 	if !userCall {
 		customEvent := slack.RTMEvent{Type: "CheckPiDiskSpace", Data: response}
@@ -223,7 +224,7 @@ func DeleteTorrentFile(filename string) string {
 }
 
 // MoveTorrentFile now exported
-func MoveTorrentFile(filename string) {
+func MoveTorrentFile(api *slack.Client, filename string) {
 	if filename == "" || strings.Contains(filename, "../") || strings.HasPrefix(filename, "/") {
 		rtm.IncomingEvents <- slack.RTMEvent{Type: "MoveTorrent", Data: "Please enter an existing filename - try `fsck`"}
 	} else {
@@ -247,6 +248,49 @@ func MoveTorrentFile(filename string) {
 
 			rtm.IncomingEvents <- slack.RTMEvent{Type: "MoveTorrent", Data: result}
 		}()
+
+		params := slack.PostMessageParameters{AsUser: true}
+		api.PostMessage(SlackReportChannel, "running `"+moveCmd+"`", params)
+		reportMoveProgress(api)
+	}
+}
+
+func reportMoveProgress(api *slack.Client) {
+	historyParams := new(slack.HistoryParameters)
+	historyParams.Latest = ""
+	historyParams.Count = 1
+	historyParams.Inclusive = true
+	lastMsgID := ""
+	msgHistory, _ := api.GetChannelHistory(SlackReportChannel, *historyParams)
+	for _, msg := range msgHistory.Messages {
+		lastMsgID = msg.Timestamp
+	}
+
+	remoteResults := make(chan RemoteResult, 1)
+	timeout := time.After(10 * time.Second)
+	notDone := true
+
+	for notDone {
+		go func() {
+			progressCmd := "progress"
+			progressDetails := RemoteCmd{Host: raspberryPIIP, HostKey: piHostKey, Username: "pi", Password: "king8tut", Cmd: progressCmd}
+
+			remoteResults <- executeRemoteCmd(progressDetails)
+		}()
+
+		select {
+		case res := <-remoteResults:
+			// update msg with progress: https://api.slack.com/methods/chat.update
+			// so there aren't 385 msgs with 2% 2% 3% ...
+			api.UpdateMessage(SlackReportChannel, lastMsgID, res.stdout)
+			if strings.Contains(res.stderr, "No command currently running") {
+				notDone = false
+			} else {
+				time.Sleep(time.Second * 5)
+			}
+		case <-timeout:
+			fmt.Println("Timed out!")
+		}
 	}
 }
 

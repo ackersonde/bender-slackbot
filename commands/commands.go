@@ -127,7 +127,7 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 				if args[0] == "rm" {
 					response = DeleteTorrentFile(path)
 				} else {
-					MoveTorrentFile(path)
+					MoveTorrentFile(api, path)
 				}
 
 				rtm.SendMessage(rtm.NewOutgoingMessage(response, slackMessage.Channel))
