@@ -156,7 +156,7 @@ func CheckPiDiskSpace(path string) string {
 		path = strings.TrimPrefix(path, "/")
 	}
 
-	diskUsage := "du -Sh \"" + piSDCardPath + path
+	diskUsage := "du -ah \"" + piSDCardPath + path
 	diskUsageAll := diskUsage + "*\""
 	diskUsageOne := diskUsage + "\""
 	cmd := "[ \"$(ls -A '" + piSDCardPath + "')\" ] && " + diskUsageAll + " || " + diskUsageOne
@@ -166,7 +166,7 @@ func CheckPiDiskSpace(path string) string {
 	remoteResult := executeRemoteCmd(details)
 	response := remoteResult.stdout
 	tunnelIdleSince = time.Now()
-	if remoteResult.stderr != "" && strings.HasPrefix(remoteResult.stderr, "du: cannot access ‘/home/pi/torrents/*’: No such file or directory") {
+	if remoteResult.stdout == "" && remoteResult.stderr != "" && strings.HasPrefix(remoteResult.stderr, "du: cannot access ‘/home/pi/torrents/*’: No such file or directory") {
 		response = remoteResult.stderr
 	} else {
 		response = strings.Replace(response, piSDCardPath+path, "", -1)
