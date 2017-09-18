@@ -19,7 +19,13 @@ type RemoteCmd struct {
 	Cmd      string
 }
 
-func executeRemoteCmd(details RemoteCmd) (stdoutStr string, stderrStr string) {
+// RemoteResult contains remote SSH execution
+type RemoteResult struct {
+	stdout string
+	stderr string
+}
+
+func executeRemoteCmd(details RemoteCmd) RemoteResult {
 	defer func() { //catch or finally
 		if err := recover(); err != nil { //catch
 			fmt.Fprintf(os.Stderr, "Exception: %v\n", err)
@@ -51,11 +57,10 @@ func executeRemoteCmd(details RemoteCmd) (stdoutStr string, stderrStr string) {
 	session.Stderr = &stderrBuf
 	session.Run(details.Cmd)
 
-	errors := ""
+	errStr := ""
 	if stderrBuf.String() != "" {
-		errStr := strings.TrimSpace(stderrBuf.String())
-		errors = "ERR `" + errStr + "`"
+		errStr = strings.TrimSpace(stderrBuf.String())
 	}
 
-	return stdoutBuf.String(), errors
+	return RemoteResult{stdoutBuf.String(), errStr}
 }

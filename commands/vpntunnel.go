@@ -32,10 +32,10 @@ func RaspberryPIPrivateTunnelChecks(userCall bool) string {
 			cmd := "curl https://ipleak.net/json/"
 			details := RemoteCmd{Host: raspberryPIIP, HostKey: piHostKey, Username: os.Getenv("piUser"), Password: os.Getenv("piPass"), Cmd: cmd}
 
-			stdout, _ := executeRemoteCmd(details)
+			remoteResult := executeRemoteCmd(details)
 
 			tunnelIdleSince = time.Now()
-			results <- stdout
+			results <- remoteResult.stdout
 		}()
 
 		type IPInfoResponse struct {
@@ -61,10 +61,10 @@ func RaspberryPIPrivateTunnelChecks(userCall bool) string {
 						cmd := "dig home.ackerson.de A home.ackerson.de AAAA +short"
 						details := RemoteCmd{Host: raspberryPIIP, HostKey: piHostKey, Username: os.Getenv("piUser"), Password: os.Getenv("piPass"), Cmd: cmd}
 
-						stdout, _ := executeRemoteCmd(details)
+						remoteResult := executeRemoteCmd(details)
 
 						tunnelIdleSince = time.Now()
-						resultsDig <- stdout
+						resultsDig <- remoteResult.stdout
 					}()
 					select {
 					case resComp := <-resultsDig:
@@ -91,10 +91,10 @@ func RaspberryPIPrivateTunnelChecks(userCall bool) string {
 				cmd := "sudo iptables -L OUTPUT -v --line-numbers | grep all"
 				details := RemoteCmd{Host: raspberryPIIP, HostKey: piHostKey, Username: os.Getenv("piUser"), Password: os.Getenv("piPass"), Cmd: cmd}
 
-				stdout, _ := executeRemoteCmd(details)
+				remoteResult := executeRemoteCmd(details)
 
 				tunnelIdleSince = time.Now()
-				resultsIPTables <- stdout
+				resultsIPTables <- remoteResult.stdout
 			}()
 			select {
 			case resIPTables := <-resultsIPTables:
@@ -128,8 +128,8 @@ func RaspberryPIPrivateTunnelChecks(userCall bool) string {
 			cmd := "sudo service openvpn@AMD restart && sudo service transmission-daemon restart"
 			details := RemoteCmd{Host: raspberryPIIP, HostKey: piHostKey, Username: os.Getenv("piUser"), Password: os.Getenv("piPass"), Cmd: cmd}
 
-			stdout, _ := executeRemoteCmd(details)
-			fmt.Println("restarting VPN & Transmission: " + stdout)
+			remoteResult := executeRemoteCmd(details)
+			fmt.Println("restarting VPN & Transmission: " + remoteResult.stdout)
 		}
 
 		if tunnelUp != "" {
@@ -163,10 +163,11 @@ func CheckPiDiskSpace(path string) string {
 	fmt.Println("chk disk usage: " + cmd)
 	details := RemoteCmd{Host: raspberryPIIP, HostKey: piHostKey, Username: os.Getenv("piUser"), Password: os.Getenv("piPass"), Cmd: cmd}
 
-	response, err := executeRemoteCmd(details)
+	remoteResult := executeRemoteCmd(details)
+	response := remoteResult.stdout
 	tunnelIdleSince = time.Now()
-	if err != "" && strings.HasPrefix(err, "du: cannot access ‘/home/pi/torrents/*’: No such file or directory") {
-		response = err
+	if remoteResult.stderr != "" && strings.HasPrefix(remoteResult.stderr, "du: cannot access ‘/home/pi/torrents/*’: No such file or directory") {
+		response = remoteResult.stderr
 	} else {
 		response = strings.Replace(response, piSDCardPath+path, "", -1)
 		response = ":raspberry_pi: *SD Card Disk Usage* @ `" + piSDCardPath + path + "`\n" + response
@@ -174,9 +175,9 @@ func CheckPiDiskSpace(path string) string {
 	cmd = "df -h /root/ /mnt/usb_1/"
 	details = RemoteCmd{Host: raspberryPIIP, HostKey: piHostKey, Username: os.Getenv("piUser"), Password: os.Getenv("piPass"), Cmd: cmd}
 
-	df, _ := executeRemoteCmd(details)
+	remoteResultDF := executeRemoteCmd(details)
 	tunnelIdleSince = time.Now()
-	response += "\n\n" + df
+	response += "\n\n" + remoteResultDF.stdout
 
 	if !userCall {
 		customEvent := slack.RTMEvent{Type: "CheckPiDiskSpace", Data: response}
@@ -189,7 +190,6 @@ func CheckPiDiskSpace(path string) string {
 // DeleteTorrentFile now exported
 func DeleteTorrentFile(filename string) string {
 	var response string
-	var err string
 
 	if filename == "*" || filename == "" || strings.Contains(filename, "../") {
 		response = "Please enter an existing filename - try `fsck`"
@@ -200,9 +200,9 @@ func DeleteTorrentFile(filename string) string {
 		cmd := "test -d \"" + path + "\" && echo 'Yes'"
 		details := RemoteCmd{Host: raspberryPIIP, HostKey: piHostKey, Username: os.Getenv("piUser"), Password: os.Getenv("piPass"), Cmd: cmd}
 
-		isDir, _ := executeRemoteCmd(details)
+		remoteResult := executeRemoteCmd(details)
 		tunnelIdleSince = time.Now()
-		if strings.HasPrefix(isDir, "Yes") {
+		if strings.HasPrefix(remoteResult.stdout, "Yes") {
 			deleteCmd = "rm -Rf \"" + path + "\""
 		} else {
 			deleteCmd = "rm \"" + path + "\""
@@ -210,10 +210,12 @@ func DeleteTorrentFile(filename string) string {
 
 		details = RemoteCmd{Host: raspberryPIIP, HostKey: piHostKey, Username: os.Getenv("piUser"), Password: os.Getenv("piPass"), Cmd: deleteCmd}
 
-		response, err = executeRemoteCmd(details)
+		remoteResultDelete := executeRemoteCmd(details)
 		tunnelIdleSince = time.Now()
-		if err != "" {
-			response = err
+		if remoteResultDelete.stderr != "" {
+			response = remoteResultDelete.stderr
+		} else {
+			response = remoteResultDelete.stdout
 		}
 	}
 
@@ -235,10 +237,10 @@ func MoveTorrentFile(filename string) {
 			details := RemoteCmd{Host: raspberryPIIP, HostKey: piHostKey, Username: os.Getenv("piUser"), Password: os.Getenv("piPass"), Cmd: moveCmd}
 
 			var result string
-			_, err := executeRemoteCmd(details)
+			remoteResult := executeRemoteCmd(details)
 			tunnelIdleSince = time.Now()
-			if err != "" && !strings.Contains(err, "NTFS volume is already exclusively opened") {
-				result = err
+			if remoteResult.stderr != "" && !strings.Contains(remoteResult.stderr, "NTFS volume is already exclusively opened") {
+				result = remoteResult.stderr
 			} else {
 				result = "Successfully moved `" + filename + "` to `" + piUSBMountPath + "`"
 			}
