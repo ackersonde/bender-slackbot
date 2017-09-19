@@ -123,7 +123,6 @@ func RaspberryPIPrivateTunnelChecks(userCall bool) string {
 			case <-timeoutIPTables:
 				fmt.Println("Timed out on `iptables -L OUTPUT`!")
 			}
-			//  TODO if tunnelUp = "" shutdown transmission daemon, restart VPN and send RED ALERT msg!
 		} else {
 			cmd := "sudo service openvpn@AMD restart && sudo service transmission-daemon restart"
 			details := RemoteCmd{Host: raspberryPIIP, HostKey: piHostKey, Username: os.Getenv("piUser"), Password: os.Getenv("piPass"), Cmd: cmd}
@@ -174,15 +173,19 @@ func CheckPiDiskSpace(path string) string {
 	}
 	cmd = "df -h /root/ /mnt/usb_1/"
 	details = RemoteCmd{Host: raspberryPIIP, HostKey: piHostKey, Username: os.Getenv("piUser"), Password: os.Getenv("piPass"), Cmd: cmd}
-
 	remoteResultDF := executeRemoteCmd(details)
-	tunnelIdleSince = time.Now()
+
+	sentences := strings.Split(remoteResultDF.stdout, "\n")
+	if sentences[2] == sentences[1] {
+		remoteResultDF.stdout = sentences[0] + "\n" + sentences[1]
+	}
 	response += "\n\n" + remoteResultDF.stdout
-	// TODO: if the 2 lines in here are the same, delete the last!
 
 	if !userCall {
 		customEvent := slack.RTMEvent{Type: "CheckPiDiskSpace", Data: response}
 		rtm.IncomingEvents <- customEvent
+	} else {
+		tunnelIdleSince = time.Now()
 	}
 
 	return response
@@ -277,6 +280,9 @@ func reportMoveProgress(api *slack.Client) {
 
 			remoteResults <- executeRemoteCmd(progressDetails)
 		}()
+
+		// reset tunnel idle time as user may want to see progress of move
+		tunnelIdleSince = time.Now()
 
 		select {
 		case res := <-remoteResults:
