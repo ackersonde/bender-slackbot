@@ -255,6 +255,7 @@ func MoveTorrentFile(api *slack.Client, filename string) {
 		params := slack.PostMessageParameters{AsUser: true}
 		api.PostMessage(SlackReportChannel, "running `"+moveCmd+"`", params)
 		reportMoveProgress(api)
+		api.PostMessage(SlackReportChannel, "DONE moving files. Enjoy your :movie_camera: & :popcorn:!", params)
 	}
 }
 
