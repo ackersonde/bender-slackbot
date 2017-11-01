@@ -231,11 +231,13 @@ func MoveTorrentFile(api *slack.Client, filename string) {
 	if filename == "" || strings.Contains(filename, "../") || strings.HasPrefix(filename, "/") {
 		rtm.IncomingEvents <- slack.RTMEvent{Type: "MoveTorrent", Data: "Please enter an existing filename - try `fsck`"}
 	} else {
-		fileToBeMoved := "\"" + piSDCardPath + filename + "\" "
+		/*fileToBeMoved := "\"" + piSDCardPath + filename + "\" "
 		if filename == "*" {
 			fileToBeMoved = piSDCardPath + filename + " "
 		}
 		moveCmd := "(sudo mount " + piUSBMountPoint + "|| true) && mv " + fileToBeMoved + piUSBMountPath + " && sudo umount " + piUSBMountPoint
+		*/ // TODO - tricky because ftp * don't work!
+		moveCmd := "cd " + piSDCardPath + "; find . -type f -not -regex \".*\\.txt$\" -exec curl -g --ftp-create-dirs -u ftpuser:abc123 -T \"{}\" \"ftp://192.168.178.1/backup/DLNA/torrents/{}\" \\;"
 		log.Println(moveCmd)
 		go func() {
 			details := RemoteCmd{Host: raspberryPIIP, HostKey: piHostKey, Username: os.Getenv("piUser"), Password: os.Getenv("piPass"), Cmd: moveCmd}
@@ -254,8 +256,9 @@ func MoveTorrentFile(api *slack.Client, filename string) {
 
 		params := slack.PostMessageParameters{AsUser: true}
 		api.PostMessage(SlackReportChannel, "running `"+moveCmd+"`", params)
-		reportMoveProgress(api)
-		api.PostMessage(SlackReportChannel, "DONE moving files. Enjoy your :movie_camera: & :popcorn:!", params)
+		//reportMoveProgress(api)
+		//api.PostMessage(SlackReportChannel, "DONE moving files. Enjoy your :movie_camera: & :popcorn:!", params)
+		// TODO delete all the files you just FTP'd
 	}
 }
 
