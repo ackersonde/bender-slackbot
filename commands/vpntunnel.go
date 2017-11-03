@@ -237,19 +237,23 @@ func MoveTorrentFile(api *slack.Client, filename string) {
 		}
 		moveCmd := "(sudo mount " + piUSBMountPoint + "|| true) && mv " + fileToBeMoved + piUSBMountPath + " && sudo umount " + piUSBMountPoint
 		*/ // TODO - tricky because ftp * don't work!
-		moveCmd := "cd " + piSDCardPath + "; find . -type f -not -regex \".*\\.txt$\" -exec curl -g --ftp-create-dirs -u ftpuser:abc123 -T \"{}\" \"ftp://192.168.178.1/backup/DLNA/torrents/{}\" \\;"
+		moveCmd := "cd " + piSDCardPath + "; find . -type f -not -regex \".*\\.txt$\" -exec curl -g --ftp-create-dirs -u ftpuser:abc123 -T \"{}\" \"ftp://192.168.178.1/backup/DLNA/torrents/{}\" \\; >> ftp.log 2>&1"
 		log.Println(moveCmd)
 		go func() {
 			details := RemoteCmd{Host: raspberryPIIP, HostKey: piHostKey, Username: os.Getenv("piUser"), Password: os.Getenv("piPass"), Cmd: moveCmd}
-
 			var result string
 			remoteResult := executeRemoteCmd(details)
 			tunnelIdleSince = time.Now()
-			if remoteResult.stderr != "" && !strings.Contains(remoteResult.stderr, "NTFS volume is already exclusively opened") {
-				result = remoteResult.stderr
-			} else {
-				result = "Successfully moved `" + filename + "` to `" + piUSBMountPath + "`"
-			}
+			log.Printf("%v:%v\n", details, remoteResult)
+
+			/*
+				if remoteResult.stderr != "" && !strings.Contains(remoteResult.stderr, "NTFS volume is already exclusively opened") {
+					result = remoteResult.stderr
+				} else {
+					result = "Successfully moved `" + filename + "` to `" + piUSBMountPath + "`"
+				}*/
+			result = "Successfully moved `" + filename + "` to `" + piUSBMountPath + "`"
+			// TODO: grab last line of ftp.log and parse for "100" % and "--:--:--"
 
 			rtm.IncomingEvents <- slack.RTMEvent{Type: "MoveTorrent", Data: result}
 		}()
