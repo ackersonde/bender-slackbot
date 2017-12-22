@@ -111,10 +111,6 @@ func RaspberryPIPrivateTunnelChecks(userCall bool) string {
 							tunnelUp = ""
 						}
 					case 2:
-						if !strings.Contains(oneLine, "ACCEPT     all  --  any    eth0    anywhere             192.168.1.0/24") {
-							tunnelUp = ""
-						}
-					case 3:
 						if !strings.Contains(oneLine, "DROP       all  --  any    eth0    anywhere             anywhere") {
 							tunnelUp = ""
 						}
