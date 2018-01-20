@@ -61,7 +61,7 @@ jobs:
             echo "Deploy to $DEPLOY_SERVER"
             export DEPLOY_CONNECT="ssh -o StrictHostKeyChecking=no ackersond@$DEPLOY_SERVER"
 
-            export UPLOAD_DIR=`$DEPLOY_CONNECT docker inspect ackerson.de| grep "/var/lib/docker/volumes/" | sed 's/"//g' | sed 's/ //g' | sed 's/,//g' | awk -F : '{ print $2 }'`'/bb_games'
+            export UPLOAD_DIR=`$DEPLOY_CONNECT docker inspect homepage| grep "/var/lib/docker/volumes/" | sed 's/"//g' | sed 's/ //g' | sed 's/,//g' | awk -F : '{ print $2 }'`'/bb_games'
 
             $DEPLOY_CONNECT docker login -u $DOCKER_USER -p $DOCKER_PASS && docker pull danackerson/bender:vc$CIRCLE_BUILD_NUM
             $DEPLOY_CONNECT docker rm -f bender || true
