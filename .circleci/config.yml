@@ -17,13 +17,13 @@ jobs:
       - run:
           name: "Install Docker CE"
           command: |
-            VER="17.09.0"
+            VER="17.12.0"
             curl -fsSLO https://download.docker.com/linux/static/stable/x86_64/docker-$VER-ce.tgz && tar --strip-components=1 -xvzf docker-$VER-ce.tgz -C /usr/local/bin
 
       - run:
           name: "Build, run and test docker image"
           command: |
-            docker build -t danackerson/bender:vc$CIRCLE_BUILD_NUM --build-arg vpnc_gateway=$VPNC_GATEWAY --build-arg vpnc_id=$VPNC_ID --build-arg vpnc_secret=$VPNC_SECRET --build-arg vpnc_username=$VPNC_USERNAME --build-arg vpnc_password=$VPNC_PASSWORD .
+            docker build --compress -t danackerson/bender:vc$CIRCLE_BUILD_NUM --build-arg vpnc_gateway=$VPNC_GATEWAY --build-arg vpnc_id=$VPNC_ID --build-arg vpnc_secret=$VPNC_SECRET --build-arg vpnc_username=$VPNC_USERNAME --build-arg vpnc_password=$VPNC_PASSWORD .
             docker run -d -e slackToken=$(echo $slackTokenEncoded | base64 --decode) -e raspberryPIIP=$raspberryPIIP -e slackReportChannel=$slackReportChannel -e piUser=$piUser -e piPass=$piPass -e digitalOceanToken=$digitalOceanToken --name bender danackerson/bender:vc$CIRCLE_BUILD_NUM
             echo `docker logs bender`
 
@@ -67,13 +67,6 @@ jobs:
             $DEPLOY_CONNECT docker rm -f bender || true
             $DEPLOY_CONNECT mkdir /home/ackersond/algo_vpn || true
             $DEPLOY_CONNECT docker run -d --restart=always --privileged=true -v /home/ackersond/algo_vpn:/algo_vpn -v $UPLOAD_DIR:/uploads -e doFirewallID=$doFirewallID -e doFloatingIP=$doFloatingIP -e officeIP=$officeIP -e homeDomain=$homeDomain -e circleAPIToken=$CIRCLE_API_TOKEN -e raspberryPIIP=$raspberryPIIP -e slackReportChannel=$slackReportChannel -e piUser=$piUser -e piPass=$piPass -e digitalOceanToken=$digitalOceanToken -e CIRCLE_BUILD_NUM=$CIRCLE_BUILD_NUM -e slackToken=$(echo $slackTokenEncoded | base64 --decode) --name bender danackerson/bender:vc$CIRCLE_BUILD_NUM
-
-            if [ $DEPLOY_SERVER_IP ]; then
-              # Battlefleet also needs to be deployed to new server
-              curl --user ${CIRCLE_API_TOKEN}: \
-                --data build_parameters[DEPLOY_SERVER_IP]=$DEPLOY_SERVER_IP \
-                https://circleci.com/api/v1.1/project/github/$CIRCLE_PROJECT_USERNAME/battlefleet/tree/master
-            fi
 
       - run:
           name: Reenable Digital Ocean firewall
