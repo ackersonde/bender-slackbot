@@ -51,6 +51,7 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 			// strip '<>' off url
 			downloadURL := strings.Trim(args[1], "<>")
 			uri, err := url.ParseRequestURI(downloadURL)
+			log.Printf("parsed %s from %s", uri.RequestURI(), downloadURL)
 			if err != nil {
 				api.PostMessage(slackMessage.Channel, "Invalid URL for downloading! ("+err.Error()+")", params)
 			} else {
@@ -376,7 +377,10 @@ func mvvRoute(origin string, destination string) string {
 }
 
 func downloadYoutubeVideo(origURL string) bool {
-	resp, _ := http.Get("https://ackerson.de/bb_download?gameURL=" + origURL)
+	resp, err := http.Get("https://ackerson.de/bb_download?gameURL=" + origURL)
+	if err != nil {
+		log.Printf("ERR: downloading YTube video: %s", err.Error())
+	}
 	if resp.StatusCode == 200 {
 		return true
 	}
