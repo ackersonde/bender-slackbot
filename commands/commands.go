@@ -253,6 +253,7 @@ func getJSONFromRequestURL(url string, requestType string) *gojq.JQ {
 	defer resp.Body.Close()
 
 	contentBytes, _ := ioutil.ReadAll(resp.Body)
+	log.Printf("got JSON: %s", string(contentBytes))
 	contentParser, _ := gojq.NewStringQuery(string(contentBytes))
 
 	return contentParser
@@ -297,7 +298,7 @@ func findAndReturnVPNConfigs(doServers string) string {
 
 		// get the log output for this step and parse out IP address and SSH password
 		outputParser := getJSONFromRequestURL(outputURL, "GET")
-		message, error := outputParser.QueryToString("[0].msg")
+		message, error := outputParser.QueryToString("[0].message")
 		if error != nil {
 			log.Printf("QueryToString ERR: %s\n", error.Error())
 		}
