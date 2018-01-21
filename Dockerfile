@@ -18,8 +18,6 @@ RUN ln -fs /usr/share/zoneinfo/Europe/Berlin /etc/localtime && dpkg-reconfigure 
 
 # get slackbot in place
 RUN mkdir /app
-RUN mkdir /algo_vpn
-RUN mkdir /uploads
 COPY bender /app/
 WORKDIR /app
 ENTRYPOINT ["./bender"]

@@ -316,7 +316,7 @@ func findAndReturnVPNConfigs(doServers string) string {
 		mobileConfigFileString := hex.EncodeToString(mobileConfigFileHashed)
 		fmt.Println(mobileConfigFileString)
 
-		copyCmd := "cp /algo_vpn/" + ipv4 + "/dan.mobileconfig /uploads/" + desktopConfigFileString + " && cp /algo_vpn/" + ipv4 + "/android_dan.sswan /uploads/" + mobileConfigFileString
+		copyCmd := "cp /algo_vpn/" + ipv4 + "/dan.mobileconfig /app/public/downloads/" + desktopConfigFileString + " && cp /algo_vpn/" + ipv4 + "/android_dan.sswan /app/public/downloads/" + mobileConfigFileString
 		_, err := exec.Command("/bin/bash", "-c", copyCmd).Output()
 		if err != nil {
 			fmt.Printf("Failed to execute command: %s", copyCmd)
@@ -328,8 +328,8 @@ func findAndReturnVPNConfigs(doServers string) string {
 			joinStatus = "couldn't send to Papa's handy"
 		}
 
-		links = ":link: <https://ackerson.de/bb_games/" + mobileConfigFileString + "|android_dan_" + ipv4 + ".sswan> (" + joinStatus + ")\n"
-		links += ":link: <https://ackerson.de/bb_games/" + desktopConfigFileString + "|dan.mobileconfig> (dbl click on Mac)\n"
+		links = ":link: <https://ackerson.de/downloads/" + mobileConfigFileString + "|android_dan_" + ipv4 + ".sswan> (" + joinStatus + ")\n"
+		links += ":link: <https://ackerson.de/downloads/" + desktopConfigFileString + "|dan.mobileconfig> (dbl click on Mac)\n"
 	}
 
 	return ":algovpn: " + passAlgoVPN + "\n" + links
