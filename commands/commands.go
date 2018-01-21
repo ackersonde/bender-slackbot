@@ -253,7 +253,6 @@ func getJSONFromRequestURL(url string, requestType string) *gojq.JQ {
 	defer resp.Body.Close()
 
 	contentBytes, _ := ioutil.ReadAll(resp.Body)
-	log.Printf("got JSON: %s", string(contentBytes))
 	contentParser, _ := gojq.NewStringQuery(string(contentBytes))
 
 	return contentParser
@@ -304,7 +303,7 @@ func findAndReturnVPNConfigs(doServers string) string {
 		}
 		log.Printf("outputParser val: %s\n", message)
 
-		checkPassString, _ := regexp.Compile(`The p12 and SSH keys password for new users is (?:[0-9a-zA-Z]{8})`)
+		checkPassString, _ := regexp.Compile(`The p12 and SSH keys password for new users is (?:[0-9a-zA-Z_@]{8})`)
 		passAlgoVPN = string(checkPassString.Find([]byte(message)))
 
 		ipv4 := getIPv4Address(doServers)
