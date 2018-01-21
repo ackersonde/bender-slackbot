@@ -297,11 +297,14 @@ func findAndReturnVPNConfigs(doServers string) string {
 
 		// get the log output for this step and parse out IP address and SSH password
 		outputParser := getJSONFromRequestURL(outputURL, "GET")
-		message, _ := outputParser.Query("[0].message")
-		//msgs := strings.Split(message.(string), "\n")
+		message, error := outputParser.QueryToString("[0].msg")
+		if error != nil {
+			log.Printf("QueryToString ERR: %s\n", error.Error())
+		}
+		log.Printf("outputParser val: %s\n", message)
 
 		checkPassString, _ := regexp.Compile(`The p12 and SSH keys password for new users is (?:[0-9a-zA-Z]{8})`)
-		passAlgoVPN = string(checkPassString.Find([]byte(message.(string))))
+		passAlgoVPN = string(checkPassString.Find([]byte(message)))
 
 		ipv4 := getIPv4Address(doServers)
 		log.Println(ipv4)
