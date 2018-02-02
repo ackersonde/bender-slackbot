@@ -205,6 +205,12 @@ func circleCIDoAlgoBuildingAndBuildNums() (bool, string, string) {
 	currentBuildNum := "-1"
 	currentlyBuilding := true
 
+	/* TODO: replace with a curl like call
+	"curl --user " + os.Getenv("circleAPIToken") + ": \
+	      --data build_parameters[REGION]=" + regionArg + " \
+	  https://circleci.com/api/v1.1/project/github/danackerson/do-algo/tree/master"
+	*/
+
 	buildsURL := circleCIDoAlgoURL + circleCITokenParam
 	buildsParser := getJSONFromRequestURL(buildsURL, "GET")
 	array, _ := buildsParser.QueryToArray(".")
