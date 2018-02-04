@@ -252,7 +252,6 @@ func getJSONFromRequestURL(url string, requestType string, encodedData string) *
 	req, _ := http.NewRequest(requestType, url, strings.NewReader(encodedData))
 	if requestType == "POST" && encodedData != "" {
 		req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
-		req.Header.Add("Content-Length", strconv.Itoa(len(encodedData)))
 	}
 	req.Header.Set("Accept", "application/json")
 

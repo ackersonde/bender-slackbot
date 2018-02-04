@@ -21,11 +21,13 @@ jobs:
             curl -fsSLO https://download.docker.com/linux/static/stable/x86_64/docker-$VER-ce.tgz && tar --strip-components=1 -xvzf docker-$VER-ce.tgz -C /usr/local/bin
 
       - run:
-          name: "Build, run and test docker image"
+          name: "Build, run, test & push docker image"
           command: |
             docker build --compress -t danackerson/bender:vc$CIRCLE_BUILD_NUM --build-arg vpnc_gateway=$VPNC_GATEWAY --build-arg vpnc_id=$VPNC_ID --build-arg vpnc_secret=$VPNC_SECRET --build-arg vpnc_username=$VPNC_USERNAME --build-arg vpnc_password=$VPNC_PASSWORD .
             docker run -d -e slackToken=$(echo $slackTokenEncoded | base64 --decode) -e raspberryPIIP=$raspberryPIIP -e slackReportChannel=$slackReportChannel -e piUser=$piUser -e piPass=$piPass -e digitalOceanToken=$digitalOceanToken --name bender danackerson/bender:vc$CIRCLE_BUILD_NUM
             echo `docker logs bender`
+            docker login -u $DOCKER_USER -p $DOCKER_PASS
+            docker push danackerson/bender:vc$CIRCLE_BUILD_NUM
 
       - type: add-ssh-keys
         name: "Load key"
@@ -48,10 +50,8 @@ jobs:
             sh <(curl -s https://raw.githubusercontent.com/danackerson/digitalocean/master/utils/disableFW.sh)
 
       - deploy:
-          name: "Upload to DockerHub & deploy to DigitalOcean Droplet"
+          name: "deploy to DigitalOcean Droplet"
           command: |
-            docker login -u $DOCKER_USER -p $DOCKER_PASS
-            docker push danackerson/bender:vc$CIRCLE_BUILD_NUM
             source ~/.ssh_agent_conf
 
             export DEPLOY_SERVER=deploy.ackerson.de
