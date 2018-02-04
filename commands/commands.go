@@ -81,16 +81,24 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 			response = findAndReturnVPNConfigs(response)
 			api.PostMessage(slackMessage.Channel, response, params)
 		} else {
-			building, buildNum, _ := circleCIDoAlgoBuildingAndBuildNums()
+			region := "fra1"
+			if len(args) > 1 {
+				region = args[1]
+			}
+
+			building, buildNum, _ := circleCIDoAlgoBuildingAndBuildNums(region)
 			if !building {
 				buildsURL := circleCIDoAlgoURL + circleCITokenParam
-				buildsParser := getJSONFromRequestURL(buildsURL, "POST")
+				data := url.Values{}
+				data.Set("build_parameters[REGION]", region)
+				buildsParser := getJSONFromRequestURL(buildsURL, "POST", data.Encode())
 
 				buildNumParse, _ := buildsParser.Query("build_num")
 				buildNum = strconv.FormatFloat(buildNumParse.(float64), 'f', -1, 64)
 			}
-			response = ":circleci: <https://circleci.com/gh/danackerson/do-algo/" + buildNum + "|do-algo Build " + buildNum + ">"
+			response = ":circleci: <https://circleci.com/gh/danackerson/do-algo/" + buildNum + "|do-algo Build " + buildNum + " @ " + region + ">"
 			api.PostMessage(slackMessage.Channel, response, params)
+
 		}
 	} else if args[0] == "do" {
 		response := ListDODroplets(true)
@@ -185,7 +193,7 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 			":metro: `mvv`: Status | Trip In | Trip Home\n" +
 			":closed_lock_with_key: `vpn[c|s|d]`: [C]onnect, [S]tatus, [D]rop VPN tunnel to Fritz!Box\n" +
 			":openvpn: `ovpn`: show status of OVPN.se on :raspberry_pi:\n" +
-			":algovpn: `algo`: show|launch AlgoVPN droplet on :do_droplet:\n" +
+			":algovpn: `algo (nyc1|tor1|lon1|ams3|...)`: show|launch AlgoVPN droplet on :do_droplet: (in given region - default FRA1)\n" +
 			":do_droplet: `do|dd <id>`: show|delete DigitalOcean droplet(s)\n" +
 			":pirate_bay: `torq <search term>`\n" +
 			":transmission: `tran[c|s|d]`: [C]reate <URL>, [S]tatus, [D]elete <ID> torrents on :raspberry_pi:\n" +
@@ -200,19 +208,13 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 	}
 }
 
-func circleCIDoAlgoBuildingAndBuildNums() (bool, string, string) {
+func circleCIDoAlgoBuildingAndBuildNums(region string) (bool, string, string) {
 	lastSuccessBuildNum := "-1"
 	currentBuildNum := "-1"
 	currentlyBuilding := true
 
-	/* TODO: replace with a curl like call
-	"curl --user " + os.Getenv("circleAPIToken") + ": \
-	      --data build_parameters[REGION]=" + regionArg + " \
-	  https://circleci.com/api/v1.1/project/github/danackerson/do-algo/tree/master"
-	*/
-
 	buildsURL := circleCIDoAlgoURL + circleCITokenParam
-	buildsParser := getJSONFromRequestURL(buildsURL, "GET")
+	buildsParser := getJSONFromRequestURL(buildsURL, "GET", "")
 	array, _ := buildsParser.QueryToArray(".")
 	for i := 0; i < len(array); i++ {
 		statusStr, _ := buildsParser.Query("[" + strconv.Itoa(i) + "].status")
@@ -246,8 +248,12 @@ func isFinishedStatus(status string) bool {
 	return false
 }
 
-func getJSONFromRequestURL(url string, requestType string) *gojq.JQ {
-	req, _ := http.NewRequest(requestType, url, nil)
+func getJSONFromRequestURL(url string, requestType string, encodedData string) *gojq.JQ {
+	req, _ := http.NewRequest(requestType, url, strings.NewReader(encodedData))
+	if requestType == "POST" && encodedData != "" {
+		req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+		req.Header.Add("Content-Length", strconv.Itoa(len(encodedData)))
+	}
 	req.Header.Set("Accept", "application/json")
 
 	resp, err := http.DefaultClient.Do(req)
@@ -268,7 +274,7 @@ func waitAndRetrieveLogs(buildURL string, index int) string {
 	outputURL := "N/A"
 
 	for notReady := true; notReady; notReady = (outputURL == "N/A") {
-		buildParser := getJSONFromRequestURL(buildURL, "GET")
+		buildParser := getJSONFromRequestURL(buildURL, "GET", "")
 		actionsParser, errOutput := buildParser.Query("steps.[" + strconv.Itoa(index) + "].actions.[0].output_url")
 
 		if errOutput != nil {
@@ -286,13 +292,13 @@ func findAndReturnVPNConfigs(doServers string) string {
 	passAlgoVPN := "No successful AlgoVPN deployments found."
 	links := ""
 
-	building, _, lastSuccessBuildNum := circleCIDoAlgoBuildingAndBuildNums()
+	building, _, lastSuccessBuildNum := circleCIDoAlgoBuildingAndBuildNums("fra1")
 
 	if !building && lastSuccessBuildNum != "-1" {
 		// now get build details for this buildNum
 		var outputURL string
 		buildURL := circleCIDoAlgoURL + "/" + lastSuccessBuildNum + circleCITokenParam
-		buildParser := getJSONFromRequestURL(buildURL, "GET")
+		buildParser := getJSONFromRequestURL(buildURL, "GET", "")
 		for i := 0; i < 9; i++ {
 			stepName, _ := buildParser.Query("steps.[" + strconv.Itoa(i) + "].name")
 			if stepName == "Upload to DockerHub, deploy to Digital Ocean Droplet & launch VPN" {
@@ -302,7 +308,7 @@ func findAndReturnVPNConfigs(doServers string) string {
 		}
 
 		// get the log output for this step and parse out IP address and SSH password
-		outputParser := getJSONFromRequestURL(outputURL, "GET")
+		outputParser := getJSONFromRequestURL(outputURL, "GET", "")
 		message, error := outputParser.QueryToString("[0].message")
 		if error != nil {
 			log.Printf("QueryToString ERR: %s\n", error.Error())
