@@ -324,11 +324,11 @@ func findAndReturnVPNConfigs(doServers string) string {
 		doPersonalAccessToken := os.Getenv("digitalOceanToken")
 		salt := []byte(ipv4 + ":" + doPersonalAccessToken)
 		desktopConfigFileHashed, _ := scrypt.Key([]byte("dan.mobileconfig"), salt, 16384, 8, 1, 32)
-		desktopConfigFileString := hex.EncodeToString(desktopConfigFileHashed)
+		desktopConfigFileString := hex.EncodeToString(desktopConfigFileHashed) + ".mobileconfig"
 		fmt.Println(desktopConfigFileString)
 
 		mobileConfigFileHashed, _ := scrypt.Key([]byte("android_dan.sswan"), salt, 16384, 8, 1, 32)
-		mobileConfigFileString := hex.EncodeToString(mobileConfigFileHashed)
+		mobileConfigFileString := hex.EncodeToString(mobileConfigFileHashed) + ".sswan"
 		fmt.Println(mobileConfigFileString)
 
 		copyCmd := "cp /algo_vpn/" + ipv4 + "/dan.mobileconfig /app/public/downloads/" + desktopConfigFileString + " && cp /algo_vpn/" + ipv4 + "/android_dan.sswan /app/public/downloads/" + mobileConfigFileString
