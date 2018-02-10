@@ -33,7 +33,7 @@ func main() {
 	slack.SetLogger(logger)
 	api.SetDebug(false)
 
-	prepareScheduler() // spawn cron scheduler jobs
+	go prepareScheduler() // spawn cron scheduler jobs
 
 	rtm := api.NewRTM()
 	commands.SetRTM(rtm)
