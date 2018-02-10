@@ -44,6 +44,9 @@ func main() {
 		case msg := <-rtm.IncomingEvents:
 			switch ev := msg.Data.(type) {
 
+			case *slack.ConnectedEvent:
+				botID = ev.Info.User.ID
+
 			case *slack.MessageEvent:
 				callerID := ev.Msg.User
 
