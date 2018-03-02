@@ -76,7 +76,9 @@ jobs:
       - run:
           name: Reenable Digital Ocean firewall
           command: |
-            sh <(curl -s https://raw.githubusercontent.com/danackerson/digitalocean/master/utils/reenableFW.sh)
+            if [ -z $DEPLOY_SERVER_IP ]; then
+              sh <(curl -s https://raw.githubusercontent.com/danackerson/digitalocean/master/utils/reenableFW.sh)
+            fi
           when: always
 
 # not all Env vars are created equal - some have ':' or '{}' or <shudder> '\/'s
