@@ -227,12 +227,11 @@ func MoveTorrentFile(api *slack.Client, filename string) {
 	if filename == "" || strings.Contains(filename, "../") || strings.HasPrefix(filename, "/") {
 		rtm.IncomingEvents <- slack.RTMEvent{Type: "MoveTorrent", Data: "Please enter an existing filename - try `fsck`"}
 	} else {
-		/*fileToBeMoved := "\"" + piSDCardPath + filename + "\" "
-		if filename == "*" {
-			fileToBeMoved = piSDCardPath + filename + " "
-		}
-		moveCmd := "(sudo mount " + piUSBMountPoint + "|| true) && mv " + fileToBeMoved + piUSBMountPath + " && sudo umount " + piUSBMountPoint
-		*/ // TODO - tricky because ftp * don't work!
+		// detox filenames => http://detox.sourceforge.net/ | https://linux.die.net/man/1/detox
+		renameCmd := "cd " + piSDCardPath + "; detox -r *"
+		renameDetails := RemoteCmd{Host: raspberryPIIP, HostKey: piHostKey, Username: os.Getenv("piUser"), Password: os.Getenv("piPass"), Cmd: renameCmd}
+		executeRemoteCmd(renameDetails)
+
 		moveCmd := "cd " + piSDCardPath + "; find . -type f -not -regex \".*\\.txt$\" -exec curl -g --ftp-create-dirs -u ftpuser:abc123 -T \"{}\" \"ftp://192.168.178.1/backup/DLNA/torrents/{}\" \\; >> ftp.log 2>&1"
 		log.Println(moveCmd)
 		go func() {
@@ -242,23 +241,13 @@ func MoveTorrentFile(api *slack.Client, filename string) {
 			tunnelIdleSince = time.Now()
 			log.Printf("%v:%v\n", details, remoteResult)
 
-			/*
-				if remoteResult.stderr != "" && !strings.Contains(remoteResult.stderr, "NTFS volume is already exclusively opened") {
-					result = remoteResult.stderr
-				} else {
-					result = "Successfully moved `" + filename + "` to `" + piUSBMountPath + "`"
-				}*/
 			result = "Successfully moved `" + filename + "` to `" + piUSBMountPath + "`"
-			// TODO: grab last line of ftp.log and parse for "100" % and "--:--:--"
-
 			rtm.IncomingEvents <- slack.RTMEvent{Type: "MoveTorrent", Data: result}
 		}()
 
 		params := slack.PostMessageParameters{AsUser: true}
 		api.PostMessage(SlackReportChannel, "running `"+moveCmd+"`", params)
 		//reportMoveProgress(api)
-		//api.PostMessage(SlackReportChannel, "DONE moving files. Enjoy your :movie_camera: & :popcorn:!", params)
-		// TODO delete all the files you just FTP'd
 	}
 }
 

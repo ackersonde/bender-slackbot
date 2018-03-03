@@ -82,7 +82,12 @@ func main() {
 					msg.Type == "CheckPiDiskSpace" {
 					response := msg.Data.(string)
 					params := slack.PostMessageParameters{AsUser: true}
-					api.PostMessage(commands.SlackReportChannel, response, params)
+
+					if msg.Type == "MoveTorrent" {
+						api.PostMessage(commands.SlackReportChannel, "DONE moving files. Enjoy your :movie_camera: & :popcorn:!", params)
+					} else {
+						api.PostMessage(commands.SlackReportChannel, response, params)
+					}
 				} else {
 					// Ignore other events..
 					fmt.Printf("Unexpected %s: %+v\n", msg.Type, msg.Data)

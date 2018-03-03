@@ -126,6 +126,27 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 				response += CheckPiDiskSpace("")
 			}
 
+			// grab listing from FritzBox NAS
+			/* $ curl -s ftp://ftpuser:abc123@192.168.178.1/backup/DLNA/torrents/Thor.Ragnarok.2017.1080p.WEB-DL.X264.AC3-EVO/ | awk '{if ($7 != ".." && $7 != "." && $1 != "total") print $5"\t"$9}'
+			5536497109	Thor.Ragnarok.2017.1080p.WEB-DL.X264.AC3-EVO.mkv
+			975	Thor.Ragnarok.2017.1080p.WEB-DL.X264.AC3-EVO.nfo */
+			ftpListingCmd := "curl -s ftp://ftpuser:abc123@192.168.178.1/backup/DLNA/torrents/ | awk '{print $5\"\t\"$9}'"
+			ftpListDetails := RemoteCmd{Host: raspberryPIIP, HostKey: piHostKey, Username: os.Getenv("piUser"), Password: os.Getenv("piPass"), Cmd: ftpListingCmd}
+			remoteResult := executeRemoteCmd(ftpListDetails)
+			response += "\n:wifi: USB Disk on fritz!Box\n\n" + remoteResult.stdout + " : " + remoteResult.stderr
+
+			/* $ curl -u ftpuser:abc123 -l ftp://192.168.178.1/backup/DLNA/torrents/
+			NFL.Super.Bowl.LII.2018.02.04.Eagles.vs.Patriots.720p.HDTV.x264-BAJSKORV[ettv]
+			Coco (2017) [1080p] [YTS.AG]
+			ftp.log
+			Thor.Ragnarok.2017.1080p.WEB-DL.X264.AC3-EVO
+			Murder On The Orient Express 2017 1080p BluRay x264 DTS-M2Tv
+			.DS_Store
+			Constantine.2005.1080p.BluRay.AC3.x264-ETRG
+			Blue Planet II (2017) [1080p]
+			Goodbye Christopher Robin.2017 1080p WEB-DL x264 DD 5.1-M2Tv
+			._.DS_Store */
+
 			rtm.SendMessage(rtm.NewOutgoingMessage(response, slackMessage.Channel))
 		}
 	} else if args[0] == "mv" || args[0] == "rm" {
