@@ -127,13 +127,10 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 			}
 
 			// grab listing from FritzBox NAS
-			/* $ curl -s ftp://ftpuser:abc123@192.168.178.1/backup/DLNA/torrents/Thor.Ragnarok.2017.1080p.WEB-DL.X264.AC3-EVO/ | awk '{if ($7 != ".." && $7 != "." && $1 != "total") print $5"\t"$9}'
-			5536497109	Thor.Ragnarok.2017.1080p.WEB-DL.X264.AC3-EVO.mkv
-			975	Thor.Ragnarok.2017.1080p.WEB-DL.X264.AC3-EVO.nfo */
 			ftpListingCmd := "curl -s ftp://ftpuser:abc123@192.168.178.1/backup/DLNA/torrents/ | awk '{print $5\"\t\"$9}'"
 			ftpListDetails := RemoteCmd{Host: raspberryPIIP, HostKey: piHostKey, Username: os.Getenv("piUser"), Password: os.Getenv("piPass"), Cmd: ftpListingCmd}
 			remoteResult := executeRemoteCmd(ftpListDetails)
-			response += "\n:wifi: USB Disk on fritz!Box\n\n" + remoteResult.stdout + " : " + remoteResult.stderr
+			response += "\n\n:wifi: USB Disk on :fritzbox:\n" + remoteResult.stdout
 
 			/* $ curl -u ftpuser:abc123 -l ftp://192.168.178.1/backup/DLNA/torrents/
 			NFL.Super.Bowl.LII.2018.02.04.Eagles.vs.Patriots.720p.HDTV.x264-BAJSKORV[ettv]
