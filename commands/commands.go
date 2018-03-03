@@ -130,7 +130,7 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 			ftpListingCmd := "curl -s ftp://ftpuser:abc123@192.168.178.1/backup/DLNA/torrents/ | awk '{print $5\"\t\"$9}'"
 			ftpListDetails := RemoteCmd{Host: raspberryPIIP, HostKey: piHostKey, Username: os.Getenv("piUser"), Password: os.Getenv("piPass"), Cmd: ftpListingCmd}
 			remoteResult := executeRemoteCmd(ftpListDetails)
-			response += "\n\n:wifi: USB Disk on :fritzbox:\n" + remoteResult.stdout
+			response += "\n\n:wifi: USB Disk ~/torrents on :fritzbox:\n" + remoteResult.stdout
 
 			/* $ curl -u ftpuser:abc123 -l ftp://192.168.178.1/backup/DLNA/torrents/
 			NFL.Super.Bowl.LII.2018.02.04.Eagles.vs.Patriots.720p.HDTV.x264-BAJSKORV[ettv]
