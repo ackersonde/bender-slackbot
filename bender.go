@@ -60,8 +60,15 @@ func main() {
 					parsedMessage := strings.TrimSpace(strings.Replace(originalMessage, "<@"+botID+">", "", -1))
 					r, n := utf8.DecodeRuneInString(parsedMessage)
 					parsedMessage = string(unicode.ToLower(r)) + parsedMessage[n:]
+
+					var userName string
 					userInfo, _ := rtm.GetUserInfo(ev.Msg.User)
-					logger.Printf("%s: %s\n", userInfo.Name, parsedMessage)
+					if userInfo == nil {
+						userName = "algo-build-bot"
+					} else {
+						userName = userInfo.Name
+					}
+					logger.Printf("%s: %s\n", userName, parsedMessage)
 
 					commands.CheckCommand(api, ev.Msg, parsedMessage)
 				}
