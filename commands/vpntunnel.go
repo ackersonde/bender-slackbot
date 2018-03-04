@@ -228,11 +228,11 @@ func MoveTorrentFile(api *slack.Client, filename string) {
 		rtm.IncomingEvents <- slack.RTMEvent{Type: "MoveTorrent", Data: "Please enter an existing filename - try `fsck`"}
 	} else {
 		// detox filenames => http://detox.sourceforge.net/ | https://linux.die.net/man/1/detox
-		renameCmd := "cd " + piSDCardPath + "; detox -r *"
+		renameCmd := "cd " + piSDCardPath + "; rm *.log; detox -r *"
 		renameDetails := RemoteCmd{Host: raspberryPIIP, HostKey: piHostKey, Username: os.Getenv("piUser"), Password: os.Getenv("piPass"), Cmd: renameCmd}
 		executeRemoteCmd(renameDetails)
 
-		moveCmd := "cd " + piSDCardPath + "; find . -type f -not -regex \".*\\.txt$\" -exec curl -g --ftp-create-dirs -u ftpuser:abc123 -T \"{}\" \"ftp://192.168.178.1/backup/DLNA/torrents/{}\" \\; >> ftp.log 2>&1"
+		moveCmd := "cd " + piSDCardPath + "; find . -type f -exec curl -g --ftp-create-dirs -u ftpuser:abc123 -T \"{}\" \"ftp://192.168.178.1/backup/DLNA/torrents/{}\" \\; > ftp.log 2>&1"
 		log.Println(moveCmd)
 		go func() {
 			details := RemoteCmd{Host: raspberryPIIP, HostKey: piHostKey, Username: os.Getenv("piUser"), Password: os.Getenv("piPass"), Cmd: moveCmd}

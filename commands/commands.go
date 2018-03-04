@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"bufio"
 	"encoding/hex"
 	"fmt"
 	"io/ioutil"
@@ -17,6 +18,7 @@ import (
 	"golang.org/x/crypto/scrypt"
 
 	"github.com/danackerson/digitalocean/common"
+	humanize "github.com/dustin/go-humanize"
 	"github.com/elgs/gojq"
 	"github.com/nlopes/slack"
 )
@@ -130,19 +132,9 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 			ftpListingCmd := "curl -s ftp://ftpuser:abc123@192.168.178.1/backup/DLNA/torrents/ | awk '{print $5\"\t\"$9}'"
 			ftpListDetails := RemoteCmd{Host: raspberryPIIP, HostKey: piHostKey, Username: os.Getenv("piUser"), Password: os.Getenv("piPass"), Cmd: ftpListingCmd}
 			remoteResult := executeRemoteCmd(ftpListDetails)
-			response += "\n\n:wifi: USB Disk ~/torrents on :fritzbox:\n" + remoteResult.stdout
 
-			/* $ curl -u ftpuser:abc123 -l ftp://192.168.178.1/backup/DLNA/torrents/
-			NFL.Super.Bowl.LII.2018.02.04.Eagles.vs.Patriots.720p.HDTV.x264-BAJSKORV[ettv]
-			Coco (2017) [1080p] [YTS.AG]
-			ftp.log
-			Thor.Ragnarok.2017.1080p.WEB-DL.X264.AC3-EVO
-			Murder On The Orient Express 2017 1080p BluRay x264 DTS-M2Tv
-			.DS_Store
-			Constantine.2005.1080p.BluRay.AC3.x264-ETRG
-			Blue Planet II (2017) [1080p]
-			Goodbye Christopher Robin.2017 1080p WEB-DL x264 DD 5.1-M2Tv
-			._.DS_Store */
+			diskUsage := getUSBDiskUsageOnFritzBox(remoteResult.stdout)
+			response += "\n\n:wifi: USB Disk ~/torrents on :fritzbox:\n" + diskUsage
 
 			rtm.SendMessage(rtm.NewOutgoingMessage(response, slackMessage.Channel))
 		}
@@ -264,6 +256,48 @@ func isFinishedStatus(status string) bool {
 		return true
 	}
 	return false
+}
+
+func getUSBDiskUsageOnFritzBox(ftpDirectories string) string {
+	result := ""
+	directoryHint := "4096\t"
+
+	scanner := bufio.NewScanner(strings.NewReader(ftpDirectories))
+	for scanner.Scan() {
+		if strings.HasPrefix(scanner.Text(), directoryHint) {
+			directory := strings.SplitAfter(scanner.Text(), directoryHint)[1]
+			totalSize := scanDirectory(directory + "/")
+			result += fmt.Sprintf("%s\t%s\n", humanize.Bytes(totalSize), directory)
+		}
+	}
+	if err := scanner.Err(); err != nil {
+		log.Fatal(err)
+	}
+
+	return result
+}
+
+func scanDirectory(directoryName string) uint64 {
+	var size uint64
+
+	ftpListingCmd := "curl -s ftp://ftpuser:abc123@192.168.178.1/backup/DLNA/torrents/" + directoryName + " | awk '{print $5\"\t\"$9}'"
+	ftpListDetails := RemoteCmd{Host: raspberryPIIP, HostKey: piHostKey, Username: os.Getenv("piUser"), Password: os.Getenv("piPass"), Cmd: ftpListingCmd}
+	remoteResult := executeRemoteCmd(ftpListDetails)
+
+	scanner := bufio.NewScanner(strings.NewReader(remoteResult.stdout))
+	for scanner.Scan() {
+		fileInfo := strings.Split(scanner.Text(), "\t")
+		fileSize, err := strconv.ParseUint(fileInfo[0], 10, 64)
+		if err != nil {
+			fmt.Println(err.Error())
+		}
+		size += fileSize
+	}
+	if err := scanner.Err(); err != nil {
+		log.Fatal(err)
+	}
+
+	return size
 }
 
 func getJSONFromRequestURL(url string, requestType string, encodedData string) *gojq.JQ {
