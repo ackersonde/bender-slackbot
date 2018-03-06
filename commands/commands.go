@@ -198,18 +198,19 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 
 		api.PostMessage(slackMessage.Channel, response, params)
 	} else if args[0] == "help" {
-		response := ":sun_behind_rain_cloud: `sw`: Schwabhausen weather\n" +
-			":metro: `mvv`: Status | Trip In | Trip Home\n" +
-			":closed_lock_with_key: `vpn[c|s|d]`: [C]onnect, [S]tatus, [D]rop VPN tunnel to Fritz!Box\n" +
-			":openvpn: `ovpn`: show status of OVPN.se on :raspberry_pi:\n" +
-			":algovpn: `algo (nyc1|tor1|lon1|ams3|...)`: show|launch AlgoVPN droplet on :do_droplet: (in given region - default FRA1)\n" +
-			":do_droplet: `do|dd <id>`: show|delete DigitalOcean droplet(s)\n" +
-			":pirate_bay: `torq <search term>`\n" +
-			":transmission: `tran[c|s|d]`: [C]reate <URL>, [S]tatus, [D]elete <ID> torrents on :raspberry_pi:\n" +
-			":recycle: `rm(|mv) <filename>` from :raspberry_pi: (to `" + piUSBMountPath + "`)\n" +
-			":floppy_disk: `fsck`: show disk space on :raspberry_pi:\n" +
-			":baseball: `bb`: show yesterday's baseball games\n" +
-			":youtube: `yt <video url>`: Download Youtube video to Papa's handy\n"
+		response :=
+			":sun_behind_rain_cloud: `sw`: Schwabhausen weather\n" +
+				":metro: `mvv`: Status | Trip In | Trip Home\n" +
+				":do_droplet: `do|dd <id>`: show|delete DigitalOcean droplet(s)\n" +
+				":algovpn: `algo (nyc1|tor1|lon1|ams3|...)`: show|launch AlgoVPN droplet on :do_droplet: (in given region - default FRA1)\n" +
+				":closed_lock_with_key: `vpn[c|s|d]`: [C]onnect, [S]tatus, [D]rop VPN tunnel to Fritz!Box\n" +
+				":openvpn: `ovpn`: show status of OVPN.se on :raspberry_pi:\n" +
+				":pirate_bay: `torq <search term>`\n" +
+				":transmission: `tran[c|s|d]`: [C]reate <URL>, [S]tatus, [D]elete <ID> torrents on :raspberry_pi:\n" +
+				":recycle: `rm(|mv) <filename>` from :raspberry_pi: (to `" + piUSBMountPath + "`)\n" +
+				":floppy_disk: `fsck`: show disk space on :raspberry_pi:\n" +
+				":baseball: `bb`: show yesterday's baseball games\n" +
+				":youtube: `yt <video url>`: Download Youtube video to Papa's handy\n"
 		api.PostMessage(slackMessage.Channel, response, params)
 	} else {
 		rtm.SendMessage(rtm.NewOutgoingMessage("whaddya say <@"+callingUserProfile.Name+">? Try `help` instead...",
