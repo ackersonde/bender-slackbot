@@ -175,7 +175,7 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 		response := RaspberryPIPrivateTunnelChecks(true)
 		rtm.SendMessage(rtm.NewOutgoingMessage(response, slackMessage.Channel))
 	} else if args[0] == "sw" {
-		response := ":partly_sunny_rain: <https://darksky.net/forecast/48.3028,11.3591/ca24/en|10-day forecast Schwabhausen>"
+		response := ":partly_sunny_rain: <https://darksky.net/forecast/48.3028,11.3591/ca24/en#week|7-day forecast Schwabhausen>"
 		api.PostMessage(slackMessage.Channel, response, params)
 	} else if args[0] == "vpnc" {
 		result := vpnTunnelCmds("/usr/sbin/vpnc-connect", "fritzbox")
