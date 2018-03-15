@@ -78,16 +78,15 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 		api.PostMessage(slackMessage.Channel, result, params)
 	} else if args[0] == "algo" {
 		response := ListDODroplets(true)
+		region := "fra1"
+		if len(args) > 1 {
+			region = args[1]
+		}
 
 		if strings.Contains(response, "york.shire") {
-			response = findAndReturnVPNConfigs(response)
+			response = findAndReturnVPNConfigs(response, region)
 			api.PostMessage(slackMessage.Channel, response, params)
 		} else {
-			region := "fra1"
-			if len(args) > 1 {
-				region = args[1]
-			}
-
 			building, buildNum, _ := circleCIDoAlgoBuildingAndBuildNums(region)
 			if !building {
 				buildsURL := circleCIDoAlgoURL + circleCITokenParam
@@ -339,11 +338,17 @@ func waitAndRetrieveLogs(buildURL string, index int) string {
 	return outputURL
 }
 
-func findAndReturnVPNConfigs(doServers string) string {
+func findAndReturnVPNConfigs(doServers string, region string) string {
 	passAlgoVPN := "No successful AlgoVPN deployments found."
 	links := ""
 
-	building, _, lastSuccessBuildNum := circleCIDoAlgoBuildingAndBuildNums("fra1")
+	building, _, lastSuccessBuildNum := circleCIDoAlgoBuildingAndBuildNums(region)
+
+	if building {
+		// sleep 10 secs and check again
+		time.Sleep(10 * time.Second)
+		building, _, lastSuccessBuildNum = circleCIDoAlgoBuildingAndBuildNums(region)
+	}
 
 	if !building && lastSuccessBuildNum != "-1" {
 		// now get build details for this buildNum
