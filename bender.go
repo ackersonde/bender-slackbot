@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"strings"
@@ -97,7 +96,7 @@ func main() {
 					}
 				} else {
 					// Ignore other events..
-					fmt.Printf("Unexpected %s: %+v\n", msg.Type, msg.Data)
+					// fmt.Printf("Unexpected %s: %+v\n", msg.Type, msg.Data)
 				}
 			}
 		}
