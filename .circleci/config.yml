@@ -73,12 +73,14 @@ jobs:
               -e slackToken=$(echo $slackTokenEncoded | base64 --decode) \
               --name bender danackerson/bender:vc$CIRCLE_BUILD_NUM
 
+            if [ $DEPLOY_SERVER_IP ]; then
+              $DEPLOY_CONNECT docker restart traefik
+            fi
+
       - run:
           name: Reenable Digital Ocean firewall
           command: |
-            if [ -z $DEPLOY_SERVER_IP ]; then
-              sh <(curl -s https://raw.githubusercontent.com/danackerson/digitalocean/master/utils/reenableFW.sh)
-            fi
+            sh <(curl -s https://raw.githubusercontent.com/danackerson/digitalocean/master/utils/reenableFW.sh)
           when: always
 
 # not all Env vars are created equal - some have ':' or '{}' or <shudder> '\/'s
