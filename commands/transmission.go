@@ -27,7 +27,7 @@ func getTorrents(t *transmission.Client) (result string) {
 			case transmission.StatusSeeding:
 				status = ":cinema:"
 				seedRatio := fmt.Sprintf("%.1f", listTorrent.UploadRatio)
-				info = "[L: ]" + strconv.Itoa(listTorrent.PeersGettingFromUs) + "] [S/R: " + seedRatio + "]\n"
+				info = "[L: " + strconv.Itoa(listTorrent.PeersGettingFromUs) + "] (Ratio: " + seedRatio + ")\n"
 			}
 
 			percentComplete := strconv.FormatFloat(listTorrent.PercentDone*100, 'f', 0, 64)
