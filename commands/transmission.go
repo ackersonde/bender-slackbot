@@ -17,6 +17,8 @@ func getTorrents(t *transmission.Client) (result string) {
 		result = ":transmission: <http://" + raspberryPIIP + ":9091/transmission/web/|Running RaspberryPI Torrent(s)>\n"
 		for _, listTorrent := range torrents {
 			status := ":arrows_counterclockwise:"
+			info := "[S: " + strconv.Itoa(listTorrent.PeersSendingToUs) + "]\n"
+
 			switch listTorrent.Status {
 			case transmission.StatusStopped:
 				status = ":black_square_for_stop:"
@@ -24,12 +26,13 @@ func getTorrents(t *transmission.Client) (result string) {
 				status = ":arrow_double_down:"
 			case transmission.StatusSeeding:
 				status = ":cinema:"
+				seedRatio := fmt.Sprintf("%.1f", listTorrent.UploadRatio)
+				info = "[L: ]" + strconv.Itoa(listTorrent.PeersGettingFromUs) + "] [S/R: " + seedRatio + "]\n"
 			}
 
 			percentComplete := strconv.FormatFloat(listTorrent.PercentDone*100, 'f', 0, 64)
 			result += status + " *" + strconv.Itoa(listTorrent.ID) + "*: " +
-				listTorrent.Name + " *" + percentComplete + "%* [S: " +
-				strconv.Itoa(listTorrent.PeersSendingToUs) + "]\n"
+				listTorrent.Name + " *" + percentComplete + "%* " + info
 		}
 	} else {
 		fmt.Printf("\nGetTorrents err: %v", err)
