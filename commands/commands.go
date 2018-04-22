@@ -64,17 +64,7 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 			api.PostMessage(slackMessage.Channel, "Please provide YouTube video URL!", params)
 		}
 	} else if args[0] == "bb" {
-		// TODO pass yesterday's date
-		response := ShowBaseBallGames()
-		result := "Ball games from " + response.ReadableDate + ":\n"
-
-		for _, gameMetaData := range response.Games {
-			watchURL := "<" + gameMetaData[10] + "|" + gameMetaData[0] + " @ " + gameMetaData[4] + ">    "
-			downloadURL := "<https://ackerson.de/bb_download?fileType=bb&gameTitle=" + gameMetaData[2] + "-" + gameMetaData[6] + "__" + response.ReadableDate + "&gameURL=" + gameMetaData[10] + " | :smartphone:>"
-
-			result += watchURL + downloadURL + "\n"
-		}
-
+		result := ShowYesterdaysBBGames(true)
 		api.PostMessage(slackMessage.Channel, result, params)
 	} else if args[0] == "algo" {
 		response := ListDODroplets(true)
