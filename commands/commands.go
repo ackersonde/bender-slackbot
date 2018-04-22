@@ -276,7 +276,7 @@ func getUSBDiskUsageOnFritzBox(ftpDirectories string) string {
 func scanDirectory(directoryName string) uint64 {
 	var size uint64
 
-	ftpListingCmd := `curl -s ftp://ftpuser:abc123@192.168.178.1/backup/DLNA/torrents/"` + directoryName + `" | awk '{print $5"\t"$9}'`
+	ftpListingCmd := `curl -s ftp://ftpuser:abc123@192.168.178.1/backup/DLNA/torrents/` + directoryName + ` | awk '{print $5"\t"$9}'`
 	fmt.Println("Running `" + ftpListingCmd + "`")
 	ftpListDetails := RemoteCmd{Host: raspberryPIIP, HostKey: piHostKey, Username: os.Getenv("piUser"), Password: os.Getenv("piPass"), Cmd: ftpListingCmd}
 	remoteResult := executeRemoteCmd(ftpListDetails)
