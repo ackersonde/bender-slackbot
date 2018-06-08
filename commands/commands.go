@@ -382,23 +382,23 @@ func findAndReturnVPNConfigs(doServers string, region string) string {
 		desktopConfigFileString := hex.EncodeToString(desktopConfigFileHashed) + ".mobileconfig"
 		fmt.Println(desktopConfigFileString)
 
-		mobileConfigFileHashed, _ := scrypt.Key([]byte("android_dan.sswan"), salt, 16384, 8, 1, 32)
-		mobileConfigFileString := hex.EncodeToString(mobileConfigFileHashed) + ".sswan"
+		mobileConfigFileHashed, _ := scrypt.Key([]byte("dan.conf"), salt, 16384, 8, 1, 32)
+		mobileConfigFileString := hex.EncodeToString(mobileConfigFileHashed) + ".conf"
 		fmt.Println(mobileConfigFileString)
 
-		copyCmd := "cp /algo_vpn/" + ipv4 + "/dan.mobileconfig /app/public/downloads/" + desktopConfigFileString + " && cp /algo_vpn/" + ipv4 + "/android_dan.sswan /app/public/downloads/" + mobileConfigFileString
+		copyCmd := "cp /algo_vpn/" + ipv4 + "/dan.mobileconfig /app/public/downloads/" + desktopConfigFileString + " && cp /algo_vpn/" + ipv4 + "/wireguard/dan.conf /app/public/downloads/" + mobileConfigFileString
 		_, err := exec.Command("/bin/bash", "-c", copyCmd).Output()
 		if err != nil {
 			fmt.Printf("Failed to execute command: %s", copyCmd)
 		}
 
 		joinStatus := "*Import* VPN profile"
-		resp, _ := http.Get("https://ackerson.de/bb_download?fileType=vpn&gameTitle=android_dan.sswan&gameURL=" + mobileConfigFileString)
+		resp, _ := http.Get("https://ackerson.de/bb_download?fileType=vpn&gameTitle=dan.conf&gameURL=" + mobileConfigFileString)
 		if resp.StatusCode != 200 {
 			joinStatus = "couldn't send to Papa's handy"
 		}
 
-		links = ":link: <https://ackerson.de/downloads/" + mobileConfigFileString + "|android_dan_" + ipv4 + ".sswan> (" + joinStatus + ")\n"
+		links = ":link: <https://ackerson.de/downloads/" + mobileConfigFileString + "|dan_" + ipv4 + ".conf> (" + joinStatus + ")\n"
 		links += ":link: <https://ackerson.de/downloads/" + desktopConfigFileString + "|dan.mobileconfig> (dbl click on Mac)\n"
 	}
 
