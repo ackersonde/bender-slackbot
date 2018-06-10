@@ -398,8 +398,8 @@ func findAndReturnVPNConfigs(doServers string, region string) string {
 			joinStatus = "couldn't send to Papa's handy"
 		}
 
-		links = ":link: <https://ackerson.de/downloads/" + mobileConfigFileString + "|dan_" + ipv4 + ".conf> (" + joinStatus + ")\n"
-		links += ":link: <https://ackerson.de/downloads/" + desktopConfigFileString + "|dan.mobileconfig> (dbl click on Mac)\n"
+		links = ":link: <https://ackerson.de/bb_download?fileType=dl&gameTitle=dan.conf&gameURL=" + mobileConfigFileString + "|dan_" + ipv4 + ".conf> (" + joinStatus + ")\n"
+		links += ":link: <https://ackerson.de/bb_download?fileType=dl&gameTitle=dan.mobileconfig&gameURL=" + desktopConfigFileString + "|dan.mobileconfig> (dbl click on Mac)\n"
 	}
 
 	return ":algovpn: " + passAlgoVPN + "\n" + links
