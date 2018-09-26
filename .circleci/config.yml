@@ -14,7 +14,6 @@ jobs:
             env GOOS=linux GOARCH=amd64 go build bender.go
 
       - setup_remote_docker
-
       - run:
           name: "Install Docker CE"
           command: |
@@ -99,7 +98,7 @@ jobs:
               -e officeIP=$officeIP -e homeDomain=$homeDomain \
               -e circleAPIToken=$CIRCLE_API_TOKEN -e raspberryPIIP=$raspberryPIIP \
               -e slackReportChannel=$slackReportChannel -e piUser=$piUser -e piPass=$piPass \
-              -e digitalOceanToken=$digitalOceanToken -e CIRCLE_BUILD_NUM=$CIRCLE_BUILD_NUM \
+              -e digitalOceanToken=$digitalOceanToken -e CIRCLE_BUILD_NUM=$LAST_DOCKER_PUSH \
               -e slackToken=$(echo $slackTokenEncoded | base64 --decode) \
               --name bender danackerson/bender:$LAST_DOCKER_PUSH
 
