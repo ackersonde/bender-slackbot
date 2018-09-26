@@ -2,13 +2,14 @@ version: 2
 jobs:
   build:
     docker:
-      - image: golang:1.10
+      - image: golang:alpine
     working_directory: /go/src/github.com/danackerson/bender-slackbot
     steps:
       - checkout
       - run:
           name: "Fetch dependencies and build bender app"
           command: |
+            apk add -U curl build-base git
             go get -t -d -v ./...
             env GOOS=linux GOARCH=amd64 go build bender.go
 
@@ -17,8 +18,9 @@ jobs:
       - run:
           name: "Install Docker CE"
           command: |
-            VER="18.03.1"
+            VER="18.06.1"
             curl -fsSLO https://download.docker.com/linux/static/stable/x86_64/docker-$VER-ce.tgz && tar --strip-components=1 -xvzf docker-$VER-ce.tgz -C /usr/local/bin
+            rm docker-$VER-ce.tgz && rm -f /var/cache/apk/*
 
       - run:
           name: "Build, run, test & push docker image"
@@ -27,7 +29,23 @@ jobs:
             docker run -d -e slackToken=$(echo $slackTokenEncoded | base64 --decode) -e raspberryPIIP=$raspberryPIIP -e slackReportChannel=$slackReportChannel -e piUser=$piUser -e piPass=$piPass -e digitalOceanToken=$digitalOceanToken --name bender danackerson/bender:vc$CIRCLE_BUILD_NUM
             echo `docker logs bender`
             docker login -u $DOCKER_USER -p $DOCKER_PASS
+            docker tag danackerson/bender:vc$CIRCLE_BUILD_NUM danackerson/bender:latest
             docker push danackerson/bender:vc$CIRCLE_BUILD_NUM
+            docker push danackerson/bender:latest
+
+            echo vc$CIRCLE_BUILD_NUM > last_docker_push
+
+      - persist_to_workspace:
+          root: /go/src/github.com/danackerson/bender-slackbot
+          paths:
+            - last_docker_push
+
+  deploy:
+    docker:
+      -image: alpine
+    steps:
+      - attach_workspace:
+          at: /tmp
 
       - type: add-ssh-keys
         name: "Load key"
@@ -37,6 +55,8 @@ jobs:
       - run:
           name: Start ssh-agent
           command: |
+            apk add -U jq curl openssh-client
+            
             ssh-agent -s > ~/.ssh_agent_conf
             source ~/.ssh_agent_conf
             for _k in $(ls ${HOME}/.ssh/id_*); do
@@ -46,10 +66,9 @@ jobs:
       - run:
           name: Disable Digital Ocean firewall for deploy
           command: |
-            apt-get update && apt-get -y install jq
             sh <(curl -s https://raw.githubusercontent.com/danackerson/digitalocean/master/utils/disableFW.sh)
 
-      - deploy:
+      - run:
           name: "deploy to DigitalOcean Droplet"
           command: |
             source ~/.ssh_agent_conf
@@ -60,9 +79,20 @@ jobs:
             fi
             echo "Deploy to $DEPLOY_SERVER"
             export DEPLOY_CONNECT="ssh -o StrictHostKeyChecking=no ackersond@$DEPLOY_SERVER"
+        
+            if [ -f /tmp/last_docker_push ]; then
+              export LAST_DOCKER_PUSH=vc`cat /tmp/last_docker_push`
+            else
+              export LAST_DOCKER_PUSH=latest
+            fi
 
-            $DEPLOY_CONNECT docker login -u $DOCKER_USER -p $DOCKER_PASS && docker pull danackerson/bender:vc$CIRCLE_BUILD_NUM
+            $DEPLOY_CONNECT docker login -u $DOCKER_USER -p $DOCKER_PASS && docker pull danackerson/bender:$LAST_DOCKER_PUSH
             $DEPLOY_CONNECT docker rm -f bender || true
+            
+# not all Env vars are created equal - some have ':' or '{}' or <shudder> '\/'s
+# in this case we base64 encode the parameter: `base64 <<< [string in question]`
+# taking the result and pasting it into the environment variable of this CircleCI project
+# above is an example how to decode this on the fly (e.g. slackToken)
             $DEPLOY_CONNECT docker run -d --restart=always --privileged=true \
               --volumes-from homepage -v /home/ackersond/algo_vpn:/algo_vpn:ro \
               -e doFirewallID=$doFirewallID -e doFloatingIP=$doFloatingIP \
@@ -71,7 +101,7 @@ jobs:
               -e slackReportChannel=$slackReportChannel -e piUser=$piUser -e piPass=$piPass \
               -e digitalOceanToken=$digitalOceanToken -e CIRCLE_BUILD_NUM=$CIRCLE_BUILD_NUM \
               -e slackToken=$(echo $slackTokenEncoded | base64 --decode) \
-              --name bender danackerson/bender:vc$CIRCLE_BUILD_NUM
+              --name bender danackerson/bender:$LAST_DOCKER_PUSH
 
             if [ $DEPLOY_SERVER_IP ]; then
               $DEPLOY_CONNECT docker restart traefik
@@ -83,7 +113,11 @@ jobs:
             sh <(curl -s https://raw.githubusercontent.com/danackerson/digitalocean/master/utils/reenableFW.sh)
           when: always
 
-# not all Env vars are created equal - some have ':' or '{}' or <shudder> '\/'s
-# in this case we base64 encode the parameter: `base64 <<< [string in question]`
-# taking the result and pasting it into the environment variable of this CircleCI project
-# above is an example how to decode this on the fly (e.g. slackToken)
+workflows:
+  version: 2
+  build-deploy:
+    jobs:
+        - build
+        - deploy:
+            requires:
+              - build
