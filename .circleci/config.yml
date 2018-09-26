@@ -81,7 +81,7 @@ jobs:
             export DEPLOY_CONNECT="ssh -o StrictHostKeyChecking=no ackersond@$DEPLOY_SERVER"
         
             if [ -f /tmp/last_docker_push ]; then
-              export LAST_DOCKER_PUSH=vc`cat /tmp/last_docker_push`
+              export LAST_DOCKER_PUSH=`cat /tmp/last_docker_push`
             else
               export LAST_DOCKER_PUSH=latest
             fi
