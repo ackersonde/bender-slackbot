@@ -41,7 +41,7 @@ jobs:
 
   deploy:
     docker:
-      -image: alpine
+      - image: alpine
     steps:
       - attach_workspace:
           at: /tmp
