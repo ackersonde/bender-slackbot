@@ -87,11 +87,11 @@ jobs:
 
             $DEPLOY_CONNECT docker login -u $DOCKER_USER -p $DOCKER_PASS && docker pull danackerson/bender:$LAST_DOCKER_PUSH
             $DEPLOY_CONNECT docker rm -f bender || true
-            
-# not all Env vars are created equal - some have ':' or '{}' or <shudder> '\/'s
-# in this case we base64 encode the parameter: `base64 <<< [string in question]`
-# taking the result and pasting it into the environment variable of this CircleCI project
-# above is an example how to decode this on the fly (e.g. slackToken)
+         
+            # not all Env vars are created equal - some have ':' or '{}' or <shudder> '\/'s
+            # in this case we base64 encode the parameter: `base64 <<< [string in question]`
+            # taking the result and pasting it into the environment variable of this CircleCI project
+            # above is an example how to decode this on the fly (e.g. slackToken)
             $DEPLOY_CONNECT docker run -d --restart=always --privileged=true \
               --volumes-from homepage -v /home/ackersond/algo_vpn:/algo_vpn:ro \
               -e doFirewallID=$doFirewallID -e doFloatingIP=$doFloatingIP \
