@@ -60,7 +60,7 @@ jobs:
       - run:
           name: Disable Digital Ocean firewall for deploy
           command: |
-            curl -s https://raw.githubusercontent.com/danackerson/digitalocean/master/utils/reenableFW.sh | sh
+            curl -s https://raw.githubusercontent.com/danackerson/digitalocean/master/utils/disableFW.sh | sh
       
       - attach_workspace:
           at: /tmp
