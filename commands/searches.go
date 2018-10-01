@@ -27,7 +27,7 @@ const (
 	Games Category = 400
 )
 
-const pirateURL = "https://thepiratebay.org"
+const pirateURL = "https://piratebaypirate.net/"
 
 // Torrent stores information about a torrent found on The Pirate Bay.
 type Torrent struct {
