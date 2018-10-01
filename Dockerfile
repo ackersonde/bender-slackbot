@@ -1,4 +1,4 @@
-FROM ubuntu:17.10
+FROM ubuntu
 RUN apt-get update && apt-get install -y --no-install-recommends tzdata openssh-client vpnc curl ca-certificates
 # prepare build environment
 ARG vpnc_gateway
