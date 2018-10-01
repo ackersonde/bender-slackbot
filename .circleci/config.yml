@@ -10,9 +10,8 @@ jobs:
           name: "Fetch dependencies and build bender app"
           command: |
             apk add -U --no-cache curl build-base git libc6-compat
-            go version
             go get -t -d -v ./...
-            env GOOS=linux GOARCH=amd64 go build bender.go
+            env CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build bender.go
 
       - setup_remote_docker
       - run:
