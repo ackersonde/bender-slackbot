@@ -20,4 +20,4 @@ RUN ln -fs /usr/share/zoneinfo/Europe/Berlin /etc/localtime && dpkg-reconfigure 
 RUN mkdir /app
 COPY bender /app/
 WORKDIR /app
-ENTRYPOINT ["./bender"]
+ENTRYPOINT ["/bin/sh", "./bender"]
