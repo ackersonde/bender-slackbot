@@ -82,6 +82,7 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 				buildsURL := circleCIDoAlgoURL + circleCITokenParam
 				data := url.Values{}
 				data.Set("build_parameters[REGION]", region)
+				data.Set("build_parameters[CIRCLE_JOB]", "deploy")
 				buildsParser := getJSONFromRequestURL(buildsURL, "POST", data.Encode())
 
 				buildNumParse, _ := buildsParser.Query("build_num")
