@@ -1,5 +1,5 @@
 FROM ubuntu
-RUN apt-get update && apt-get install -y --no-install-recommends tzdata openssh-client vpnc curl ca-certificates
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends tzdata openssh-client vpnc curl ca-certificates
 # prepare build environment
 ARG vpnc_gateway
 ARG vpnc_id
