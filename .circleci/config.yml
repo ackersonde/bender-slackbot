@@ -9,7 +9,8 @@ jobs:
       - run:
           name: "Fetch dependencies and build bender app"
           command: |
-            apk add -U curl build-base git
+            apk add -U --no-cache curl build-base git libc6-compat
+            go version
             go get -t -d -v ./...
             env GOOS=linux GOARCH=amd64 go build bender.go
 
@@ -19,13 +20,13 @@ jobs:
           command: |
             VER="18.06.1"
             curl -fsSLO https://download.docker.com/linux/static/stable/x86_64/docker-$VER-ce.tgz && tar --strip-components=1 -xvzf docker-$VER-ce.tgz -C /usr/local/bin
-            rm docker-$VER-ce.tgz && rm -f /var/cache/apk/*
+            rm docker-$VER-ce.tgz
 
       - run:
           name: "Build, run, test & push docker image"
           command: |
             docker build --compress -t danackerson/bender:vc$CIRCLE_BUILD_NUM --build-arg vpnc_gateway=$VPNC_GATEWAY --build-arg vpnc_id=$VPNC_ID --build-arg vpnc_secret=$VPNC_SECRET --build-arg vpnc_username=$VPNC_USERNAME --build-arg vpnc_password=$VPNC_PASSWORD .
-            docker run -d -e slackToken=$(echo $slackTokenEncoded | base64 --decode) -e raspberryPIIP=$raspberryPIIP -e slackReportChannel=$slackReportChannel -e piUser=$piUser -e piPass=$piPass -e digitalOceanToken=$digitalOceanToken --name bender danackerson/bender:vc$CIRCLE_BUILD_NUM
+            docker run -d -e slackToken=$(echo $slackTokenEncoded | base64 -d) -e raspberryPIIP=$raspberryPIIP -e slackReportChannel=$slackReportChannel -e piUser=$piUser -e piPass=$piPass -e digitalOceanToken=$digitalOceanToken --name bender danackerson/bender:vc$CIRCLE_BUILD_NUM
             echo `docker logs bender`
             docker login -u $DOCKER_USER -p $DOCKER_PASS
             docker tag danackerson/bender:vc$CIRCLE_BUILD_NUM danackerson/bender:latest
@@ -98,7 +99,7 @@ jobs:
               -e circleAPIToken=$CIRCLE_API_TOKEN -e raspberryPIIP=$raspberryPIIP \
               -e slackReportChannel=$slackReportChannel -e piUser=$piUser -e piPass=$piPass \
               -e digitalOceanToken=$digitalOceanToken -e CIRCLE_BUILD_NUM=$LAST_DOCKER_PUSH \
-              -e slackToken=$(echo $slackTokenEncoded | base64 --decode) \
+              -e slackToken=$(echo $slackTokenEncoded | base64 -d) \
               --name bender danackerson/bender:$LAST_DOCKER_PUSH
 
             if [ $DEPLOY_SERVER_IP ]; then
