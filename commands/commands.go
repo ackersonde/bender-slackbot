@@ -220,7 +220,7 @@ func circleCIDoAlgoBuildingAndBuildNums(region string) (bool, string, string) {
 		statusStr, _ := buildsParser.Query("[" + strconv.Itoa(i) + "].status")
 
 		if i == 0 {
-			log.Println("current status: " + statusStr.(string))
+			log.Println("current Do-Algo build status: " + statusStr.(string))
 			currentlyBuilding = !isFinishedStatus(statusStr.(string))
 			buildNumParse, _ := buildsParser.Query("[" + strconv.Itoa(i) + "].build_num")
 			currentBuildNum = strconv.FormatFloat(buildNumParse.(float64), 'f', -1, 64)
