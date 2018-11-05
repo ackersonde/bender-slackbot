@@ -246,7 +246,7 @@ func MoveTorrentFile(api *slack.Client, filename string) {
 		}()
 
 		params := slack.MsgOptionAsUser(true)
-		api.PostMessage(SlackReportChannel, "running `"+moveCmd+"`", params)
+		api.PostMessage(SlackReportChannel, slack.MsgOptionText("running `"+moveCmd+"`", true), params)
 		//reportMoveProgress(api)
 	}
 }
@@ -281,7 +281,7 @@ func reportMoveProgress(api *slack.Client) {
 		case res := <-remoteResults:
 			// update msg with progress: https://api.slack.com/methods/chat.update
 			// so there aren't 385 msgs with 2% 2% 3% ...
-			api.UpdateMessage(SlackReportChannel, lastMsgID, res.stdout)
+			api.UpdateMessage(SlackReportChannel, lastMsgID, slack.MsgOptionText(res.stdout, true))
 			if strings.Contains(res.stderr, "No command currently running") {
 				notDone = false
 			} else {

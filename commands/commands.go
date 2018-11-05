@@ -55,17 +55,17 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 			uri, err := url.ParseRequestURI(downloadURL)
 			log.Printf("parsed %s from %s", uri.RequestURI(), downloadURL)
 			if err != nil {
-				api.PostMessage(slackMessage.Channel, "Invalid URL for downloading! ("+err.Error()+")", params)
+				api.PostMessage(slackMessage.Channel, slack.MsgOptionText("Invalid URL for downloading! ("+err.Error()+")", true), params)
 			} else {
 				downloadYoutubeVideo(uri.String())
-				api.PostMessage(slackMessage.Channel, "Requested YouTube video...", params)
+				api.PostMessage(slackMessage.Channel, slack.MsgOptionText("Requested YouTube video...", true), params)
 			}
 		} else {
-			api.PostMessage(slackMessage.Channel, "Please provide YouTube video URL!", params)
+			api.PostMessage(slackMessage.Channel, slack.MsgOptionText("Please provide YouTube video URL!", true), params)
 		}
 	} else if args[0] == "bb" {
 		result := ShowYesterdaysBBGames(true)
-		api.PostMessage(slackMessage.Channel, result, params)
+		api.PostMessage(slackMessage.Channel, slack.MsgOptionText(result, true), params)
 	} else if args[0] == "algo" {
 		response := ListDODroplets(true)
 		region := "fra1"
@@ -75,7 +75,7 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 
 		if strings.Contains(response, "york.shire") {
 			response = findAndReturnVPNConfigs(response, region)
-			api.PostMessage(slackMessage.Channel, response, params)
+			api.PostMessage(slackMessage.Channel, slack.MsgOptionText(response, true), params)
 		} else {
 			building, buildNum, _ := circleCIDoAlgoBuildingAndBuildNums(region)
 			if !building {
@@ -89,23 +89,23 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 				buildNum = strconv.FormatFloat(buildNumParse.(float64), 'f', -1, 64)
 			}
 			response = ":circleci: <https://circleci.com/gh/danackerson/do-algo/" + buildNum + "|do-algo Build " + buildNum + " @ " + region + ">"
-			api.PostMessage(slackMessage.Channel, response, params)
+			api.PostMessage(slackMessage.Channel, slack.MsgOptionText(response, true), params)
 
 		}
 	} else if args[0] == "do" {
 		response := ListDODroplets(true)
-		api.PostMessage(slackMessage.Channel, response, params)
+		api.PostMessage(slackMessage.Channel, slack.MsgOptionText(response, true), params)
 	} else if args[0] == "dd" {
 		if len(args) > 1 {
 			number, err := strconv.Atoi(args[1])
 			if err != nil {
-				api.PostMessage(slackMessage.Channel, "Invalid integer value for ID!", params)
+				api.PostMessage(slackMessage.Channel, slack.MsgOptionText("Invalid integer value for ID!", true), params)
 			} else {
 				result := common.DeleteDODroplet(number)
-				api.PostMessage(slackMessage.Channel, result, params)
+				api.PostMessage(slackMessage.Channel, slack.MsgOptionText(result, true), params)
 			}
 		} else {
-			api.PostMessage(slackMessage.Channel, "Please provide Droplet ID from `do` cmd!", params)
+			api.PostMessage(slackMessage.Channel, slack.MsgOptionText("Please provide Droplet ID from `do` cmd!", true), params)
 		}
 	} else if args[0] == "fsck" {
 		if runningFritzboxTunnel() {
@@ -160,13 +160,13 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 		} else {
 			_, response = SearchFor("", Category(cat))
 		}
-		api.PostMessage(slackMessage.Channel, response, params)
+		api.PostMessage(slackMessage.Channel, slack.MsgOptionText(response, true), params)
 	} else if args[0] == "ovpn" {
 		response := RaspberryPIPrivateTunnelChecks(true)
 		rtm.SendMessage(rtm.NewOutgoingMessage(response, slackMessage.Channel))
 	} else if args[0] == "sw" {
 		response := ":partly_sunny_rain: <https://darksky.net/forecast/48.3028,11.3591/ca24/en#week|7-day forecast Schwabhausen>"
-		api.PostMessage(slackMessage.Channel, response, params)
+		api.PostMessage(slackMessage.Channel, slack.MsgOptionText(response, true), params)
 	} else if args[0] == "vpnc" {
 		result := vpnTunnelCmds("/usr/sbin/vpnc-connect", "fritzbox")
 		rtm.SendMessage(rtm.NewOutgoingMessage(result, slackMessage.Channel))
@@ -179,14 +179,14 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 	} else if args[0] == "trans" || args[0] == "trand" || args[0] == tranc {
 		if runningFritzboxTunnel() {
 			response := torrentCommand(args)
-			api.PostMessage(slackMessage.Channel, response, params)
+			api.PostMessage(slackMessage.Channel, slack.MsgOptionText(response, true), params)
 		}
 	} else if args[0] == "mvv" {
 		response := "<https://img.srv2.de/customer/sbahnMuenchen/newsticker/newsticker.html|Aktuelles>"
 		response += " | <" + mvvRoute("Schwabhausen", "München, Hauptbahnhof") + "|Going in>"
 		response += " | <" + mvvRoute("München, Hauptbahnhof", "Schwabhausen") + "|Going home>"
 
-		api.PostMessage(slackMessage.Channel, response, params)
+		api.PostMessage(slackMessage.Channel, slack.MsgOptionText(response, true), params)
 	} else if args[0] == "help" {
 		response :=
 			":sun_behind_rain_cloud: `sw`: Schwabhausen weather\n" +
@@ -201,7 +201,7 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 				":floppy_disk: `fsck`: show disk space on :raspberry_pi:\n" +
 				":baseball: `bb`: show yesterday's baseball games\n" +
 				":youtube: `yt <video url>`: Download Youtube video to Papa's handy\n"
-		api.PostMessage(slackMessage.Channel, response, params)
+		api.PostMessage(slackMessage.Channel, slack.MsgOptionText(response, true), params)
 	} else {
 		rtm.SendMessage(rtm.NewOutgoingMessage("whaddya say <@"+callingUserProfile.Name+">? Try `help` instead...",
 			slackMessage.Channel))

@@ -30,8 +30,9 @@ func prepareScheduler() {
 func main() {
 	api := slack.New(os.Getenv("slackToken"))
 	logger := log.New(os.Stdout, "slack-bot: ", log.Lshortfile|log.LstdFlags)
-	slack.SetLogger(logger)
-	api.SetDebug(false)
+
+	slack.OptionLog(logger)
+	slack.OptionDebug(false)
 
 	go prepareScheduler() // spawn cron scheduler jobs
 
@@ -91,9 +92,9 @@ func main() {
 					params := slack.MsgOptionAsUser(true)
 
 					if msg.Type == "MoveTorrent" {
-						api.PostMessage(commands.SlackReportChannel, "DONE moving files. Enjoy your :movie_camera: & :popcorn:!", params)
+						api.PostMessage(commands.SlackReportChannel, slack.MsgOptionText("DONE moving files. Enjoy your :movie_camera: & :popcorn:!", true), params)
 					} else {
-						api.PostMessage(commands.SlackReportChannel, response, params)
+						api.PostMessage(commands.SlackReportChannel, slack.MsgOptionText(response, true), params)
 					}
 				} else {
 					// Ignore other events..
