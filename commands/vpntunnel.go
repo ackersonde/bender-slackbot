@@ -245,7 +245,7 @@ func MoveTorrentFile(api *slack.Client, filename string) {
 			rtm.IncomingEvents <- slack.RTMEvent{Type: "MoveTorrent", Data: result}
 		}()
 
-		params := slack.PostMessageParameters{AsUser: true}
+		params := slack.MsgOptionAsUser(true)
 		api.PostMessage(SlackReportChannel, "running `"+moveCmd+"`", params)
 		//reportMoveProgress(api)
 	}

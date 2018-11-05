@@ -88,7 +88,7 @@ func main() {
 					msg.Type == "RaspberryPIPrivateTunnelChecks" ||
 					msg.Type == "CheckPiDiskSpace" || msg.Type == "ShowYesterdaysBBGames" {
 					response := msg.Data.(string)
-					params := slack.PostMessageParameters{AsUser: true}
+					params := slack.MsgOptionAsUser(true)
 
 					if msg.Type == "MoveTorrent" {
 						api.PostMessage(commands.SlackReportChannel, "DONE moving files. Enjoy your :movie_camera: & :popcorn:!", params)
