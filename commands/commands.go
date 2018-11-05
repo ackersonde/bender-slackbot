@@ -46,7 +46,7 @@ func SetRTM(rtmPassed *slack.RTM) {
 func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 	args := strings.Fields(command)
 	callingUserProfile, _ := api.GetUserInfo(slackMessage.User)
-	params := slack.PostMessageParameters{AsUser: true}
+	params := slack.MsgOptionAsUser(true)
 
 	if args[0] == "yt" {
 		if len(args) > 1 {
