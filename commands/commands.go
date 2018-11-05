@@ -65,7 +65,7 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 		}
 	} else if args[0] == "bb" {
 		result := ShowYesterdaysBBGames(true)
-		api.PostMessage(slackMessage.Channel, slack.MsgOptionText(result, true), params)
+		api.PostMessage(slackMessage.Channel, slack.MsgOptionText(result, false), params)
 	} else if args[0] == "algo" {
 		response := ListDODroplets(true)
 		region := "fra1"
@@ -89,12 +89,12 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 				buildNum = strconv.FormatFloat(buildNumParse.(float64), 'f', -1, 64)
 			}
 			response = ":circleci: <https://circleci.com/gh/danackerson/do-algo/" + buildNum + "|do-algo Build " + buildNum + " @ " + region + ">"
-			api.PostMessage(slackMessage.Channel, slack.MsgOptionText(response, true), params)
+			api.PostMessage(slackMessage.Channel, slack.MsgOptionText(response, false), params)
 
 		}
 	} else if args[0] == "do" {
 		response := ListDODroplets(true)
-		api.PostMessage(slackMessage.Channel, slack.MsgOptionText(response, true), params)
+		api.PostMessage(slackMessage.Channel, slack.MsgOptionText(response, false), params)
 	} else if args[0] == "dd" {
 		if len(args) > 1 {
 			number, err := strconv.Atoi(args[1])
@@ -160,13 +160,13 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 		} else {
 			_, response = SearchFor("", Category(cat))
 		}
-		api.PostMessage(slackMessage.Channel, slack.MsgOptionText(response, true), params)
+		api.PostMessage(slackMessage.Channel, slack.MsgOptionText(response, false), params)
 	} else if args[0] == "ovpn" {
 		response := RaspberryPIPrivateTunnelChecks(true)
 		rtm.SendMessage(rtm.NewOutgoingMessage(response, slackMessage.Channel))
 	} else if args[0] == "sw" {
 		response := ":partly_sunny_rain: <https://darksky.net/forecast/48.3028,11.3591/ca24/en#week|7-day forecast Schwabhausen>"
-		api.PostMessage(slackMessage.Channel, slack.MsgOptionText(response, true), params)
+		api.PostMessage(slackMessage.Channel, slack.MsgOptionText(response, false), params)
 	} else if args[0] == "vpnc" {
 		result := vpnTunnelCmds("/usr/sbin/vpnc-connect", "fritzbox")
 		rtm.SendMessage(rtm.NewOutgoingMessage(result, slackMessage.Channel))
@@ -186,7 +186,7 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 		response += " | <" + mvvRoute("Schwabhausen", "München, Hauptbahnhof") + "|Going in>"
 		response += " | <" + mvvRoute("München, Hauptbahnhof", "Schwabhausen") + "|Going home>"
 
-		api.PostMessage(slackMessage.Channel, slack.MsgOptionText(response, true), params)
+		api.PostMessage(slackMessage.Channel, slack.MsgOptionText(response, false), params)
 	} else if args[0] == "help" {
 		response :=
 			":sun_behind_rain_cloud: `sw`: Schwabhausen weather\n" +
