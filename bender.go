@@ -94,7 +94,7 @@ func main() {
 					if msg.Type == "MoveTorrent" {
 						api.PostMessage(commands.SlackReportChannel, slack.MsgOptionText("DONE moving files. Enjoy your :movie_camera: & :popcorn:!", true), params)
 					} else {
-						api.PostMessage(commands.SlackReportChannel, slack.MsgOptionText(response, true), params)
+						api.PostMessage(commands.SlackReportChannel, slack.MsgOptionText(response, false), params)
 					}
 				} else {
 					// Ignore other events..
