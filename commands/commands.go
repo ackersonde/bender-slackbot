@@ -15,12 +15,11 @@ import (
 	"strings"
 	"time"
 
-	"golang.org/x/crypto/scrypt"
-
 	"github.com/danackerson/digitalocean/common"
 	humanize "github.com/dustin/go-humanize"
 	"github.com/elgs/gojq"
 	"github.com/nlopes/slack"
+	"golang.org/x/crypto/scrypt"
 )
 
 var raspberryPIIP = os.Getenv("raspberryPIIP")
@@ -179,7 +178,7 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 	} else if args[0] == "trans" || args[0] == "trand" || args[0] == tranc {
 		if runningFritzboxTunnel() {
 			response := torrentCommand(args)
-			api.PostMessage(slackMessage.Channel, slack.MsgOptionText(response, true), params)
+			api.PostMessage(slackMessage.Channel, slack.MsgOptionText(response, false), params)
 		}
 	} else if args[0] == "mvv" {
 		response := "<https://img.srv2.de/customer/sbahnMuenchen/newsticker/newsticker.html|Aktuelles>"
