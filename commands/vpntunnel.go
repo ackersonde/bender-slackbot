@@ -58,7 +58,7 @@ func RaspberryPIPrivateTunnelChecks(userCall bool) string {
 					timeoutDig := time.After(10 * time.Second)
 					// ensure home.ackerson.de is DIFFERENT than PI IP address!
 					go func() {
-						cmd := "dig home.ackerson.de A home.ackerson.de AAAA +short"
+						cmd := "dig home.ackerson.de A +short"
 						details := RemoteCmd{Host: raspberryPIIP, HostKey: piHostKey, Username: os.Getenv("piUser"), Password: os.Getenv("piPass"), Cmd: cmd}
 
 						remoteResult := executeRemoteCmd(details)
@@ -70,7 +70,7 @@ func RaspberryPIPrivateTunnelChecks(userCall bool) string {
 					case resComp := <-resultsDig:
 						fmt.Println("dig results: " + resComp)
 						lines := strings.Split(resComp, "\n")
-						if lines[1] != jsonRes.IP && lines[3] != jsonRes.IP {
+						if lines[1] != jsonRes.IP {
 							tunnelUp = jsonRes.IP
 						}
 					case <-timeoutDig:
@@ -167,14 +167,9 @@ func CheckPiDiskSpace(path string) string {
 		response = strings.Replace(response, piSDCardPath+path, "", -1)
 		response = ":raspberry_pi: *SD Card Disk Usage* @ `" + piSDCardPath + path + "`\n" + response
 	}
-	cmd = "df -h /root/ /mnt/usb_1/"
+	cmd = "df -h /root/"
 	details = RemoteCmd{Host: raspberryPIIP, HostKey: piHostKey, Username: os.Getenv("piUser"), Password: os.Getenv("piPass"), Cmd: cmd}
 	remoteResultDF := executeRemoteCmd(details)
-
-	sentences := strings.Split(remoteResultDF.stdout, "\n")
-	if sentences[2] == sentences[1] {
-		remoteResultDF.stdout = sentences[0] + "\n" + sentences[1]
-	}
 	response += "\n\n" + remoteResultDF.stdout
 
 	if !userCall {
