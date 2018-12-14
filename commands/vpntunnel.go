@@ -227,7 +227,7 @@ func MoveTorrentFile(api *slack.Client, filename string) {
 		renameDetails := RemoteCmd{Host: raspberryPIIP, HostKey: piHostKey, Username: os.Getenv("piUser"), Password: os.Getenv("piPass"), Cmd: renameCmd}
 		executeRemoteCmd(renameDetails)
 
-		moveCmd := "cd " + piSDCardPath + "; find . -type f -exec curl -g --ftp-create-dirs -u ftpuser:abc123 -T \"{}\" \"ftp://192.168.178.1/backup/DLNA/torrents/{}\" \\; rm -Rf *; > ftp.log 2>&1"
+		moveCmd := "cd " + piSDCardPath + "; find . -type f -exec curl -g --ftp-create-dirs -u ftpuser:abc123 -T \"{}\" \"ftp://192.168.178.1/backup/DLNA/torrents/{}\" \\; > ftp.log 2>&1"
 		log.Println(moveCmd)
 		go func() {
 			details := RemoteCmd{Host: raspberryPIIP, HostKey: piHostKey, Username: os.Getenv("piUser"), Password: os.Getenv("piPass"), Cmd: moveCmd}
@@ -238,6 +238,13 @@ func MoveTorrentFile(api *slack.Client, filename string) {
 
 			result = "Successfully moved `" + filename + "` to `" + piUSBMountPath + "`"
 			rtm.IncomingEvents <- slack.RTMEvent{Type: "MoveTorrent", Data: result}
+
+			cleanPITorrentsCmd := "cd " + piSDCardPath + "; rm -Rf *;"
+			details = RemoteCmd{Host: raspberryPIIP, HostKey: piHostKey,
+				Username: os.Getenv("piUser"),
+				Password: os.Getenv("piPass"),
+				Cmd:      cleanPITorrentsCmd}
+			remoteResult = executeRemoteCmd(details)
 		}()
 
 		params := slack.MsgOptionAsUser(true)
