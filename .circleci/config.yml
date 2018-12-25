@@ -50,7 +50,7 @@ jobs:
       - run:
           name: Disable Digital Ocean firewall for deploy
           command: |
-            apk add -U curl
+            apk add -U curl openssh-client
             curl -s https://raw.githubusercontent.com/danackerson/digitalocean/master/utils/addSSHipFW.sh | sh
 
       - attach_workspace:
