@@ -50,7 +50,7 @@ jobs:
           name: Start ssh-agent
           command: |
             apk add -U jq curl openssh-client
-            
+
             ssh-agent -s > ~/.ssh_agent_conf
             source ~/.ssh_agent_conf
             for _k in $(ls ${HOME}/.ssh/id_*); do
@@ -60,8 +60,9 @@ jobs:
       - run:
           name: Disable Digital Ocean firewall for deploy
           command: |
-            curl -s https://raw.githubusercontent.com/danackerson/digitalocean/master/utils/disableFW.sh | sh
-      
+            public_ip_address=$(curl -s https://checkip.amazonaws.com)
+            curl -s https://raw.githubusercontent.com/danackerson/digitalocean/master/utils/addSSHipFW.sh | sh
+
       - attach_workspace:
           at: /tmp
 
@@ -76,7 +77,7 @@ jobs:
             fi
             echo "Deploy to $DEPLOY_SERVER"
             export DEPLOY_CONNECT="ssh -o StrictHostKeyChecking=no ackersond@$DEPLOY_SERVER"
-        
+
             if [ -f /tmp/last_docker_push ]; then
               export LAST_DOCKER_PUSH=`cat /tmp/last_docker_push`
             else
@@ -86,7 +87,7 @@ jobs:
             $DEPLOY_CONNECT docker login -u $DOCKER_USER -p $DOCKER_PASS
             $DEPLOY_CONNECT docker pull danackerson/bender:$LAST_DOCKER_PUSH
             $DEPLOY_CONNECT docker rm -f bender || true
-         
+
             # not all Env vars are created equal - some have ':' or '{}' or <shudder> '\/'s
             # in this case we base64 encode the parameter: `base64 <<< [string in question]`
             # taking the result and pasting it into the environment variable of this CircleCI project
@@ -108,9 +109,8 @@ jobs:
       - run:
           name: Reenable Digital Ocean firewall
           command: |
-            if [ -z $DEPLOY_SERVER_IP ]; then
-              curl -s https://raw.githubusercontent.com/danackerson/digitalocean/master/utils/reenableFW.sh | sh
-            fi
+            public_ip_address=$(curl -s https://checkip.amazonaws.com)
+            curl -s https://raw.githubusercontent.com/danackerson/digitalocean/master/utils/dropSSHipFW.sh | sh
           when: always
 
 workflows:
