@@ -17,9 +17,9 @@ jobs:
       - run:
           name: "Install Docker CE"
           command: |
-            VER="18.06.1"
-            curl -fsSLO https://download.docker.com/linux/static/stable/x86_64/docker-$VER-ce.tgz && tar --strip-components=1 -xvzf docker-$VER-ce.tgz -C /usr/local/bin
-            rm docker-$VER-ce.tgz
+            VER="18.09.0"
+            curl -fsSLO https://download.docker.com/linux/static/stable/x86_64/docker-$VER.tgz && tar --strip-components=1 -xvzf docker-$VER.tgz -C /usr/local/bin
+            rm docker-$VER.tgz
 
       - run:
           name: "Build, run, test & push docker image"
@@ -46,21 +46,10 @@ jobs:
       - add-ssh-keys:
           fingerprints:
             - "93:c4:61:21:a6:82:d8:6d:4f:73:11:79:37:23:83:07"
-      - run:
-          name: Start ssh-agent
-          command: |
-            apk add -U jq curl openssh-client
-
-            ssh-agent -s > ~/.ssh_agent_conf
-            source ~/.ssh_agent_conf
-            for _k in $(ls ${HOME}/.ssh/id_*); do
-              ssh-add ${_k} || true
-            done
 
       - run:
           name: Disable Digital Ocean firewall for deploy
           command: |
-            public_ip_address=$(curl -s https://checkip.amazonaws.com)
             curl -s https://raw.githubusercontent.com/danackerson/digitalocean/master/utils/addSSHipFW.sh | sh
 
       - attach_workspace:
@@ -69,14 +58,14 @@ jobs:
       - run:
           name: "deploy to DigitalOcean Droplet"
           command: |
-            source ~/.ssh_agent_conf
-
             export DEPLOY_SERVER=deploy.ackerson.de
             if [ $DEPLOY_SERVER_IP ]; then
               export DEPLOY_SERVER=$DEPLOY_SERVER_IP
             fi
             echo "Deploy to $DEPLOY_SERVER"
-            export DEPLOY_CONNECT="ssh -o StrictHostKeyChecking=no ackersond@$DEPLOY_SERVER"
+
+            ssh-keyscan $DEPLOY_SERVER >> ~/.ssh/known_hosts
+            export DEPLOY_CONNECT="ssh ackersond@$DEPLOY_SERVER"
 
             if [ -f /tmp/last_docker_push ]; then
               export LAST_DOCKER_PUSH=`cat /tmp/last_docker_push`
@@ -109,7 +98,6 @@ jobs:
       - run:
           name: Reenable Digital Ocean firewall
           command: |
-            public_ip_address=$(curl -s https://checkip.amazonaws.com)
             curl -s https://raw.githubusercontent.com/danackerson/digitalocean/master/utils/dropSSHipFW.sh | sh
           when: always
 
