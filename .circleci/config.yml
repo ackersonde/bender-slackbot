@@ -50,6 +50,7 @@ jobs:
       - run:
           name: Disable Digital Ocean firewall for deploy
           command: |
+            apk add -U curl
             curl -s https://raw.githubusercontent.com/danackerson/digitalocean/master/utils/addSSHipFW.sh | sh
 
       - attach_workspace:
@@ -63,9 +64,7 @@ jobs:
               export DEPLOY_SERVER=$DEPLOY_SERVER_IP
             fi
             echo "Deploy to $DEPLOY_SERVER"
-
-            ssh-keyscan $DEPLOY_SERVER >> ~/.ssh/known_hosts
-            export DEPLOY_CONNECT="ssh ackersond@$DEPLOY_SERVER"
+            export DEPLOY_CONNECT="ssh -o StrictHostKeyChecking=no ackersond@$DEPLOY_SERVER"
 
             if [ -f /tmp/last_docker_push ]; then
               export LAST_DOCKER_PUSH=`cat /tmp/last_docker_push`
