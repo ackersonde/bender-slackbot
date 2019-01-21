@@ -72,10 +72,10 @@ func loadPBProxies() []interface{} {
 	data, err := ioutil.ReadFile(proxyFile)
 	if err != nil {
 		log.Printf("ERR: %s", err)
-	} else {
-		json.Unmarshal([]byte(data), &pbProxiesJSON)
+		return nil
 	}
 
+	json.Unmarshal([]byte(data), &pbProxiesJSON)
 	return pbProxiesJSON["proxies"].([]interface{})
 }
 
