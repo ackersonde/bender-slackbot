@@ -2,11 +2,17 @@ package commands
 
 // forked from https://github.com/jasonrhansen/piratebay
 import (
+	"encoding/json"
+	"errors"
 	"fmt"
+	"io/ioutil"
+	"log"
 	"net/http"
 	"net/url"
+	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"golang.org/x/net/html"
 )
@@ -27,7 +33,61 @@ const (
 	Games Category = 400
 )
 
-const pirateURL = "https://piratebaypirate.net/"
+const pbProxiesURL = "https://piratebay-proxylist.se/api/v1/proxies"
+const proxyFile = "/tmp/pbproxies.json"
+
+var proxyIndex = 0
+
+// InitPBProxies json file on disk
+func InitPBProxies() time.Time {
+	resp, _ := http.Get(pbProxiesURL)
+	if resp.StatusCode != 200 {
+		log.Printf("ERR: Unable to scan %s (%d)", pbProxiesURL, resp.StatusCode)
+	} else {
+		defer resp.Body.Close()
+		htmlData, _ := ioutil.ReadAll(resp.Body) //<--- here!
+		if len(htmlData) > 0 {
+			err := ioutil.WriteFile(proxyFile, htmlData, 0644)
+			if err != nil {
+				log.Printf("ERR: Unable to save %s: %s", proxyFile, err.Error())
+			}
+		}
+	}
+
+	fileInfo, err := os.Stat(proxyFile)
+	if err != nil {
+		if os.IsNotExist(err) {
+			log.Printf("ERR: %s does not exist.", proxyFile)
+		}
+	} else if fileInfo.Size() > 0 {
+		log.Printf("INFO: %s from %s", proxyFile, fileInfo.ModTime().Format("Jan _2, 2006 @15:04"))
+	}
+
+	return fileInfo.ModTime()
+}
+
+func loadPBProxies() []interface{} {
+	var pbProxiesJSON map[string]interface{}
+
+	data, err := ioutil.ReadFile(proxyFile)
+	if err != nil {
+		log.Printf("ERR: %s", err)
+	} else {
+		json.Unmarshal([]byte(data), &pbProxiesJSON)
+	}
+
+	return pbProxiesJSON["proxies"].([]interface{})
+}
+
+/*func main() {
+	//lastModTime := initPBProxies()
+	proxies := loadPBProxies()
+
+	for i := 0; i < len(proxies); i++ {
+		domain := proxies[i].(map[string]interface{})
+		log.Printf("%v", domain["domain"])
+	}
+}*/
 
 // Torrent stores information about a torrent found on The Pirate Bay.
 type Torrent struct {
@@ -64,11 +124,11 @@ func SearchFor(term string, cat Category) ([]Torrent, string) {
 					humanSize = humanSize / 1024
 					sizeSuffix = fmt.Sprintf("*%.1f GiB*", humanSize)
 				}
-				response += fmt.Sprintf("%d: <http://%s|%s> Seeds:%d %s\n", i, t.MagnetLink, t.Title, t.Seeders, sizeSuffix)
+				response += fmt.Sprintf("%d: <https://%s|%s> Seeds:%d %s\n", i, t.MagnetLink, t.Title, t.Seeders, sizeSuffix)
 			}
 		}
 	} else {
-		response = pirateURL + " seems to be offline: " + fmt.Sprintf("%v", err)
+		response = pbProxiesURL + " seems to be offline: " + fmt.Sprintf("%v", err)
 	}
 
 	if found < 1 {
@@ -82,6 +142,27 @@ func SearchFor(term string, cat Category) ([]Torrent, string) {
 func search(query string, cats ...Category) ([]Torrent, error) {
 	resp := new(http.Response)
 	var err error
+
+	proxies := loadPBProxies()
+	domain := proxies[proxyIndex].(map[string]interface{})
+	proxyBaseURL := "https://" + domain["domain"].(string)
+	// verify & set a working proxy URL for searching
+	if len(proxies) > 0 {
+		for resp.StatusCode != 200 {
+			resp, err = http.Get(proxyBaseURL + "/browse/207/0/7/0")
+			if err != nil || resp.StatusCode != 200 {
+				proxyIndex++
+				domain := proxies[proxyIndex].(map[string]interface{})
+				proxyBaseURL = "https://" + domain["domain"].(string)
+			}
+		}
+	} else {
+		lastModTime := InitPBProxies()
+		errString := "ERR: " + pbProxiesURL + " offline. " +
+			"Unable to get any proxies as of " +
+			lastModTime.Format("Jan _2, 2016 @15:04")
+		return nil, errors.New(errString)
+	}
 
 	if query != "" {
 		if len(cats) == 0 {
@@ -99,14 +180,12 @@ func search(query string, cats ...Category) ([]Torrent, error) {
 			catStr = "0"
 		}
 
-		searchStringURL := pirateURL + "/search/" + url.QueryEscape(query) + "/0/99/" + catStr
-		fmt.Println("searching for: " + searchStringURL)
+		searchStringURL := proxyBaseURL + "/search/" + url.QueryEscape(query) + "/0/99/" + catStr
+		log.Printf("searching for: %s", searchStringURL)
 		resp, err = http.Get(searchStringURL)
 		if err != nil {
 			return nil, err
 		}
-	} else {
-		resp, _ = http.Get(pirateURL + "/browse/207/0/7/0")
 	}
 
 	doc, err := html.Parse(resp.Body)
@@ -114,13 +193,13 @@ func search(query string, cats ...Category) ([]Torrent, error) {
 		return nil, err
 	}
 
-	return getTorrentsFromDoc(doc), nil
+	return getTorrentsFromDoc(doc, proxyBaseURL), nil
 }
 
-func getTorrentsFromDoc(doc *html.Node) []Torrent {
+func getTorrentsFromDoc(doc *html.Node, domain string) []Torrent {
 	tc := make(chan Torrent)
 	go func() {
-		loopDOM(doc, tc)
+		loopDOM(doc, tc, domain)
 		close(tc)
 	}()
 	var torrents []Torrent
@@ -131,36 +210,36 @@ func getTorrentsFromDoc(doc *html.Node) []Torrent {
 	return torrents
 }
 
-func loopDOM(n *html.Node, tc chan Torrent) {
+func loopDOM(n *html.Node, tc chan Torrent, domain string) {
 	if n.Type == html.ElementNode && n.Data == "tbody" {
-		getTorrentsFromTable(n, tc)
+		getTorrentsFromTable(n, tc, domain)
 	}
 	for c := n.FirstChild; c != nil; c = c.NextSibling {
-		loopDOM(c, tc)
+		loopDOM(c, tc, domain)
 	}
 }
 
-func getTorrentsFromTable(n *html.Node, tc chan Torrent) {
+func getTorrentsFromTable(n *html.Node, tc chan Torrent, domain string) {
 	for c := n.FirstChild; c != nil; c = c.NextSibling {
 		if c.Type == html.ElementNode && c.Data == "tr" {
-			getTorrentFromRow(c, tc)
+			getTorrentFromRow(c, tc, domain)
 		}
 	}
 }
 
-func getTorrentFromRow(n *html.Node, tc chan Torrent) {
+func getTorrentFromRow(n *html.Node, tc chan Torrent, domain string) {
 	var torrent Torrent
 	col := 0
 	for c := n.FirstChild; c != nil; c = c.NextSibling {
 		if c.Type == html.ElementNode && c.Data == "td" {
-			setTorrentDataFromCell(c, &torrent, col)
+			setTorrentDataFromCell(c, &torrent, col, domain)
 			col++
 		}
 	}
 	tc <- torrent
 }
 
-func setTorrentDataFromCell(n *html.Node, t *Torrent, col int) {
+func setTorrentDataFromCell(n *html.Node, t *Torrent, col int, domain string) {
 	if n.Type == html.ElementNode {
 		if col == 2 {
 			if s, err := strconv.Atoi(getNodeText(n)); err == nil {
@@ -178,7 +257,7 @@ func setTorrentDataFromCell(n *html.Node, t *Torrent, col int) {
 					} else if strings.HasPrefix(a.Val, "/torrent/") {
 						if t.Title == "" {
 							t.Title = getNodeText(n)
-							t.DetailsLink = pirateURL + a.Val
+							t.DetailsLink = domain + a.Val
 						}
 					} else if strings.HasPrefix(a.Val, "/browse/") && t.Category == "" {
 						t.Category = getNodeText(n)
@@ -200,7 +279,7 @@ func setTorrentDataFromCell(n *html.Node, t *Torrent, col int) {
 		}
 	}
 	for c := n.FirstChild; c != nil; c = c.NextSibling {
-		setTorrentDataFromCell(c, t, col)
+		setTorrentDataFromCell(c, t, col, domain)
 	}
 }
 

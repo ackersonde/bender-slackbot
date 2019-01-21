@@ -34,7 +34,7 @@ func executeRemoteCmd(details RemoteCmd) RemoteResult {
 
 	hostKey, _, _, _, err := ssh.ParseAuthorizedKey([]byte(details.HostKey))
 	if err != nil {
-		log.Fatalf("error parsing: %v", err)
+		log.Printf("error parsing: %v", err)
 	}
 
 	config := &ssh.ClientConfig{

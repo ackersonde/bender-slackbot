@@ -267,7 +267,7 @@ func getUSBDiskUsageOnFritzBox(ftpDirectories string) string {
 		}
 	}
 	if err := scanner.Err(); err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 
 	return result
@@ -291,7 +291,7 @@ func scanDirectory(directoryName string) uint64 {
 		size += fileSize
 	}
 	if err := scanner.Err(); err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 
 	return size
@@ -365,9 +365,9 @@ func findAndReturnVPNConfigs(doServers string, region string) string {
 		outputParser := getJSONFromRequestURL(outputURL, "GET", "")
 		message, error := outputParser.QueryToString("[0].message")
 		if error != nil {
-			log.Printf("QueryToString ERR: %s\n", error.Error())
+			log.Printf("QueryToString ERR: %s", error.Error())
 		}
-		log.Printf("outputParser val: %s\n", message)
+		log.Printf("outputParser val: %s", message)
 
 		checkPassString, _ := regexp.Compile(`The p12 and SSH keys password for new users is (?:[0-9a-zA-Z_@]{8})`)
 		passAlgoVPN = string(checkPassString.Find([]byte(message)))

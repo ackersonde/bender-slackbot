@@ -234,7 +234,7 @@ func MoveTorrentFile(api *slack.Client, filename string) {
 			var result string
 			remoteResult := executeRemoteCmd(details)
 			tunnelIdleSince = time.Now()
-			log.Printf("%v:%v\n", details, remoteResult)
+			log.Printf("%v:%v", details, remoteResult)
 
 			result = "Successfully moved `" + filename + "` to `" + piUSBMountPath + "`"
 			rtm.IncomingEvents <- slack.RTMEvent{Type: "MoveTorrent", Data: result}
