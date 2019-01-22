@@ -193,7 +193,11 @@ func search(query string, cats ...Category) ([]Torrent, error) {
 	}
 
 	doc, err := html.Parse(resp.Body)
+
+	var b bytes.Buffer
+	log.Printf("RESP: %s", html.Render(&b, doc))
 	if err != nil {
+		log.Printf("ERR: %s", err.Error())
 		return nil, err
 	}
 
@@ -256,9 +260,6 @@ func setTorrentDataFromCell(n *html.Node, t *Torrent, col int, domain string) {
 		} else {
 			for _, a := range n.Attr {
 				if n.Data == "a" && a.Key == "href" {
-					var b bytes.Buffer
-					log.Printf("Node: %s", html.Render(&b, n))
-
 					if strings.HasPrefix(a.Val, "magnet") {
 						t.MagnetLink = a.Val
 					} else if strings.HasPrefix(a.Val, "/torrent/") {
