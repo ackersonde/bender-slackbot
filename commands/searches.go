@@ -79,16 +79,6 @@ func loadPBProxies() []interface{} {
 	return pbProxiesJSON["proxies"].([]interface{})
 }
 
-/*func main() {
-	//lastModTime := initPBProxies()
-	proxies := loadPBProxies()
-
-	for i := 0; i < len(proxies); i++ {
-		domain := proxies[i].(map[string]interface{})
-		log.Printf("%v", domain["domain"])
-	}
-}*/
-
 // Torrent stores information about a torrent found on The Pirate Bay.
 type Torrent struct {
 	Title       string
@@ -138,31 +128,41 @@ func SearchFor(term string, cat Category) ([]Torrent, string) {
 	return torrents, response
 }
 
+func findWorkingProxy(resp *http.Response) (string, error) {
+	var domain map[string]interface{}
+	var proxyURL string
+	var lastModTime time.Time
+
+	proxies := loadPBProxies()
+	if len(proxies) == 0 {
+		lastModTime = InitPBProxies()
+		proxies = loadPBProxies()
+	}
+
+	if len(proxies) == 0 {
+		errString := "ERR: " + pbProxiesURL + " offline. " +
+			"Unable to get any proxies as of " +
+			lastModTime.Format("Jan _2, 2016 @15:04")
+		return "N/A", errors.New(errString)
+	}
+
+	err := errors.New("")
+	for i := 0; resp.StatusCode != 200; i++ {
+		resp, err = http.Get(proxyURL + "/browse/207/0/7/0")
+		if err != nil || resp.StatusCode != 200 {
+			domain = proxies[0].(map[string]interface{})
+			proxyURL = "https://" + domain["domain"].(string)
+		}
+	}
+
+	return domain["domain"].(string), err
+}
+
 // search returns the torrents found with the given search string and categories.
 func search(query string, cats ...Category) ([]Torrent, error) {
 	resp := new(http.Response)
 	var err error
-
-	proxies := loadPBProxies()
-	domain := proxies[proxyIndex].(map[string]interface{})
-	proxyBaseURL := "https://" + domain["domain"].(string)
-	// verify & set a working proxy URL for searching
-	if len(proxies) > 0 {
-		for resp.StatusCode != 200 {
-			resp, err = http.Get(proxyBaseURL + "/browse/207/0/7/0")
-			if err != nil || resp.StatusCode != 200 {
-				proxyIndex++
-				domain := proxies[proxyIndex].(map[string]interface{})
-				proxyBaseURL = "https://" + domain["domain"].(string)
-			}
-		}
-	} else {
-		lastModTime := InitPBProxies()
-		errString := "ERR: " + pbProxiesURL + " offline. " +
-			"Unable to get any proxies as of " +
-			lastModTime.Format("Jan _2, 2016 @15:04")
-		return nil, errors.New(errString)
-	}
+	proxyURL, err := findWorkingProxy(resp)
 
 	if query != "" {
 		if len(cats) == 0 {
@@ -180,7 +180,7 @@ func search(query string, cats ...Category) ([]Torrent, error) {
 			catStr = "0"
 		}
 
-		searchStringURL := proxyBaseURL + "/search/" + url.QueryEscape(query) + "/0/99/" + catStr
+		searchStringURL := proxyURL + "/search/" + url.QueryEscape(query) + "/0/99/" + catStr
 		log.Printf("searching for: %s", searchStringURL)
 		resp, err = http.Get(searchStringURL)
 		if err != nil {
@@ -193,7 +193,7 @@ func search(query string, cats ...Category) ([]Torrent, error) {
 		return nil, err
 	}
 
-	return getTorrentsFromDoc(doc, proxyBaseURL), nil
+	return getTorrentsFromDoc(doc, proxyURL), nil
 }
 
 func getTorrentsFromDoc(doc *html.Node, domain string) []Torrent {
