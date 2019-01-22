@@ -2,6 +2,7 @@ package commands
 
 // forked from https://github.com/jasonrhansen/piratebay
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -183,7 +184,7 @@ func search(query string, cats ...Category) ([]Torrent, error) {
 			catStr = "0"
 		}
 
-		searchStringURL := proxyURL + "/search/" + url.QueryEscape(query) + "/0/99/" + catStr
+		searchStringURL := "https://" + proxyURL + "/search/" + url.QueryEscape(query) + "/0/99/" + catStr
 		log.Printf("searching for: %s", searchStringURL)
 		resp, err = http.Get(searchStringURL)
 		if err != nil {
@@ -255,6 +256,9 @@ func setTorrentDataFromCell(n *html.Node, t *Torrent, col int, domain string) {
 		} else {
 			for _, a := range n.Attr {
 				if n.Data == "a" && a.Key == "href" {
+					var b bytes.Buffer
+					log.Printf("Node: %s", html.Render(&b, n))
+
 					if strings.HasPrefix(a.Val, "magnet") {
 						t.MagnetLink = a.Val
 					} else if strings.HasPrefix(a.Val, "/torrent/") {
