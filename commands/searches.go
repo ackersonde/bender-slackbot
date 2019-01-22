@@ -128,7 +128,9 @@ func SearchFor(term string, cat Category) ([]Torrent, string) {
 	return torrents, response
 }
 
-func findWorkingProxy(resp *http.Response) (string, error) {
+func findWorkingProxy() (*http.Response, error) {
+	resp := new(http.Response)
+
 	var domain map[string]interface{}
 	var proxyURL string
 	var lastModTime time.Time
@@ -143,7 +145,7 @@ func findWorkingProxy(resp *http.Response) (string, error) {
 		errString := "ERR: " + pbProxiesURL + " offline. " +
 			"Unable to get any proxies as of " +
 			lastModTime.Format("Jan _2, 2016 @15:04")
-		return "N/A", errors.New(errString)
+		return resp, errors.New(errString)
 	}
 
 	err := errors.New("")
@@ -155,14 +157,15 @@ func findWorkingProxy(resp *http.Response) (string, error) {
 		}
 	}
 
-	return domain["domain"].(string), err
+	return resp, err
 }
 
 // search returns the torrents found with the given search string and categories.
 func search(query string, cats ...Category) ([]Torrent, error) {
-	resp := new(http.Response)
 	var err error
-	proxyURL, err := findWorkingProxy(resp)
+
+	resp, err := findWorkingProxy()
+	proxyURL := resp.Request.Host
 
 	if query != "" {
 		if len(cats) == 0 {
