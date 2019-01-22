@@ -195,7 +195,8 @@ func search(query string, cats ...Category) ([]Torrent, error) {
 	doc, err := html.Parse(resp.Body)
 
 	var b bytes.Buffer
-	log.Printf("RESP: %s", html.Render(&b, doc))
+	html.Render(&b, doc)
+	log.Printf("RESP: %s", b.String())
 	if err != nil {
 		log.Printf("ERR: %s", err.Error())
 		return nil, err
