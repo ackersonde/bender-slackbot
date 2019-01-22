@@ -147,7 +147,7 @@ func findWorkingProxy(resp *http.Response) (string, error) {
 	}
 
 	err := errors.New("")
-	for i := 0; resp.StatusCode != 200; i++ {
+	for i := 0; resp == nil || resp.StatusCode != 200; i++ {
 		resp, err = http.Get(proxyURL + "/browse/207/0/7/0")
 		if err != nil || resp.StatusCode != 200 {
 			domain = proxies[0].(map[string]interface{})
