@@ -60,6 +60,7 @@ func searchProxy(url string) *http.Response {
 		}
 		if resp != nil {
 			defer resp.Body.Close()
+			return resp
 		}
 	}
 
@@ -114,7 +115,7 @@ func SearchFor(term string, cat Category) ([]Torrent, string) {
 }
 
 // search returns the torrents found with the given search string and categories.
-func search(query string, cats ...Category) ([]Torrent, error) {
+func xsearch(query string, cats ...Category) ([]Torrent, error) {
 	resp := new(http.Response)
 	var err error
 
