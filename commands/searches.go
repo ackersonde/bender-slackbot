@@ -116,7 +116,6 @@ func SearchFor(term string, cat Category) ([]Torrent, string) {
 // search returns the torrents found with the given search string and categories.
 func search(query string, cats ...Category) ([]Torrent, error) {
 	resp := new(http.Response)
-	defer resp.Body.Close()
 
 	if query != "" {
 		if len(cats) == 0 {
@@ -141,6 +140,8 @@ func search(query string, cats ...Category) ([]Torrent, error) {
 	}
 
 	doc, err := html.Parse(resp.Body)
+	defer resp.Body.Close()
+
 	if err != nil {
 		//var buf bytes.Buffer
 		//w := io.Writer(&buf)
