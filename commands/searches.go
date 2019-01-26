@@ -59,7 +59,6 @@ func searchProxy(url string) *http.Response {
 			log.Printf("%s%s succeeded!", proxy, url)
 		}
 		if resp != nil {
-			defer resp.Body.Close()
 			return resp
 		}
 	}
@@ -117,6 +116,7 @@ func SearchFor(term string, cat Category) ([]Torrent, string) {
 // search returns the torrents found with the given search string and categories.
 func search(query string, cats ...Category) ([]Torrent, error) {
 	resp := new(http.Response)
+	defer resp.Body.Close()
 
 	if query != "" {
 		if len(cats) == 0 {
