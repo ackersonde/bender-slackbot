@@ -2,8 +2,10 @@ package commands
 
 // forked from https://github.com/jasonrhansen/piratebay
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"net/url"
@@ -35,13 +37,12 @@ var proxies = []string{"piratebay.icu", "thepirate.host", "thepiratebay.icu"}
 func searchProxy(url string) *http.Response {
 	var resp *http.Response
 
-	for i, proxy := range proxies {
-		log.Printf("trying %d. %s ...", i, proxy)
-
+	for _, proxy := range proxies {
 		uri := "https://" + proxy + url
 		req, err := http.NewRequest("GET", uri, nil)
 		if err != nil {
 			log.Printf("http.NewRequest() failed with '%s'\n", err)
+			return resp
 		}
 
 		// create a context indicating 100 ms timeout
@@ -55,6 +56,7 @@ func searchProxy(url string) *http.Response {
 			// the request should timeout because we want to wait max 100 ms
 			// but the server doesn't return response for 3 seconds
 			log.Printf("http.DefaultClient.Do() failed with:\n'%s'\n", err)
+			continue
 		} else {
 			log.Printf("%s%s succeeded!", proxy, url)
 		}
@@ -117,7 +119,6 @@ func SearchFor(term string, cat Category) ([]Torrent, string) {
 // search returns the torrents found with the given search string and categories.
 func search(query string, cats ...Category) ([]Torrent, error) {
 	resp := new(http.Response)
-	var err error
 
 	if query != "" {
 		if len(cats) == 0 {
@@ -143,6 +144,10 @@ func search(query string, cats ...Category) ([]Torrent, error) {
 
 	doc, err := html.Parse(resp.Body)
 	if err != nil {
+		var buf bytes.Buffer
+		w := io.Writer(&buf)
+		html.Render(w, doc)
+		log.Printf("WTF: %s (%s)", err.Error(), buf.String())
 		return nil, err
 	}
 
