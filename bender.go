@@ -19,7 +19,6 @@ func prepareScheduler() {
 	gocron.Every(1).Friday().At("09:03").Do(commands.ListDODroplets, false)
 	gocron.Every(1).Friday().At("09:04").Do(commands.RaspberryPIPrivateTunnelChecks, false)
 	gocron.Every(1).Friday().At("09:05").Do(commands.CheckPiDiskSpace, "---")
-	gocron.Every(1).Friday().At("09:06").Do(commands.InitPBProxies)
 	gocron.Every(1).Day().At("05:30").Do(common.UpdateFirewall)
 	//gocron.Every(1).Day().At("17:30").Do(commands.ShowYesterdaysBBGames, false)
 	gocron.Every(10).Minutes().Do(commands.DisconnectIdleTunnel)
