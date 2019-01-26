@@ -115,7 +115,7 @@ func SearchFor(term string, cat Category) ([]Torrent, string) {
 }
 
 // search returns the torrents found with the given search string and categories.
-func xsearch(query string, cats ...Category) ([]Torrent, error) {
+func search(query string, cats ...Category) ([]Torrent, error) {
 	resp := new(http.Response)
 	var err error
 
