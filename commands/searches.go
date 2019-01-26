@@ -2,10 +2,8 @@ package commands
 
 // forked from https://github.com/jasonrhansen/piratebay
 import (
-	"bytes"
 	"context"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"net/url"
@@ -144,10 +142,10 @@ func search(query string, cats ...Category) ([]Torrent, error) {
 
 	doc, err := html.Parse(resp.Body)
 	if err != nil {
-		var buf bytes.Buffer
-		w := io.Writer(&buf)
-		html.Render(w, doc)
-		log.Printf("WTF: %s (%s)", err.Error(), buf.String())
+		//var buf bytes.Buffer
+		//w := io.Writer(&buf)
+		//html.Render(w, doc)
+		log.Printf("WTF: %s (%v)", err.Error(), doc)
 		return nil, err
 	}
 
