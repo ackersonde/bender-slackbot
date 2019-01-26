@@ -211,13 +211,11 @@ func setTorrentDataFromCell(n *html.Node, t *Torrent, col int) {
 				if n.Data == "a" && a.Key == "href" {
 					if strings.HasPrefix(a.Val, "magnet") {
 						t.MagnetLink = a.Val
-					} else if strings.HasPrefix(a.Val, "/torrent/") {
+					} else if strings.Contains(a.Val, "/torrent/") {
 						if t.Title == "" {
 							t.Title = getNodeText(n)
 							t.DetailsLink = a.Val
 						}
-					} else if strings.HasPrefix(a.Val, "/browse/") && t.Category == "" {
-						t.Category = getNodeText(n)
 					}
 				} else if n.Data == "font" && a.Key == "class" && a.Val == "detDesc" {
 					parts := strings.Split(getNodeText(n), ", ")
@@ -225,12 +223,6 @@ func setTorrentDataFromCell(n *html.Node, t *Torrent, col int) {
 						t.Uploaded = strings.Split(parts[0], " ")[1]
 						t.Size = sizeStrToInt(strings.Split(parts[1], " ")[1])
 					}
-				} else if n.Data == "img" && a.Key == "alt" && a.Val == "VIP" {
-					t.VIP = true
-				} else if n.Data == "img" && a.Key == "alt" && a.Val == "Trusted" {
-					t.Trusted = true
-				} else if n.Data == "a" && a.Key == "class" && a.Val == "detDesc" {
-					t.User = getNodeText(n)
 				}
 			}
 		}
