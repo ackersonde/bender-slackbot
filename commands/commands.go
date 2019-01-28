@@ -74,7 +74,7 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 
 		if strings.Contains(response, "york.shire") {
 			response = findAndReturnVPNConfigs(response, region)
-			api.PostMessage(slackMessage.Channel, slack.MsgOptionText(response, true), params)
+			api.PostMessage(slackMessage.Channel, slack.MsgOptionText(response, false), params)
 		} else {
 			building, buildNum, _ := circleCIDoAlgoBuildingAndBuildNums(region)
 			if !building {
