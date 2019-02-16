@@ -3,6 +3,7 @@ package commands
 // forked from https://github.com/jasonrhansen/piratebay
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -30,7 +31,8 @@ const (
 	Games Category = 400
 )
 
-var proxies = []string{"piratebay.icu", "thepirate.host", "thepiratebay.icu"}
+// https://pirateproxy.wtf/
+var proxies = []string{"thepirate.live", "piratebay.icu", "thepirate.host", "thepiratebay.icu"}
 
 func searchProxy(url string) *http.Response {
 	var resp *http.Response
@@ -44,7 +46,7 @@ func searchProxy(url string) *http.Response {
 		}
 
 		// create a context indicating 100 ms timeout
-		ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*1000)
+		ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*5000)
 		defer cancel()
 		// get a new request based on original request but with the context
 		req = req.WithContext(ctx)
@@ -139,13 +141,14 @@ func search(query string, cats ...Category) ([]Torrent, error) {
 		resp = searchProxy("/browse/207/0/7/0")
 	}
 
+	if resp == nil {
+		return nil, errors.New("unable to contact any PB Proxy...try again later")
+	}
+
 	doc, err := html.Parse(resp.Body)
 	defer resp.Body.Close()
 
 	if err != nil {
-		//var buf bytes.Buffer
-		//w := io.Writer(&buf)
-		//html.Render(w, doc)
 		log.Printf("WTF: %s (%v)", err.Error(), doc)
 		return nil, err
 	}
