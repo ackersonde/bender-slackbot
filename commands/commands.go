@@ -28,7 +28,6 @@ var piSDCardPath = "/home/pi/torrents/"
 var piUSBMountPoint = "/mnt/usb_1"
 var piUSBMountPath = piUSBMountPoint + "/DLNA/torrents/"
 var routerIP = "192.168.1.1"
-var tranc = "tranc"
 
 var circleCIDoAlgoURL = "https://circleci.com/api/v1.1/project/github/danackerson/do-algo"
 var circleCITokenParam = "?circle-token=" + os.Getenv("circleAPIToken")
@@ -175,7 +174,7 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 	} else if args[0] == "vpns" {
 		result := vpnTunnelCmds("status")
 		rtm.SendMessage(rtm.NewOutgoingMessage(result, slackMessage.Channel))
-	} else if args[0] == "trans" || args[0] == "trand" || args[0] == tranc {
+	} else if args[0] == "trans" || args[0] == "trand" || args[0] == "tranc" || args[0] == "tranp" {
 		if runningFritzboxTunnel() {
 			response := torrentCommand(args)
 			api.PostMessage(slackMessage.Channel, slack.MsgOptionText(response, false), params)
@@ -195,7 +194,7 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 				":closed_lock_with_key: `vpn[c|s|d]`: [C]onnect, [S]tatus, [D]rop VPN tunnel to Fritz!Box\n" +
 				":openvpn: `ovpn`: show status of OVPN.se on :raspberry_pi:\n" +
 				":pirate_bay: `torq <search term>`\n" +
-				":transmission: `tran[c|s|d]`: [C]reate <URL>, [S]tatus, [D]elete <ID> torrents on :raspberry_pi:\n" +
+				":transmission: `tran[c|p|s|d]`: [C]reate <URL>, [P]aused <URL>, [S]tatus, [D]elete <ID> torrents on :raspberry_pi:\n" +
 				":recycle: `rm(|mv) <filename>` from :raspberry_pi: (to `" + piUSBMountPath + "`)\n" +
 				":floppy_disk: `fsck`: show disk space on :raspberry_pi:\n" +
 				":baseball: `bb`: show yesterday's baseball games\n" +

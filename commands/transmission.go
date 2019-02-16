@@ -41,7 +41,7 @@ func getTorrents(t *transmission.Client) (result string) {
 	return result
 }
 
-func addTorrents(t *transmission.Client, torrentLink string) (result string) {
+func addTorrents(t *transmission.Client, torrentLink string, paused bool) (result string) {
 	// slack 'markdown's URLs with '<link|text>' so clip these off
 	if strings.HasPrefix(torrentLink, "<") {
 		torrentLink = strings.TrimLeft(torrentLink, "<http://")
@@ -57,7 +57,9 @@ func addTorrents(t *transmission.Client, torrentLink string) (result string) {
 	result = fmt.Sprintf(":star2: adding %s\n", torrentLink)
 
 	// Add a torrent
-	_, err := t.Add(torrentLink)
+
+	args := transmission.AddTorrentArg{Filename: torrentLink, Paused: paused}
+	_, err := t.AddTorrent(args)
 	if err != nil {
 		fmt.Printf("\nAdd err: %v", err)
 	}
@@ -112,11 +114,18 @@ func torrentCommand(cmd []string) (result string) {
 		if cmd[0] == "trans" {
 			result = getTorrents(t)
 		} else if cmd[0] == "tranc" {
-
 			if len(cmd) == 1 {
 				result = "Usage: `tranc <Torrent link>`"
 			} else {
-				result = addTorrents(t, cmd[1])
+				paused := false
+				result = addTorrents(t, cmd[1], paused)
+			}
+		} else if cmd[0] == "tranp" {
+			if len(cmd) == 1 {
+				result = "Usage: `tranp <Torrent link>`"
+			} else {
+				paused := true
+				result = addTorrents(t, cmd[1], paused)
 			}
 		} else if cmd[0] == "trand" {
 			if len(cmd) == 1 {
