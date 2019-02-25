@@ -32,7 +32,7 @@ const (
 )
 
 // https://pirateproxy.wtf/
-var proxies = []string{"thepirate.live", "piratebay.icu", "thepirate.host", "thepiratebay.icu"}
+var proxies = []string{"tpb.cool", "piratebay.tech", "thepiratebay.fail", "piratebay.icu", "thepirate.host"}
 
 func searchProxy(url string) *http.Response {
 	var resp *http.Response
