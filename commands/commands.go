@@ -67,7 +67,7 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 
 		if len(args) > 1 {
 			gameDate, err := time.Parse("2006-01-02", args[1])
-			dateString = gameDate.Format("2006-01-02")
+			dateString = gameDate.Format("2006/month_01/day_02")
 
 			if err != nil {
 				result = "Couldn't figure out date '" + args[1] + "'. Try `help`"
