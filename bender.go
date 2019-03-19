@@ -20,7 +20,7 @@ func prepareScheduler() {
 	gocron.Every(1).Friday().At("09:04").Do(commands.RaspberryPIPrivateTunnelChecks, false)
 	gocron.Every(1).Friday().At("09:05").Do(commands.CheckPiDiskSpace, "---")
 	gocron.Every(1).Day().At("05:30").Do(common.UpdateFirewall)
-	//gocron.Every(1).Day().At("17:30").Do(commands.ShowYesterdaysBBGames, false)
+	//gocron.Every(1).Day().At("17:30").Do(commands.ShowBBGames, false)
 	gocron.Every(10).Minutes().Do(commands.DisconnectIdleTunnel)
 	<-gocron.Start()
 
@@ -87,7 +87,7 @@ func main() {
 				// accordingly
 				if msg.Type == "ListDODroplets" || msg.Type == "MoveTorrent" ||
 					msg.Type == "RaspberryPIPrivateTunnelChecks" ||
-					msg.Type == "CheckPiDiskSpace" || msg.Type == "ShowYesterdaysBBGames" {
+					msg.Type == "CheckPiDiskSpace" || msg.Type == "ShowBBGames" {
 					response := msg.Data.(string)
 					params := slack.MsgOptionAsUser(true)
 

@@ -62,7 +62,21 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 			api.PostMessage(slackMessage.Channel, slack.MsgOptionText("Please provide YouTube video URL!", true), params)
 		}
 	} else if args[0] == "bb" {
-		result := ShowYesterdaysBBGames(true)
+		result := ""
+		dateString := ""
+
+		if len(args) > 1 {
+			gameDate, err := time.Parse("2006-01-02", args[1])
+			dateString = gameDate.Format("2006-01-02")
+
+			if err != nil {
+				result = "Couldn't figure out date '" + args[1] + "'. Try `help`"
+				api.PostMessage(slackMessage.Channel, slack.MsgOptionText(result, false), params)
+				return
+			}
+		}
+		result = ShowBBGames(true, dateString)
+
 		api.PostMessage(slackMessage.Channel, slack.MsgOptionText(result, false), params)
 	} else if args[0] == "algo" {
 		response := ListDODroplets(true)
@@ -197,7 +211,7 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 				":transmission: `tran[c|p|s|d]`: [C]reate <URL>, [P]aused <URL>, [S]tatus, [D]elete <ID> torrents on :raspberry_pi:\n" +
 				":recycle: `rm(|mv) <filename>` from :raspberry_pi: (to `" + piUSBMountPath + "`)\n" +
 				":floppy_disk: `fsck`: show disk space on :raspberry_pi:\n" +
-				":baseball: `bb`: show yesterday's baseball games\n" +
+				":baseball: `bb <YYYY-MM-DD>`: show baseball games from given date (default yesterday)\n" +
 				":youtube: `yt <video url>`: Download Youtube video to Papa's handy\n"
 		api.PostMessage(slackMessage.Channel, slack.MsgOptionText(response, true), params)
 	} else {

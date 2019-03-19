@@ -25,9 +25,9 @@ func GetBaseBallGame(gameID string) string {
 	return baseball.FetchGameURLFromID(gameID)
 }
 
-// ShowYesterdaysBBGames is now commented
-func ShowYesterdaysBBGames(userCall bool) string {
-	response := ShowBaseBallGames()
+// ShowBBGames is now commented
+func ShowBBGames(userCall bool, fromDate string) string {
+	response := ShowBaseBallGames(fromDate)
 	result := "Ball games from " + response.ReadableDate + ":\n"
 
 	for _, gameMetaData := range response.Games {
@@ -38,20 +38,19 @@ func ShowYesterdaysBBGames(userCall bool) string {
 	}
 
 	if !userCall {
-		rtm.IncomingEvents <- slack.RTMEvent{Type: "ShowYesterdaysBBGames", Data: result}
+		rtm.IncomingEvents <- slack.RTMEvent{Type: "ShowBBGames", Data: result}
 	}
 
 	return result
 }
 
 // ShowBaseBallGames now commented
-func ShowBaseBallGames() baseball.GameDay {
+func ShowBaseBallGames(fromDate string) baseball.GameDay {
 	homePageMap = baseball.InitHomePageMap()
 
-	date1 := ""
 	offset := ""
 
-	gameDayListing := baseball.GameDayListingHandler(date1, offset, homePageMap)
+	gameDayListing := baseball.GameDayListingHandler(fromDate, offset, homePageMap)
 
 	return gameDayListing
 }
