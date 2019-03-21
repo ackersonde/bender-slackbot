@@ -103,15 +103,13 @@ jobs:
               -e digitalOceanToken=$digitalOceanToken \
               -e CIRCLE_BUILD_NUM=$LAST_DOCKER_PUSH \
               -e slackToken=$(echo $slackTokenEncoded | base64 -d) \
-              -e SPACES_KEY=$SPACES_KEY \
-              -e SPACES_SECRET=$SPACES_SECRET \
               --name bender danackerson/bender:$LAST_DOCKER_PUSH
 
             if [ $DEPLOY_SERVER_IP ]; then
               $DEPLOY_CONNECT docker restart traefik
             fi
 
-      - run:
+      - run:S
           name: Reenable Digital Ocean firewall
           command: |
             curl -s https://raw.githubusercontent.com/danackerson/digitalocean/master/utils/dropSSHipFW.sh | sh
