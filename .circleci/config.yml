@@ -109,7 +109,7 @@ jobs:
               $DEPLOY_CONNECT docker restart traefik
             fi
 
-      - run:S
+      - run:
           name: Reenable Digital Ocean firewall
           command: |
             curl -s https://raw.githubusercontent.com/danackerson/digitalocean/master/utils/dropSSHipFW.sh | sh
