@@ -103,8 +103,6 @@ jobs:
               -e digitalOceanToken=$digitalOceanToken \
               -e CIRCLE_BUILD_NUM=$LAST_DOCKER_PUSH \
               -e slackToken=$(echo $slackTokenEncoded | base64 -d) \
-              -e SPACES_KEY=$SPACES_KEY \
-              -e SPACES_SECRET=$SPACES_SECRET \
               --name bender danackerson/bender:$LAST_DOCKER_PUSH
 
             if [ $DEPLOY_SERVER_IP ]; then

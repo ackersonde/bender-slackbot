@@ -66,6 +66,7 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 		dateString := ""
 
 		if len(args) > 1 {
+			// TODO: use https://github.com/olebedev/when for Natural Language processing
 			gameDate, err := time.Parse("2006-01-02", args[1])
 			dateString = gameDate.Format("2006/month_01/day_02")
 
@@ -214,9 +215,11 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 				":baseball: `bb <YYYY-MM-DD>`: show baseball games from given date (default yesterday)\n" +
 				":youtube: `yt <video url>`: Download Youtube video to Papa's handy\n"
 		api.PostMessage(slackMessage.Channel, slack.MsgOptionText(response, true), params)
-	} else {
+	} else if callingUserProfile != nil {
 		rtm.SendMessage(rtm.NewOutgoingMessage("whaddya say <@"+callingUserProfile.Name+">? Try `help` instead...",
 			slackMessage.Channel))
+	} else {
+		log.Printf("No Command found: %s", slackMessage.Text)
 	}
 }
 
