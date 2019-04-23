@@ -122,7 +122,7 @@ func SearchFor(term string, cat Category) ([]Torrent, string) {
 
 // search returns the torrents found with the given search string and categories.
 func search(query string, cats ...Category) ([]Torrent, error) {
-	doc := nil
+	var doc *html.Node
 
 	if query != "" {
 		if len(cats) == 0 {
