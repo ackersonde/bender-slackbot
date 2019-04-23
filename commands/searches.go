@@ -35,14 +35,12 @@ const (
 var proxies = []string{"tpb.cool", "piratebay.tech", "thepiratebay.fail", "piratebay.icu", "thepirate.host"}
 
 func searchProxy(url string) *html.Node {
-	var resp *http.Response
-
 	for _, proxy := range proxies {
 		uri := "https://" + proxy + url
 		req, err := http.NewRequest("GET", uri, nil)
 		if err != nil {
 			log.Printf("http.NewRequest() failed with '%s'\n", err)
-			return resp
+			continue
 		}
 
 		// create a context indicating 100 ms timeout
@@ -51,7 +49,7 @@ func searchProxy(url string) *html.Node {
 		// get a new request based on original request but with the context
 		req = req.WithContext(ctx)
 
-		resp, err = http.DefaultClient.Do(req)
+		resp, err := http.DefaultClient.Do(req)
 		if err != nil {
 			// the request should timeout because we want to wait max 100 ms
 			// but the server doesn't return response for 3 seconds
@@ -70,7 +68,7 @@ func searchProxy(url string) *html.Node {
 		}
 	}
 
-	return resp
+	return nil
 }
 
 // Torrent stores information about a torrent found on The Pirate Bay.
