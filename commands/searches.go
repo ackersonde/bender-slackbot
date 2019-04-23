@@ -34,7 +34,7 @@ const (
 // https://pirateproxy.wtf/
 var proxies = []string{"tpb.cool", "piratebay.tech", "thepiratebay.fail", "piratebay.icu", "thepirate.host"}
 
-func searchProxy(url string) *http.Response {
+func searchProxy(url string) *html.Node {
 	var resp *http.Response
 
 	for _, proxy := range proxies {
