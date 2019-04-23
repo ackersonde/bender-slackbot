@@ -57,10 +57,9 @@ func searchProxy(url string) *http.Response {
 			// but the server doesn't return response for 3 seconds
 			log.Printf("http.DefaultClient.Do() failed with:\n'%s'\n", err)
 			continue
-		} else {
-			log.Printf("%s%s succeeded!", proxy, url)
 		}
-		if resp != nil {
+		if resp != nil && resp.Body != nil {
+			log.Printf("%s%s succeeded!", proxy, url)
 			return resp
 		}
 	}
