@@ -58,9 +58,15 @@ func searchProxy(url string) *http.Response {
 			log.Printf("http.DefaultClient.Do() failed with:\n'%s'\n", err)
 			continue
 		}
-		if resp != nil && resp.Body != nil {
-			log.Printf("%s%s succeeded!", proxy, url)
-			return resp
+		if resp != nil {
+			doc, err := html.Parse(resp.Body)
+			defer resp.Body.Close()
+
+			if err == nil && doc != nil {
+				log.Printf("%s%s succeeded!", proxy, url)
+			}
+
+			return doc
 		}
 	}
 
@@ -116,7 +122,7 @@ func SearchFor(term string, cat Category) ([]Torrent, string) {
 
 // search returns the torrents found with the given search string and categories.
 func search(query string, cats ...Category) ([]Torrent, error) {
-	resp := new(http.Response)
+	doc := nil
 
 	if query != "" {
 		if len(cats) == 0 {
@@ -135,21 +141,13 @@ func search(query string, cats ...Category) ([]Torrent, error) {
 		}
 
 		searchStringURL := "/search/" + url.QueryEscape(query) + "/0/99/" + catStr
-		resp = searchProxy(searchStringURL)
+		doc = searchProxy(searchStringURL)
 	} else {
-		resp = searchProxy("/browse/207/0/7/0")
+		doc = searchProxy("/browse/207/0/7/0")
 	}
 
-	if resp == nil {
+	if doc == nil {
 		return nil, errors.New("unable to contact any PB Proxy...try again later")
-	}
-
-	doc, err := html.Parse(resp.Body)
-	defer resp.Body.Close()
-
-	if err != nil {
-		log.Printf("WTF: %s (%v)", err.Error(), doc)
-		return nil, err
 	}
 
 	return getTorrentsFromDoc(doc), nil
