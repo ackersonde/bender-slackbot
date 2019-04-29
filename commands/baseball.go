@@ -1,6 +1,8 @@
 package commands
 
 import (
+	"time"
+
 	"github.com/danackerson/ackerson.de-go/baseball"
 	"github.com/nlopes/slack"
 )
@@ -27,6 +29,10 @@ func GetBaseBallGame(gameID string) string {
 
 // ShowBBGames is now commented
 func ShowBBGames(userCall bool, fromDate string) string {
+	if fromDate == "" {
+		yesterday := time.Now().AddDate(0, 0, -1)
+		fromDate = yesterday.Format("2006/month_01/day_02")
+	}
 	response := ShowBaseBallGames(fromDate)
 	result := "Ball games from " + response.ReadableDate + ":\n"
 
