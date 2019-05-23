@@ -29,6 +29,11 @@ var piUSBMountPoint = "/mnt/usb_1"
 var piUSBMountPath = piUSBMountPoint + "/DLNA/torrents/"
 var routerIP = "192.168.1.1"
 
+var spacesKey = os.Getenv("SPACES_KEY")
+var spacesSecret = os.Getenv("SPACES_SECRET")
+var spacesNamePublic = os.Getenv("SPACES_NAME_PUBLIC")
+var joinAPIKey = os.Getenv("joinAPIKey")
+
 var circleCIDoAlgoURL = "https://circleci.com/api/v1.1/project/github/danackerson/do-algo"
 var circleCITokenParam = "?circle-token=" + os.Getenv("circleAPIToken")
 
@@ -389,7 +394,6 @@ func findAndReturnVPNConfigs(doServers string, region string) string {
 		passAlgoVPN = string(checkPassString.Find([]byte(message)))
 
 		ipv4 := getIPv4Address(doServers)
-		log.Println(ipv4)
 
 		// lets encrypt the filenames on disk
 		doPersonalAccessToken := os.Getenv("digitalOceanToken")
@@ -402,18 +406,24 @@ func findAndReturnVPNConfigs(doServers string, region string) string {
 		mobileConfigFileString := hex.EncodeToString(mobileConfigFileHashed) + ".conf"
 		fmt.Println(mobileConfigFileString)
 
+		// TODO: Change AlgoVPN files to be hosted from DO Space
 		copyCmd := "cp /algo_vpn/" + ipv4 + "/dan.mobileconfig /app/public/downloads/" + desktopConfigFileString + " && cp /algo_vpn/" + ipv4 + "/wireguard/dan.conf /app/public/downloads/" + mobileConfigFileString
 		_, err := exec.Command("/bin/bash", "-c", copyCmd).Output()
 		if err != nil {
 			fmt.Printf("Failed to execute command: %s", copyCmd)
 		}
 
-		joinStatus := "*Import* VPN profile"
-		resp, _ := http.Get("https://ackerson.de/bb_download?fileType=vpn&gameTitle=dan.conf&gameURL=" + mobileConfigFileString)
-		if resp.StatusCode != 200 {
-			joinStatus = "couldn't send to Papa's handy"
-		}
+		// 1. Upload dan.conf to S3 bucket: 058bb9a2-4bc3-11e9-8646-d663bd873d93.ams3.cdn.digitaloceanspaces.com.
+		// doSpacesClient := common.AccessDigitalOceanSpaces()
 
+		joinStatus := "*Import* VPN profile"
+		// 2. Change below Join Push alert to S3 bucket URL
+		icon := "http://www.setaram.com/wp-content/themes/setaram/library/images/lock.png"
+		smallIcon := "http://www.setaram.com/wp-content/themes/setaram/library/images/lock.png"
+
+		sendPayloadToJoinAPI("dan.conf", "dan.conf", icon, smallIcon)
+
+		// 3. Change download links to S3 bucket URL: https://space.ackerson.de/algovpn/dan_<ipv4_addr>.conf
 		links = ":link: <https://ackerson.de/bb_download?fileType=dl&gameTitle=dan.conf&gameURL=" + mobileConfigFileString + "|dan_" + ipv4 + ".conf> (" + joinStatus + ")\n"
 		links += ":link: <https://ackerson.de/bb_download?fileType=dl&gameTitle=dan.mobileconfig&gameURL=" + desktopConfigFileString + "|dan.mobileconfig> (dbl click on Mac)\n"
 	}
