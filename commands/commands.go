@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"os/exec"
 	"regexp"
 	"strconv"
 	"strings"
@@ -406,26 +405,25 @@ func findAndReturnVPNConfigs(doServers string, region string) string {
 		mobileConfigFileString := hex.EncodeToString(mobileConfigFileHashed) + ".conf"
 		fmt.Println(mobileConfigFileString)
 
-		// TODO: Change AlgoVPN files to be hosted from DO Space
-		copyCmd := "cp /algo_vpn/" + ipv4 + "/dan.mobileconfig /app/public/downloads/" + desktopConfigFileString + " && cp /algo_vpn/" + ipv4 + "/wireguard/dan.conf /app/public/downloads/" + mobileConfigFileString
-		_, err := exec.Command("/bin/bash", "-c", copyCmd).Output()
-		if err != nil {
-			fmt.Printf("Failed to execute command: %s", copyCmd)
-		}
+		localMobileConfigFilePath := "/algo_vpn/" + ipv4 + "/wireguard/dan.conf"
+		localDesktopConfigFilePath := "/algo_vpn/" + ipv4 + "/dan.mobileconfig"
 
-		// 1. Upload dan.conf to S3 bucket: 058bb9a2-4bc3-11e9-8646-d663bd873d93.ams3.cdn.digitaloceanspaces.com.
-		// doSpacesClient := common.AccessDigitalOceanSpaces()
+		remoteMobileConfigURL := "/.recycle/" + mobileConfigFileString
+		remoteDesktopConfigURL := "/.recycle/" + desktopConfigFileString
+
+		common.CopyFileToDOSpaces(spacesNamePublic, localDesktopConfigFilePath, remoteDesktopConfigURL, -1)
+		common.CopyFileToDOSpaces(spacesNamePublic, localMobileConfigFilePath, remoteMobileConfigURL, -1)
 
 		joinStatus := "*Import* VPN profile"
-		// 2. Change below Join Push alert to S3 bucket URL
+
 		icon := "http://www.setaram.com/wp-content/themes/setaram/library/images/lock.png"
 		smallIcon := "http://www.setaram.com/wp-content/themes/setaram/library/images/lock.png"
 
-		sendPayloadToJoinAPI("dan.conf", "dan.conf", icon, smallIcon)
+		// 2. Change below Join Push alert to S3 bucket URL
+		sendPayloadToJoinAPI(remoteMobileConfigURL, "dan.conf", icon, smallIcon)
 
-		// 3. Change download links to S3 bucket URL: https://space.ackerson.de/algovpn/dan_<ipv4_addr>.conf
-		links = ":link: <https://ackerson.de/bb_download?fileType=dl&gameTitle=dan.conf&gameURL=" + mobileConfigFileString + "|dan_" + ipv4 + ".conf> (" + joinStatus + ")\n"
-		links += ":link: <https://ackerson.de/bb_download?fileType=dl&gameTitle=dan.mobileconfig&gameURL=" + desktopConfigFileString + "|dan.mobileconfig> (dbl click on Mac)\n"
+		links = ":link: <https://" + spacesNamePublic + remoteMobileConfigURL + "|dan_" + ipv4 + ".conf> (" + joinStatus + ")\n"
+		links += ":link: <https://" + spacesNamePublic + remoteDesktopConfigURL + "|dan.mobileconfig> (dbl click on Mac)\n"
 	}
 
 	return ":algovpn: " + passAlgoVPN + "\n" + links
