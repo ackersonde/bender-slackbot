@@ -84,7 +84,7 @@ jobs:
               export LAST_DOCKER_PUSH=latest
             fi
 
-            $DEPLOY_CONNECT docker login -u $DOCKER_USER -p "$DOCKER_PASS"
+            $DEPLOY_CONNECT docker login -u $DOCKER_USER -p \"$DOCKER_PASS\"
             $DEPLOY_CONNECT docker pull danackerson/bender:$LAST_DOCKER_PUSH
             $DEPLOY_CONNECT docker rm -f bender || true
 
