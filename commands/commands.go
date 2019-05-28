@@ -411,19 +411,26 @@ func findAndReturnVPNConfigs(doServers string, region string) string {
 		remoteMobileConfigURL := "/.recycle/" + mobileConfigFileString
 		remoteDesktopConfigURL := "/.recycle/" + desktopConfigFileString
 
-		common.CopyFileToDOSpaces(spacesNamePublic, localDesktopConfigFilePath, remoteDesktopConfigURL, -1)
-		common.CopyFileToDOSpaces(spacesNamePublic, localMobileConfigFilePath, remoteMobileConfigURL, -1)
+		err := common.CopyFileToDOSpaces(spacesNamePublic, localDesktopConfigFilePath, remoteDesktopConfigURL, -1)
+		if err != nil {
+			log.Printf("Unable to upload %s to Spaces %s", localDesktopConfigFilePath, err.Error())
+		} else {
+			err := common.CopyFileToDOSpaces(spacesNamePublic, localMobileConfigFilePath, remoteMobileConfigURL, -1)
+			if err != nil {
+				log.Printf("Unable to upload %s to Spaces %s", localMobileConfigFilePath, err.Error())
+			} else {
+				joinStatus := "*Import* VPN profile"
 
-		joinStatus := "*Import* VPN profile"
+				icon := "http://www.setaram.com/wp-content/themes/setaram/library/images/lock.png"
+				smallIcon := "http://www.setaram.com/wp-content/themes/setaram/library/images/lock.png"
 
-		icon := "http://www.setaram.com/wp-content/themes/setaram/library/images/lock.png"
-		smallIcon := "http://www.setaram.com/wp-content/themes/setaram/library/images/lock.png"
-
-		// 2. Change below Join Push alert to S3 bucket URL
-		sendPayloadToJoinAPI(remoteMobileConfigURL, "dan.conf", icon, smallIcon)
-
-		links = ":link: <https://" + spacesNamePublic + remoteMobileConfigURL + "|dan_" + ipv4 + ".conf> (" + joinStatus + ")\n"
-		links += ":link: <https://" + spacesNamePublic + remoteDesktopConfigURL + "|dan.mobileconfig> (dbl click on Mac)\n"
+				// 2. Change below Join Push alert to S3 bucket URL
+				sendPayloadToJoinAPI(remoteMobileConfigURL, "dan.conf", icon, smallIcon)
+				digitalOceanSpacesURL := spacesNamePublic + ".ams3.digitaloceanspaces.com"
+				links = ":link: <https://" + digitalOceanSpacesURL + remoteMobileConfigURL + "|dan_" + ipv4 + ".conf> (" + joinStatus + ")\n"
+				links += ":link: <https://" + digitalOceanSpacesURL + remoteDesktopConfigURL + "|dan.mobileconfig> (dbl click on Mac)\n"
+			}
+		}
 	}
 
 	return ":algovpn: " + passAlgoVPN + "\n" + links
