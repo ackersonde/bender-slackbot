@@ -397,8 +397,8 @@ func findAndReturnVPNConfigs(doServers string, region string) string {
 		// lets encrypt the filenames on disk
 		doPersonalAccessToken := os.Getenv("digitalOceanToken")
 		salt := []byte(ipv4 + ":" + doPersonalAccessToken)
-		desktopConfigFileHashed, _ := scrypt.Key([]byte("dan.mobileconfig"), salt, 16384, 8, 1, 32)
 		mobileConfigFileHashed, _ := scrypt.Key([]byte("dan.conf"), salt, 16384, 8, 1, 32)
+		desktopConfigFileHashed, _ := scrypt.Key([]byte("dan.mobileconfig"), salt, 16384, 8, 1, 32)
 
 		localMobileConfigFilePath := "/algo_vpn/" + ipv4 + "/wireguard/dan.conf"
 		localDesktopConfigFilePath := "/algo_vpn/" + ipv4 + "/dan.mobileconfig"
@@ -410,13 +410,13 @@ func findAndReturnVPNConfigs(doServers string, region string) string {
 		remoteMobileConfigURL := "/.recycle/" + hex.EncodeToString(mobileConfigFileHashed) + "/dan_" + ipv4 + ".conf"
 		remoteDesktopConfigURL := "/.recycle/" + hex.EncodeToString(desktopConfigFileHashed) + "/dan_" + ipv4 + ".mobileconfig"
 
-		err := common.CopyFileToDOSpaces(spacesNamePublic, remoteDesktopConfigURL, localDesktopConfigFilePath, desktopConfigFileSize)
+		err := common.CopyFileToDOSpaces(spacesNamePublic, remoteMobileConfigURL, localMobileConfigFilePath, mobileConfigFileSize)
 		if err != nil {
-			log.Printf("Unable to upload %s to Spaces %s", remoteDesktopConfigURL, err.Error())
+			log.Printf("Unable to upload %s to Spaces %s", remoteMobileConfigURL, err.Error())
 		} else {
-			err := common.CopyFileToDOSpaces(spacesNamePublic, remoteMobileConfigURL, localMobileConfigFilePath, mobileConfigFileSize)
+			err := common.CopyFileToDOSpaces(spacesNamePublic, remoteDesktopConfigURL, localDesktopConfigFilePath, desktopConfigFileSize)
 			if err != nil {
-				log.Printf("Unable to upload %s to Spaces %s", remoteMobileConfigURL, err.Error())
+				log.Printf("Unable to upload %s to Spaces %s", remoteDesktopConfigURL, err.Error())
 			} else {
 				joinStatus := "*Import* VPN profile"
 
@@ -424,10 +424,10 @@ func findAndReturnVPNConfigs(doServers string, region string) string {
 				smallIcon := "http://www.setaram.com/wp-content/themes/setaram/library/images/lock.png"
 
 				// 2. Change below Join Push alert to S3 bucket URL
-				sendPayloadToJoinAPI(remoteMobileConfigURL, "dan.conf", icon, smallIcon)
+				sendPayloadToJoinAPI(remoteMobileConfigURL, "dan_"+ipv4+".conf", icon, smallIcon)
 				digitalOceanSpacesURL := spacesNamePublic + ".ams3.digitaloceanspaces.com"
 				links = ":link: <https://" + digitalOceanSpacesURL + remoteMobileConfigURL + "|dan_" + ipv4 + ".conf> (" + joinStatus + ")\n"
-				links += ":link: <https://" + digitalOceanSpacesURL + remoteDesktopConfigURL + "|dan.mobileconfig> (dbl click on Mac)\n"
+				links += ":link: <https://" + digitalOceanSpacesURL + remoteDesktopConfigURL + "|dan_" + ipv4 + ".mobileconfig> (dbl click on Mac)\n"
 			}
 		}
 	}
