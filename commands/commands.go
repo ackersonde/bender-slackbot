@@ -398,12 +398,7 @@ func findAndReturnVPNConfigs(doServers string, region string) string {
 		doPersonalAccessToken := os.Getenv("digitalOceanToken")
 		salt := []byte(ipv4 + ":" + doPersonalAccessToken)
 		desktopConfigFileHashed, _ := scrypt.Key([]byte("dan.mobileconfig"), salt, 16384, 8, 1, 32)
-		desktopConfigFileString := hex.EncodeToString(desktopConfigFileHashed) + ".mobileconfig"
-		fmt.Println(desktopConfigFileString)
-
 		mobileConfigFileHashed, _ := scrypt.Key([]byte("dan.conf"), salt, 16384, 8, 1, 32)
-		mobileConfigFileString := hex.EncodeToString(mobileConfigFileHashed) + ".conf"
-		fmt.Println(mobileConfigFileString)
 
 		localMobileConfigFilePath := "/algo_vpn/" + ipv4 + "/wireguard/dan.conf"
 		localDesktopConfigFilePath := "/algo_vpn/" + ipv4 + "/dan.mobileconfig"
@@ -412,8 +407,8 @@ func findAndReturnVPNConfigs(doServers string, region string) string {
 		fi, _ = os.Stat(localDesktopConfigFilePath)
 		desktopConfigFileSize := fi.Size()
 
-		remoteMobileConfigURL := "/.recycle/" + mobileConfigFileString
-		remoteDesktopConfigURL := "/.recycle/" + desktopConfigFileString
+		remoteMobileConfigURL := ".recycle/" + hex.EncodeToString(mobileConfigFileHashed) + "/dan.conf"
+		remoteDesktopConfigURL := ".recycle/" + hex.EncodeToString(desktopConfigFileHashed) + "/dan.mobileconfig"
 
 		err := common.CopyFileToDOSpaces(spacesNamePublic, remoteDesktopConfigURL, localDesktopConfigFilePath, desktopConfigFileSize)
 		if err != nil {
