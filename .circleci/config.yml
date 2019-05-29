@@ -17,8 +17,7 @@ jobs:
       - run:
           name: "Install Docker CE"
           command: |
-            VER="18.09.6"
-            curl -fsSLO https://download.docker.com/linux/static/stable/x86_64/docker-$VER.tgz && tar --strip-components=1 -xvzf docker-$VER.tgz -C /usr/local/bin
+            curl -fsSLO https://download.docker.com/linux/static/stable/x86_64/docker-$DOCKER_ENGINE.tgz && tar --strip-components=1 -xvzf docker-$VER.tgz -C /usr/local/bin
             rm docker-$VER.tgz
 
       - run:
