@@ -407,8 +407,8 @@ func findAndReturnVPNConfigs(doServers string, region string) string {
 		fi, _ = os.Stat(localDesktopConfigFilePath)
 		desktopConfigFileSize := fi.Size()
 
-		remoteMobileConfigURL := "/.recycle/" + hex.EncodeToString(mobileConfigFileHashed) + "/dan_" + ipv4 + ".conf"
-		remoteDesktopConfigURL := "/.recycle/" + hex.EncodeToString(desktopConfigFileHashed) + "/dan_" + ipv4 + ".mobileconfig"
+		remoteMobileConfigURL := "/.recycle/" + hex.EncodeToString(mobileConfigFileHashed) + "/" + ipv4 + ".conf"
+		remoteDesktopConfigURL := "/.recycle/" + hex.EncodeToString(desktopConfigFileHashed) + "/macOS_" + ipv4 + ".mobileconfig"
 
 		err := common.CopyFileToDOSpaces(spacesNamePublic, remoteMobileConfigURL, localMobileConfigFilePath, mobileConfigFileSize)
 		if err != nil {
@@ -426,8 +426,8 @@ func findAndReturnVPNConfigs(doServers string, region string) string {
 				// 2. Change below Join Push alert to S3 bucket URL
 				sendPayloadToJoinAPI(remoteMobileConfigURL, "dan_"+ipv4+".conf", icon, smallIcon)
 				digitalOceanSpacesURL := spacesNamePublic + ".ams3.digitaloceanspaces.com"
-				links = ":link: <https://" + digitalOceanSpacesURL + remoteMobileConfigURL + "|dan_" + ipv4 + ".conf> (" + joinStatus + ")\n"
-				links += ":link: <https://" + digitalOceanSpacesURL + remoteDesktopConfigURL + "|dan_" + ipv4 + ".mobileconfig> (dbl click on Mac)\n"
+				links = ":link: <https://" + digitalOceanSpacesURL + remoteMobileConfigURL + "|" + ipv4 + ".conf> (" + joinStatus + ")\n"
+				links += ":link: <https://" + digitalOceanSpacesURL + remoteDesktopConfigURL + "|macOS_" + ipv4 + ".mobileconfig> (dbl click on Mac)\n"
 			}
 		}
 	}
