@@ -407,15 +407,19 @@ func findAndReturnVPNConfigs(doServers string, region string) string {
 
 		localMobileConfigFilePath := "/algo_vpn/" + ipv4 + "/wireguard/dan.conf"
 		localDesktopConfigFilePath := "/algo_vpn/" + ipv4 + "/dan.mobileconfig"
+		fi, _ := os.Stat(localMobileConfigFilePath)
+		mobileConfigFileSize := fi.Size()
+		fi, _ = os.Stat(localDesktopConfigFilePath)
+		desktopConfigFileSize := fi.Size()
 
 		remoteMobileConfigURL := "/.recycle/" + mobileConfigFileString
 		remoteDesktopConfigURL := "/.recycle/" + desktopConfigFileString
 
-		err := common.CopyFileToDOSpaces(spacesNamePublic, remoteDesktopConfigURL, localDesktopConfigFilePath, -1)
+		err := common.CopyFileToDOSpaces(spacesNamePublic, remoteDesktopConfigURL, localDesktopConfigFilePath, desktopConfigFileSize)
 		if err != nil {
 			log.Printf("Unable to upload %s to Spaces %s", remoteDesktopConfigURL, err.Error())
 		} else {
-			err := common.CopyFileToDOSpaces(spacesNamePublic, remoteMobileConfigURL, localMobileConfigFilePath, -1)
+			err := common.CopyFileToDOSpaces(spacesNamePublic, remoteMobileConfigURL, localMobileConfigFilePath, mobileConfigFileSize)
 			if err != nil {
 				log.Printf("Unable to upload %s to Spaces %s", remoteMobileConfigURL, err.Error())
 			} else {
