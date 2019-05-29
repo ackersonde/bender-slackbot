@@ -122,7 +122,8 @@ workflows:
   version: 2
   build-deploy:
     jobs:
-        - build
+        - build:
+          context: org-global
         - deploy:
             requires:
               - build
