@@ -407,8 +407,8 @@ func findAndReturnVPNConfigs(doServers string, region string) string {
 		fi, _ = os.Stat(localDesktopConfigFilePath)
 		desktopConfigFileSize := fi.Size()
 
-		remoteMobileConfigURL := ".recycle/" + hex.EncodeToString(mobileConfigFileHashed) + "/dan.conf"
-		remoteDesktopConfigURL := ".recycle/" + hex.EncodeToString(desktopConfigFileHashed) + "/dan.mobileconfig"
+		remoteMobileConfigURL := "/.recycle/" + hex.EncodeToString(mobileConfigFileHashed) + "/dan.conf"
+		remoteDesktopConfigURL := "/.recycle/" + hex.EncodeToString(desktopConfigFileHashed) + "/dan.mobileconfig"
 
 		err := common.CopyFileToDOSpaces(spacesNamePublic, remoteDesktopConfigURL, localDesktopConfigFilePath, desktopConfigFileSize)
 		if err != nil {
