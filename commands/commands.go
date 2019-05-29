@@ -411,13 +411,13 @@ func findAndReturnVPNConfigs(doServers string, region string) string {
 		remoteMobileConfigURL := "/.recycle/" + mobileConfigFileString
 		remoteDesktopConfigURL := "/.recycle/" + desktopConfigFileString
 
-		err := common.CopyFileToDOSpaces(spacesNamePublic, localDesktopConfigFilePath, remoteDesktopConfigURL, -1)
+		err := common.CopyFileToDOSpaces(spacesNamePublic, remoteDesktopConfigURL, localDesktopConfigFilePath, -1)
 		if err != nil {
-			log.Printf("Unable to upload %s to Spaces %s", localDesktopConfigFilePath, err.Error())
+			log.Printf("Unable to upload %s to Spaces %s", remoteDesktopConfigFilePath, err.Error())
 		} else {
-			err := common.CopyFileToDOSpaces(spacesNamePublic, localMobileConfigFilePath, remoteMobileConfigURL, -1)
+			err := common.CopyFileToDOSpaces(spacesNamePublic, remoteMobileConfigURL, localMobileConfigFilePath, -1)
 			if err != nil {
-				log.Printf("Unable to upload %s to Spaces %s", localMobileConfigFilePath, err.Error())
+				log.Printf("Unable to upload %s to Spaces %s", remoteMobileConfigFilePath, err.Error())
 			} else {
 				joinStatus := "*Import* VPN profile"
 
