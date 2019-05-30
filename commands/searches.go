@@ -33,7 +33,7 @@ const (
 
 var proxies = []string{"tpb.cool", "piratebay.tech", "thepiratebay.fail", "piratebay.icu", "thepirate.host"}
 
-func searchProxy(url string) *html.Node {
+func searchProxy(url string) []Torrent {
 	for _, proxy := range proxies {
 		uri := "https://" + proxy + url
 		req, err := http.NewRequest("GET", uri, nil)
@@ -43,15 +43,11 @@ func searchProxy(url string) *html.Node {
 		}
 
 		// create a context indicating 5s timeout
-		ctx, _ := context.WithTimeout(context.Background(), time.Millisecond*5000)
-		//defer cancel()
-		// get a new request based on original request but with the context
+		ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*5000)
+		defer cancel()
 		req = req.WithContext(ctx)
-
 		resp, err := http.DefaultClient.Do(req)
 		if err != nil {
-			// the request should timeout because we want to wait max 100 ms
-			// but the server doesn't return response for 3 seconds
 			log.Printf("%s failed with:\n'%s'\n", proxy, err)
 			continue
 		}
@@ -60,10 +56,12 @@ func searchProxy(url string) *html.Node {
 			defer resp.Body.Close()
 
 			if err == nil && doc != nil {
-				log.Printf("%s%s succeeded!", proxy, url)
+				torrents := getTorrentsFromDoc(doc)
+				if torrents != nil {
+					log.Printf("%s%s succeeded!", proxy, url)
+					return torrents
+				}
 			}
-
-			return doc
 		}
 	}
 
@@ -119,7 +117,7 @@ func SearchFor(term string, cat Category) ([]Torrent, string) {
 
 // search returns the torrents found with the given search string and categories.
 func search(query string, cats ...Category) ([]Torrent, error) {
-	var doc *html.Node
+	var torrents []Torrent
 
 	if query != "" {
 		if len(cats) == 0 {
@@ -138,16 +136,16 @@ func search(query string, cats ...Category) ([]Torrent, error) {
 		}
 
 		searchStringURL := "/search/" + url.QueryEscape(query) + "/0/99/" + catStr
-		doc = searchProxy(searchStringURL)
+		torrents = searchProxy(searchStringURL)
 	} else {
-		doc = searchProxy("/browse/207/0/7/0")
+		torrents = searchProxy("/browse/207/0/7/0")
 	}
 
-	if doc == nil {
+	if torrents == nil {
 		return nil, errors.New("unable to contact any PB Proxy...try again later")
 	}
 
-	return getTorrentsFromDoc(doc), nil
+	return torrents, nil
 }
 
 func getTorrentsFromDoc(doc *html.Node) []Torrent {
