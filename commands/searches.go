@@ -31,7 +31,6 @@ const (
 	Games Category = 400
 )
 
-// https://pirateproxy.wtf/
 var proxies = []string{"tpb.cool", "piratebay.tech", "thepiratebay.fail", "piratebay.icu", "thepirate.host"}
 
 func searchProxy(url string) *html.Node {
@@ -43,9 +42,9 @@ func searchProxy(url string) *html.Node {
 			continue
 		}
 
-		// create a context indicating 100 ms timeout
-		ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*5000)
-		defer cancel()
+		// create a context indicating 5s timeout
+		ctx, _ := context.WithTimeout(context.Background(), time.Millisecond*5000)
+		//defer cancel()
 		// get a new request based on original request but with the context
 		req = req.WithContext(ctx)
 
@@ -53,7 +52,7 @@ func searchProxy(url string) *html.Node {
 		if err != nil {
 			// the request should timeout because we want to wait max 100 ms
 			// but the server doesn't return response for 3 seconds
-			log.Printf("http.DefaultClient.Do() failed with:\n'%s'\n", err)
+			log.Printf("%s failed with:\n'%s'\n", proxy, err)
 			continue
 		}
 		if resp != nil {
