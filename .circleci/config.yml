@@ -93,20 +93,20 @@ jobs:
             # above is an example how to decode this on the fly (e.g. slackToken)
             $DEPLOY_CONNECT docker run -d --restart=always --privileged=true \
               --volumes-from homepage -v /home/ackersond/algo_vpn:/algo_vpn:ro \
-              -e doFirewallID=$CTX_DIGITALOCEAN_FIREWALL \
+              -e CTX_DIGITALOCEAN_FIREWALL=$CTX_DIGITALOCEAN_FIREWALL \
               -e doFloatingIP=$doFloatingIP \
               -e homeDomain=$homeDomain \
-              -e circleAPIToken=$CTX_CIRCLECI_API_TOKEN \
+              -e CTX_CIRCLECI_API_TOKEN=$CTX_CIRCLECI_API_TOKEN \
               -e raspberryPIIP=$raspberryPIIP \
               -e slackReportChannel=$slackReportChannel \
               -e piUser=$piUser -e piPass=$piPass \
-              -e digitalOceanToken=$CTX_DIGITALOCEAN_TOKEN \
+              -e CTX_DIGITALOCEAN_TOKEN=$CTX_DIGITALOCEAN_TOKEN \
               -e CIRCLE_BUILD_NUM=$LAST_DOCKER_PUSH \
-              -e slackToken=$CTX_SLACK_API_TOKEN \
-              -e SPACES_KEY=$CTX_DIGITALOCEAN_SPACES_KEY \
-              -e SPACES_SECRET=$CTX_DIGITALOCEAN_SPACES_SECRET \
-              -e SPACES_NAME_PUBLIC=$CTX_DIGITALOCEAN_SPACES_NAME_PUBLIC \
-              -e joinAPIKey=$CTX_JOIN_API_KEY \
+              -e CTX_SLACK_API_TOKEN=$CTX_SLACK_API_TOKEN \
+              -e CTX_DIGITALOCEAN_SPACES_KEY=$CTX_DIGITALOCEAN_SPACES_KEY \
+              -e CTX_DIGITALOCEAN_SPACES_SECRET=$CTX_DIGITALOCEAN_SPACES_SECRET \
+              -e CTX_DIGITALOCEAN_SPACES_NAME_PUBLIC=$CTX_DIGITALOCEAN_SPACES_NAME_PUBLIC \
+              -e CTX_JOIN_API_KEY=$CTX_JOIN_API_KEY \
               --name bender danackerson/bender:$LAST_DOCKER_PUSH
 
             if [ $DEPLOY_SERVER_IP ]; then

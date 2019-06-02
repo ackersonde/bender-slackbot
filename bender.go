@@ -28,7 +28,7 @@ func prepareScheduler() {
 }
 
 func main() {
-	api := slack.New(os.Getenv("slackToken"))
+	api := slack.New(os.Getenv("CTX_SLACK_API_TOKEN"))
 	logger := log.New(os.Stdout, "slack-bot: ", log.Lshortfile|log.LstdFlags)
 
 	slack.OptionLog(logger)

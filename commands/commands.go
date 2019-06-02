@@ -28,13 +28,13 @@ var piUSBMountPoint = "/mnt/usb_1"
 var piUSBMountPath = piUSBMountPoint + "/DLNA/torrents/"
 var routerIP = "192.168.1.1"
 
-var spacesKey = os.Getenv("SPACES_KEY")
-var spacesSecret = os.Getenv("SPACES_SECRET")
-var spacesNamePublic = os.Getenv("SPACES_NAME_PUBLIC")
-var joinAPIKey = os.Getenv("joinAPIKey")
+var spacesKey = os.Getenv("CTX_DIGITALOCEAN_SPACES_KEY")
+var spacesSecret = os.Getenv("CTX_DIGITALOCEAN_SPACES_SECRET")
+var spacesNamePublic = os.Getenv("CTX_DIGITALOCEAN_SPACES_NAME_PUBLIC")
+var joinAPIKey = os.Getenv("CTX_JOIN_API_KEY")
 
 var circleCIDoAlgoURL = "https://circleci.com/api/v1.1/project/github/danackerson/do-algo"
-var circleCITokenParam = "?circle-token=" + os.Getenv("circleAPIToken")
+var circleCITokenParam = "?circle-token=" + os.Getenv("CTX_CIRCLECI_API_TOKEN")
 
 // SlackReportChannel default reporting channel for bot crons
 var SlackReportChannel = os.Getenv("slackReportChannel") // C33QYV3PW is #remote_network_report
@@ -395,7 +395,7 @@ func findAndReturnVPNConfigs(doServers string, region string) string {
 		ipv4 := getIPv4Address(doServers)
 
 		// lets encrypt the filenames on disk
-		doPersonalAccessToken := os.Getenv("digitalOceanToken")
+		doPersonalAccessToken := os.Getenv("CTX_DIGITALOCEAN_TOKEN")
 		salt := []byte(ipv4 + ":" + doPersonalAccessToken)
 		mobileConfigFileHashed, _ := scrypt.Key([]byte("dan.conf"), salt, 16384, 8, 1, 32)
 		desktopConfigFileHashed, _ := scrypt.Key([]byte("dan.mobileconfig"), salt, 16384, 8, 1, 32)
