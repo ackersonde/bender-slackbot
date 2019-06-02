@@ -400,15 +400,15 @@ func findAndReturnVPNConfigs(doServers string, region string) string {
 		mobileConfigFileHashed, _ := scrypt.Key([]byte("dan.conf"), salt, 16384, 8, 1, 32)
 		desktopConfigFileHashed, _ := scrypt.Key([]byte("dan.mobileconfig"), salt, 16384, 8, 1, 32)
 
-		localMobileConfigFilePath := "/algo_vpn/" + ipv4 + "/wireguard/dan.conf"
-		localDesktopConfigFilePath := "/algo_vpn/" + ipv4 + "/dan.mobileconfig"
+		localMobileConfigFilePath := "/algo_vpn/" + ipv4 + "/wireguard/phone.conf"
+		localDesktopConfigFilePath := "/algo_vpn/" + ipv4 + "/wireguard/laptop.conf"
 		fi, _ := os.Stat(localMobileConfigFilePath)
 		mobileConfigFileSize := fi.Size()
 		fi, _ = os.Stat(localDesktopConfigFilePath)
 		desktopConfigFileSize := fi.Size()
 
 		remoteMobileConfigURL := "/.recycle/" + hex.EncodeToString(mobileConfigFileHashed) + "/" + ipv4 + ".conf"
-		remoteDesktopConfigURL := "/.recycle/" + hex.EncodeToString(desktopConfigFileHashed) + "/macOS_" + ipv4 + ".mobileconfig"
+		remoteDesktopConfigURL := "/.recycle/" + hex.EncodeToString(desktopConfigFileHashed) + "/macOS_" + ipv4 + ".conf"
 
 		err := common.CopyFileToDOSpaces(spacesNamePublic, remoteMobileConfigURL, localMobileConfigFilePath, mobileConfigFileSize)
 		if err != nil {
@@ -427,7 +427,7 @@ func findAndReturnVPNConfigs(doServers string, region string) string {
 				sendPayloadToJoinAPI(remoteMobileConfigURL, "dan_"+ipv4+".conf", icon, smallIcon)
 				digitalOceanSpacesURL := spacesNamePublic + ".ams3.digitaloceanspaces.com"
 				links = ":link: <https://" + digitalOceanSpacesURL + remoteMobileConfigURL + "|" + ipv4 + ".conf> (" + joinStatus + ")\n"
-				links += ":link: <https://" + digitalOceanSpacesURL + remoteDesktopConfigURL + "|macOS_" + ipv4 + ".mobileconfig> (dbl click on Mac)\n"
+				links += ":link: <https://" + digitalOceanSpacesURL + remoteDesktopConfigURL + "|macOS_" + ipv4 + ".conf> (dbl click on Mac)\n"
 			}
 		}
 	}
