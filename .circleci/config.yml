@@ -38,7 +38,7 @@ jobs:
             --name bender danackerson/bender:vc$CIRCLE_BUILD_NUM
 
             echo `docker logs bender`
-            docker login -u $DOCKER_USER -p $DOCKER_PASS
+            docker login -u $CTX_DOCKER_USER -p $CTX_DOCKER_PASS
             docker tag danackerson/bender:vc$CIRCLE_BUILD_NUM danackerson/bender:latest
             docker push danackerson/bender:vc$CIRCLE_BUILD_NUM
             docker push danackerson/bender:latest
@@ -56,7 +56,7 @@ jobs:
     steps:
       - add-ssh-keys:
           fingerprints:
-            - "93:c4:61:21:a6:82:d8:6d:4f:73:11:79:37:23:83:07"
+            - $CTX_SSH_DEPLOY_FINGERPRINT
 
       - run:
           name: Disable Digital Ocean firewall for deploy
@@ -83,7 +83,7 @@ jobs:
               export LAST_DOCKER_PUSH=latest
             fi
 
-            $DEPLOY_CONNECT docker login -u $DOCKER_USER -p \"$DOCKER_PASS\"
+            $DEPLOY_CONNECT docker login -u $CTX_DOCKER_USER -p \"$CTX_DOCKER_PASS\"
             $DEPLOY_CONNECT docker pull danackerson/bender:$LAST_DOCKER_PUSH
             $DEPLOY_CONNECT docker rm -f bender || true
 
@@ -93,18 +93,20 @@ jobs:
             # above is an example how to decode this on the fly (e.g. slackToken)
             $DEPLOY_CONNECT docker run -d --restart=always --privileged=true \
               --volumes-from homepage -v /home/ackersond/algo_vpn:/algo_vpn:ro \
-              -e doFirewallID=$doFirewallID -e doFloatingIP=$doFloatingIP \
-              -e officeIP=$officeIP -e homeDomain=$homeDomain \
-              -e circleAPIToken=$CIRCLE_API_TOKEN \
+              -e doFirewallID=$CTX_DIGITALOCEAN_FIREWALL \
+              -e doFloatingIP=$doFloatingIP \
+              -e homeDomain=$homeDomain \
+              -e circleAPIToken=$CTX_CIRCLECI_API_TOKEN \
               -e raspberryPIIP=$raspberryPIIP \
               -e slackReportChannel=$slackReportChannel \
               -e piUser=$piUser -e piPass=$piPass \
-              -e digitalOceanToken=$digitalOceanToken \
+              -e digitalOceanToken=$CTX_DIGITALOCEAN_TOKEN \
               -e CIRCLE_BUILD_NUM=$LAST_DOCKER_PUSH \
-              -e slackToken=$(echo $slackTokenEncoded | base64 -d) \
-              -e SPACES_KEY=$SPACES_KEY -e SPACES_SECRET=$SPACES_SECRET \
-              -e SPACES_NAME_PUBLIC=$SPACES_NAME_PUBLIC \
-              -e joinAPIKey=$joinAPIKey \
+              -e slackToken=$CTX_SLACK_API_TOKEN \
+              -e SPACES_KEY=$CTX_DIGITALOCEAN_SPACES_KEY \
+              -e SPACES_SECRET=$CTX_DIGITALOCEAN_SPACES_SECRET \
+              -e SPACES_NAME_PUBLIC=$CTX_DIGITALOCEAN_SPACES_NAME_PUBLIC \
+              -e joinAPIKey=$CTX_JOIN_API_KEY \
               --name bender danackerson/bender:$LAST_DOCKER_PUSH
 
             if [ $DEPLOY_SERVER_IP ]; then
