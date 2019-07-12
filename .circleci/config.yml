@@ -32,7 +32,7 @@ commands:
       - run:
           name: "Build & push docker image"
           command: |
-            docker run --rm --privileged multiarch/qemu-user-static:register --reset
+            #docker run --rm --privileged multiarch/qemu-user-static:register --reset
             export DOCKER_TAG=danackerson/bender:vc$CIRCLE_BUILD_NUM
 
             mv /tmp/bender /tmp/Dockerfile .
