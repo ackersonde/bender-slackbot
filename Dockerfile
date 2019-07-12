@@ -5,7 +5,4 @@ RUN apk --no-cache add curl openssh-client ca-certificates tzdata
 RUN cp /usr/share/zoneinfo/Europe/Berlin /etc/localtime && \
 echo "Europe/Berlin" > /etc/timezone
 
-RUN mkdir /app
-ADD bender /app/
-
-ENTRYPOINT ["/app/bender"]
+ENTRYPOINT ["/tmp/bender"]

@@ -20,7 +20,7 @@ jobs:
           root: /go/src/github.com/danackerson/bender-slackbot
           paths:
             - bender
-            - Dockerfile
+            - run_bender.sh
 
 commands:
   prepare_deploy_script:
@@ -28,29 +28,16 @@ commands:
       - attach_workspace:
           at: /tmp
       - run:
-          name: "Build & push docker image"
-          command: |
-            export DOCKER_TAG=danackerson/bender:vc$CIRCLE_BUILD_NUM
-
-            mv /tmp/bender /tmp/Dockerfile .
-            docker build . --compress -t $DOCKER_TAG
-
-            docker login -u $CTX_DOCKER_USER -p $CTX_DOCKER_PASS
-            docker tag $DOCKER_TAG danackerson/bender:latest
-            docker push $DOCKER_TAG
-            docker push danackerson/bender:latest
-
-      - run:
           name: "Prepare deploy script"
           command: |
-            export DOCKER_TAG=danackerson/bender:vc$CIRCLE_BUILD_NUM
-
             cat \<<EOF >deploy_script.sh
             ssh -o StrictHostKeyChecking=no $SSH_USER@$SSH_HOST "\
-            docker login -u $CTX_DOCKER_USER -p \"$CTX_DOCKER_PASS\" && \
-            docker pull $DOCKER_TAG && \
-            docker rm -f bender || true && \
+              mkdir bender_app || true"
+            scp /tmp/bender /tmp/run_bender.sh \
+              $SSH_USER@$SSH_HOST:~/bender_app/
+            ssh $SSH_USER@$SSH_HOST "docker rm -f bender || true && \
             docker run -d --restart=always \
+              -v ~/bender_app:/tmp/
               -e CTX_DIGITALOCEAN_FIREWALL=$CTX_DIGITALOCEAN_FIREWALL \
               -e doFloatingIP=$doFloatingIP \
               -e homeDomain=$homeDomain \
@@ -65,7 +52,7 @@ commands:
               -e CTX_DIGITALOCEAN_SPACES_SECRET=$CTX_DIGITALOCEAN_SPACES_SECRET \
               -e CTX_DIGITALOCEAN_SPACES_NAME_PUBLIC=$CTX_DIGITALOCEAN_SPACES_NAME_PUBLIC \
               -e CTX_JOIN_API_KEY=$CTX_JOIN_API_KEY \
-              --name bender $DOCKER_TAG"
+              --name bender arm32v7/alpine /tmp/run_bender.sh"
             EOF
 
             chmod u+x deploy_script.sh
