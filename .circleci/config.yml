@@ -62,8 +62,7 @@ commands:
             docker login -u $CTX_DOCKER_USER -p \"$CTX_DOCKER_PASS\" && \
             docker pull danackerson/bender:$LAST_DOCKER_PUSH && \
             docker rm -f bender || true && \
-            docker run -d --restart=always --privileged=true \
-              --volumes-from homepage -v /home/ackersond/algo_vpn:/algo_vpn:ro \
+            docker run -d --restart=always \
               -e CTX_DIGITALOCEAN_FIREWALL=$CTX_DIGITALOCEAN_FIREWALL \
               -e doFloatingIP=$doFloatingIP \
               -e homeDomain=$homeDomain \
@@ -78,7 +77,6 @@ commands:
               -e CTX_DIGITALOCEAN_SPACES_SECRET=$CTX_DIGITALOCEAN_SPACES_SECRET \
               -e CTX_DIGITALOCEAN_SPACES_NAME_PUBLIC=$CTX_DIGITALOCEAN_SPACES_NAME_PUBLIC \
               -e CTX_JOIN_API_KEY=$CTX_JOIN_API_KEY \
-              -e CURRENT_APP_VERSION=$LAST_DOCKER_PUSH \
               --name bender danackerson/bender:$LAST_DOCKER_PUSH"
             EOF
 
