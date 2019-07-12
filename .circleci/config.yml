@@ -30,6 +30,8 @@ commands:
       - run:
           name: "Prepare deploy script"
           command: |
+            ls -lrt /tmp/
+
             cat \<<EOF >deploy_script.sh
             ssh -o StrictHostKeyChecking=no $SSH_USER@$SSH_HOST "\
               mkdir bender_app || true"
@@ -37,7 +39,7 @@ commands:
               $SSH_USER@$SSH_HOST:~/bender_app/
             ssh $SSH_USER@$SSH_HOST "docker rm -f bender || true && \
             docker run -d --restart=always \
-              -v ~/bender_app:/tmp/
+              -v ~/bender_app:/tmp/ \
               -e CTX_DIGITALOCEAN_FIREWALL=$CTX_DIGITALOCEAN_FIREWALL \
               -e doFloatingIP=$doFloatingIP \
               -e homeDomain=$homeDomain \
