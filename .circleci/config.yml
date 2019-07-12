@@ -16,11 +16,9 @@ jobs:
             apk add -U --no-cache curl build-base git libc6-compat
             go get -t -d -v ./...
             env GOOS=linux GOARCH=arm GOARM=7 go build bender.go
-      - run: echo vc$CIRCLE_BUILD_NUM > last_docker_push
       - persist_to_workspace:
           root: /go/src/github.com/danackerson/bender-slackbot
           paths:
-            - last_docker_push
             - bender
             - Dockerfile
 
@@ -32,7 +30,6 @@ commands:
       - run:
           name: "Build & push docker image"
           command: |
-            #docker run --rm --privileged multiarch/qemu-user-static:register --reset
             export DOCKER_TAG=danackerson/bender:vc$CIRCLE_BUILD_NUM
 
             mv /tmp/bender /tmp/Dockerfile .
@@ -46,16 +43,10 @@ commands:
       - run:
           name: "Prepare deploy script"
           command: |
-            if [ -f /tmp/last_docker_push ]; then
-              export LAST_DOCKER_PUSH=`cat /tmp/last_docker_push`
-            else
-              export LAST_DOCKER_PUSH=latest
-            fi
-
             cat \<<EOF >deploy_script.sh
             ssh -o StrictHostKeyChecking=no $SSH_USER@$SSH_HOST "\
             docker login -u $CTX_DOCKER_USER -p \"$CTX_DOCKER_PASS\" && \
-            docker pull danackerson/bender:$LAST_DOCKER_PUSH && \
+            docker pull danackerson/bender:$CIRCLE_BUILD_NUM && \
             docker rm -f bender || true && \
             docker run -d --restart=always \
               -e CTX_DIGITALOCEAN_FIREWALL=$CTX_DIGITALOCEAN_FIREWALL \
@@ -66,13 +57,13 @@ commands:
               -e slackReportChannel=$slackReportChannel \
               -e piUser=$piUser -e piPass=$piPass \
               -e CTX_DIGITALOCEAN_TOKEN=$CTX_DIGITALOCEAN_TOKEN \
-              -e CIRCLE_BUILD_NUM=$LAST_DOCKER_PUSH \
+              -e CIRCLE_BUILD_NUM=$CIRCLE_BUILD_NUM \
               -e CTX_SLACK_API_TOKEN=$CTX_SLACK_API_TOKEN \
               -e CTX_DIGITALOCEAN_SPACES_KEY=$CTX_DIGITALOCEAN_SPACES_KEY \
               -e CTX_DIGITALOCEAN_SPACES_SECRET=$CTX_DIGITALOCEAN_SPACES_SECRET \
               -e CTX_DIGITALOCEAN_SPACES_NAME_PUBLIC=$CTX_DIGITALOCEAN_SPACES_NAME_PUBLIC \
               -e CTX_JOIN_API_KEY=$CTX_JOIN_API_KEY \
-              --name bender danackerson/bender:$LAST_DOCKER_PUSH"
+              --name bender danackerson/bender:$CIRCLE_BUILD_NUM"
             EOF
 
             chmod u+x deploy_script.sh
