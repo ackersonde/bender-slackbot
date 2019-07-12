@@ -43,10 +43,12 @@ commands:
       - run:
           name: "Prepare deploy script"
           command: |
+            export DOCKER_TAG=danackerson/bender:vc$CIRCLE_BUILD_NUM
+
             cat \<<EOF >deploy_script.sh
             ssh -o StrictHostKeyChecking=no $SSH_USER@$SSH_HOST "\
             docker login -u $CTX_DOCKER_USER -p \"$CTX_DOCKER_PASS\" && \
-            docker pull danackerson/bender:$CIRCLE_BUILD_NUM && \
+            docker pull $DOCKER_TAG && \
             docker rm -f bender || true && \
             docker run -d --restart=always \
               -e CTX_DIGITALOCEAN_FIREWALL=$CTX_DIGITALOCEAN_FIREWALL \
@@ -63,7 +65,7 @@ commands:
               -e CTX_DIGITALOCEAN_SPACES_SECRET=$CTX_DIGITALOCEAN_SPACES_SECRET \
               -e CTX_DIGITALOCEAN_SPACES_NAME_PUBLIC=$CTX_DIGITALOCEAN_SPACES_NAME_PUBLIC \
               -e CTX_JOIN_API_KEY=$CTX_JOIN_API_KEY \
-              --name bender danackerson/bender:$CIRCLE_BUILD_NUM"
+              --name bender $DOCKER_TAG"
             EOF
 
             chmod u+x deploy_script.sh
