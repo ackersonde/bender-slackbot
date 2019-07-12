@@ -21,17 +21,19 @@ jobs:
       - run:
           name: "Install Docker CE"
           command: |
-            curl -fsSLO https://download.docker.com/linux/static/stable/x86_64/docker-$CTX_DOCKER_ENGINE_VERSION.tgz && tar --strip-components=1 -xvzf docker-$CTX_DOCKER_ENGINE_VERSION.tgz -C /usr/local/bin
+            curl -fsSLO https://download.docker.com/linux/static/stable/x86_64/docker-$CTX_DOCKER_ENGINE_VERSION.tgz && \
+              tar --strip-components=1 -xvzf docker-$CTX_DOCKER_ENGINE_VERSION.tgz -C /usr/local/bin
             rm docker-$CTX_DOCKER_ENGINE_VERSION.tgz
 
       - run:
           name: "Build & push docker image"
           command: |
-            docker build --compress -t danackerson/bender:vc$CIRCLE_BUILD_NUM
+            export DOCKER_TAG=danackerson/bender:vc$CIRCLE_BUILD_NUM
+            docker build . --compress -t $DOCKER_TAG
 
             docker login -u $CTX_DOCKER_USER -p $CTX_DOCKER_PASS
-            docker tag danackerson/bender:vc$CIRCLE_BUILD_NUM danackerson/bender:latest
-            docker push danackerson/bender:vc$CIRCLE_BUILD_NUM
+            docker tag $DOCKER_TAG danackerson/bender:latest
+            docker push $DOCKER_TAG
             docker push danackerson/bender:latest
 
             echo vc$CIRCLE_BUILD_NUM > last_docker_push
