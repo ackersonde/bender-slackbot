@@ -29,6 +29,7 @@ jobs:
           name: "Build & push docker image"
           command: |
             export DOCKER_TAG=danackerson/bender:vc$CIRCLE_BUILD_NUM
+            docker run --rm --privileged multiarch/qemu-user-static:register --reset
             docker build . --compress -t $DOCKER_TAG
 
             docker login -u $CTX_DOCKER_USER -p $CTX_DOCKER_PASS
