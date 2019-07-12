@@ -16,21 +16,25 @@ jobs:
             apk add -U --no-cache curl build-base git libc6-compat
             go get -t -d -v ./...
             env GOOS=linux GOARCH=arm GOARM=7 go build bender.go
-            chmod u+x bender
+      - run: echo vc$CIRCLE_BUILD_NUM > last_docker_push
+      - persist_to_workspace:
+          root: /go/src/github.com/danackerson/bender-slackbot
+          paths:
+            - last_docker_push
+            - bender
 
-      - setup_remote_docker
-      - run:
-          name: "Install Docker CE"
-          command: |
-            curl -fsSLO https://download.docker.com/linux/static/stable/x86_64/docker-$CTX_DOCKER_ENGINE_VERSION.tgz && \
-              tar --strip-components=1 -xvzf docker-$CTX_DOCKER_ENGINE_VERSION.tgz -C /usr/local/bin
-            rm docker-$CTX_DOCKER_ENGINE_VERSION.tgz
-      - run: docker run --rm --privileged multiarch/qemu-user-static:register --reset
+commands:
+  prepare_deploy_script:
+    steps:
+      - attach_workspace:
+          at: /tmp
       - run:
           name: "Build & push docker image"
           command: |
+            docker run --rm --privileged multiarch/qemu-user-static:register --reset
             export DOCKER_TAG=danackerson/bender:vc$CIRCLE_BUILD_NUM
 
+            mv /tmp/bender .
             docker build . --compress -t $DOCKER_TAG
 
             docker login -u $CTX_DOCKER_USER -p $CTX_DOCKER_PASS
@@ -38,18 +42,6 @@ jobs:
             docker push $DOCKER_TAG
             docker push danackerson/bender:latest
 
-            echo vc$CIRCLE_BUILD_NUM > last_docker_push
-
-      - persist_to_workspace:
-          root: /go/src/github.com/danackerson/bender-slackbot
-          paths:
-            - last_docker_push
-
-commands:
-  prepare_deploy_script:
-    steps:
-      - attach_workspace:
-          at: /tmp
       - run:
           name: "Prepare deploy script"
           command: |
