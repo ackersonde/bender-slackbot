@@ -124,7 +124,7 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 		} else {
 			response += CheckTorrentsDiskSpace("")
 		}
-
+		response += "\n\n========================================================\n\n"
 		response += CheckPlexDiskSpace("")
 		rtm.SendMessage(rtm.NewOutgoingMessage(response, slackMessage.Channel))
 	} else if args[0] == "mv" || args[0] == "rm" {
