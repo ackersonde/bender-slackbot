@@ -3,6 +3,7 @@ package commands
 import (
 	"bytes"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
@@ -39,9 +40,15 @@ func executeRemoteCmd(details RemoteCmd) RemoteResult {
 		log.Printf("error parsing: %v", err)
 	}
 
+	key, err := ioutil.ReadFile("/home/pi/.ssh/id_rsa")
+	signer, err := ssh.ParsePrivateKey(key)
+	if err != nil {
+		log.Printf("Unable to parse private key: %v", err)
+	}
+
 	config := &ssh.ClientConfig{
 		User:            details.Username,
-		Auth:            []ssh.AuthMethod{ssh.Password(details.Password)},
+		Auth:            []ssh.AuthMethod{ssh.PublicKeys(signer)},
 		HostKeyCallback: ssh.FixedHostKey(hostKey),
 	}
 

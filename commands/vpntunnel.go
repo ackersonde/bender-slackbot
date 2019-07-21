@@ -3,7 +3,6 @@ package commands
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"os"
 	"strings"
 	"time"
@@ -27,7 +26,7 @@ func RaspberryPIPrivateTunnelChecks(userCall bool) string {
 	go func() {
 		// get both ipv4+ipv6 internet addresses
 		cmd := "curl https://ipleak.net/json/"
-		details := RemoteCmd{Host: raspberryPIIP, HostKey: piHostKey, Username: os.Getenv("piUser"), Password: os.Getenv("piPass"), Cmd: cmd}
+		details := RemoteCmd{Host: raspberryPIIP, HostKey: piHostKey, Username: os.Getenv("piUser"), Cmd: cmd}
 
 		remoteResult := executeRemoteCmd(details)
 
@@ -56,7 +55,7 @@ func RaspberryPIPrivateTunnelChecks(userCall bool) string {
 				// ensure home.ackerson.de is DIFFERENT than PI IP address!
 				go func() {
 					cmd := "dig home.ackerson.de A +short"
-					details := RemoteCmd{Host: raspberryPIIP, HostKey: piHostKey, Username: os.Getenv("piUser"), Password: os.Getenv("piPass"), Cmd: cmd}
+					details := RemoteCmd{Host: raspberryPIIP, HostKey: piHostKey, Username: os.Getenv("piUser"), Cmd: cmd}
 
 					remoteResult := executeRemoteCmd(details)
 
@@ -86,7 +85,7 @@ func RaspberryPIPrivateTunnelChecks(userCall bool) string {
 		timeoutIPTables := time.After(5 * time.Second)
 		go func() {
 			cmd := "sudo iptables -L OUTPUT -v --line-numbers | grep all"
-			details := RemoteCmd{Host: raspberryPIIP, HostKey: piHostKey, Username: os.Getenv("piUser"), Password: os.Getenv("piPass"), Cmd: cmd}
+			details := RemoteCmd{Host: raspberryPIIP, HostKey: piHostKey, Username: os.Getenv("piUser"), Cmd: cmd}
 
 			remoteResult := executeRemoteCmd(details)
 
@@ -118,7 +117,7 @@ func RaspberryPIPrivateTunnelChecks(userCall bool) string {
 		}
 	} else {
 		cmd := "sudo service openvpn@AMD restart && sudo service transmission-daemon restart"
-		details := RemoteCmd{Host: raspberryPIIP, HostKey: piHostKey, Username: os.Getenv("piUser"), Password: os.Getenv("piPass"), Cmd: cmd}
+		details := RemoteCmd{Host: raspberryPIIP, HostKey: piHostKey, Username: os.Getenv("piUser"), Cmd: cmd}
 
 		remoteResult := executeRemoteCmd(details)
 		fmt.Println("restarting VPN & Transmission: " + remoteResult.stdout)
@@ -134,153 +133,4 @@ func RaspberryPIPrivateTunnelChecks(userCall bool) string {
 	}
 
 	return response
-}
-
-// CheckPiDiskSpace now exported
-func CheckPiDiskSpace(path string) string {
-	userCall := true
-	if path == "---" {
-		path = ""
-		userCall = false
-	} else {
-		path = strings.TrimPrefix(path, "/")
-	}
-
-	diskUsage := "du -ah \"" + piSDCardPath + path
-	diskUsageAll := diskUsage + "*\""
-	diskUsageOne := diskUsage + "\""
-	cmd := "[ \"$(ls -A '" + piSDCardPath + "')\" ] && " + diskUsageAll + " || " + diskUsageOne
-	fmt.Println("chk disk usage: " + cmd)
-	details := RemoteCmd{Host: raspberryPIIP, HostKey: piHostKey, Username: os.Getenv("piUser"), Password: os.Getenv("piPass"), Cmd: cmd}
-
-	remoteResult := executeRemoteCmd(details)
-	response := remoteResult.stdout
-	if remoteResult.stdout == "" && remoteResult.stderr != "" && strings.HasPrefix(remoteResult.stderr, "du: cannot access ‘/home/pi/torrents/*’: No such file or directory") {
-		response = remoteResult.stderr
-	} else {
-		response = strings.Replace(response, piSDCardPath+path, "", -1)
-		response = ":raspberry_pi: *SD Card Disk Usage* @ `" + piSDCardPath + path + "`\n" + response
-	}
-	cmd = "df -h /root/"
-	details = RemoteCmd{Host: raspberryPIIP, HostKey: piHostKey, Username: os.Getenv("piUser"), Password: os.Getenv("piPass"), Cmd: cmd}
-	remoteResultDF := executeRemoteCmd(details)
-	response += "\n\n" + remoteResultDF.stdout
-
-	if !userCall {
-		customEvent := slack.RTMEvent{Type: "CheckPiDiskSpace", Data: response}
-		rtm.IncomingEvents <- customEvent
-	}
-
-	return response
-}
-
-// DeleteTorrentFile now exported
-func DeleteTorrentFile(filename string) string {
-	var response string
-
-	if filename == "*" || filename == "" || strings.Contains(filename, "../") {
-		response = "Please enter an existing filename - try `fsck`"
-	} else {
-		path := piSDCardPath + filename
-
-		var deleteCmd string
-		cmd := "test -d \"" + path + "\" && echo 'Yes'"
-		details := RemoteCmd{Host: raspberryPIIP, HostKey: piHostKey, Username: os.Getenv("piUser"), Password: os.Getenv("piPass"), Cmd: cmd}
-
-		remoteResult := executeRemoteCmd(details)
-		if strings.HasPrefix(remoteResult.stdout, "Yes") {
-			deleteCmd = "rm -Rf \"" + path + "\""
-		} else {
-			deleteCmd = "rm \"" + path + "\""
-		}
-
-		details = RemoteCmd{Host: raspberryPIIP, HostKey: piHostKey, Username: os.Getenv("piUser"), Password: os.Getenv("piPass"), Cmd: deleteCmd}
-
-		remoteResultDelete := executeRemoteCmd(details)
-		tunnelIdleSince = time.Now()
-		if remoteResultDelete.stderr != "" {
-			response = remoteResultDelete.stderr
-		} else {
-			response = remoteResultDelete.stdout
-		}
-	}
-
-	return response
-}
-
-// MoveTorrentFile now exported
-func MoveTorrentFile(api *slack.Client, filename string) {
-	if filename == "" || strings.Contains(filename, "../") || strings.HasPrefix(filename, "/") {
-		rtm.IncomingEvents <- slack.RTMEvent{Type: "MoveTorrent", Data: "Please enter an existing filename - try `fsck`"}
-	} else {
-		// detox filenames => http://detox.sourceforge.net/ | https://linux.die.net/man/1/detox
-		renameCmd := "cd " + piSDCardPath + "; rm *.log; detox -r *"
-		renameDetails := RemoteCmd{Host: raspberryPIIP, HostKey: piHostKey, Username: os.Getenv("piUser"), Password: os.Getenv("piPass"), Cmd: renameCmd}
-		executeRemoteCmd(renameDetails)
-
-		moveCmd := "cd " + piSDCardPath + "; find . -type f -exec curl -g --ftp-create-dirs -u ftpuser:abc123 -T \"{}\" \"ftp://192.168.178.1/backup/DLNA/torrents/{}\" \\; > ftp.log 2>&1"
-		log.Println(moveCmd)
-		go func() {
-			details := RemoteCmd{Host: raspberryPIIP, HostKey: piHostKey, Username: os.Getenv("piUser"), Password: os.Getenv("piPass"), Cmd: moveCmd}
-			var result string
-			remoteResult := executeRemoteCmd(details)
-			log.Printf("%v:%v", details, remoteResult)
-
-			result = "Successfully moved `" + filename + "` to `" + piUSBMountPath + "`"
-			rtm.IncomingEvents <- slack.RTMEvent{Type: "MoveTorrent", Data: result}
-
-			cleanPITorrentsCmd := "cd " + piSDCardPath + "; rm -Rf *;"
-			details = RemoteCmd{Host: raspberryPIIP, HostKey: piHostKey,
-				Username: os.Getenv("piUser"),
-				Password: os.Getenv("piPass"),
-				Cmd:      cleanPITorrentsCmd}
-			remoteResult = executeRemoteCmd(details)
-		}()
-
-		params := slack.MsgOptionAsUser(true)
-		api.PostMessage(SlackReportChannel, slack.MsgOptionText("running `"+moveCmd+"`", true), params)
-		//reportMoveProgress(api)
-	}
-}
-
-func reportMoveProgress(api *slack.Client) {
-	historyParams := new(slack.HistoryParameters)
-	historyParams.Latest = ""
-	historyParams.Count = 1
-	historyParams.Inclusive = true
-	lastMsgID := ""
-	msgHistory, _ := api.GetChannelHistory(SlackReportChannel, *historyParams)
-	for _, msg := range msgHistory.Messages {
-		lastMsgID = msg.Timestamp
-	}
-
-	remoteResults := make(chan RemoteResult, 1)
-	timeout := time.After(10 * time.Second)
-	notDone := true
-
-	for notDone {
-		go func() {
-			progressCmd := "progress"
-			progressDetails := RemoteCmd{Host: raspberryPIIP, HostKey: piHostKey, Username: "pi", Password: "king8tut", Cmd: progressCmd}
-
-			remoteResults <- executeRemoteCmd(progressDetails)
-		}()
-
-		// reset tunnel idle time as user may want to see progress of move
-		tunnelIdleSince = time.Now()
-
-		select {
-		case res := <-remoteResults:
-			// update msg with progress: https://api.slack.com/methods/chat.update
-			// so there aren't 385 msgs with 2% 2% 3% ...
-			api.UpdateMessage(SlackReportChannel, lastMsgID, slack.MsgOptionText(res.stdout, true))
-			if strings.Contains(res.stderr, "No command currently running") {
-				notDone = false
-			} else {
-				time.Sleep(time.Second * 5)
-			}
-		case <-timeout:
-			fmt.Println("Timed out!")
-		}
-	}
 }

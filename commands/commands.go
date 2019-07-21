@@ -21,12 +21,7 @@ import (
 	"golang.org/x/crypto/scrypt"
 )
 
-var raspberryPIIP = os.Getenv("raspberryPIIP")
 var rtm *slack.RTM
-var piSDCardPath = "/home/pi/torrents/"
-var piUSBMountPoint = "/mnt/usb_1"
-var piUSBMountPath = piUSBMountPoint + "/DLNA/torrents/"
-var routerIP = "192.168.1.1"
 
 var spacesKey = os.Getenv("CTX_DIGITALOCEAN_SPACES_KEY")
 var spacesSecret = os.Getenv("CTX_DIGITALOCEAN_SPACES_SECRET")
@@ -126,22 +121,14 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 		}
 	} else if args[0] == "fsck" {
 		response := ""
-
 		if len(args) > 1 {
 			path := strings.Join(args[1:], " ")
-			response += CheckPiDiskSpace(path)
+			response += CheckTorrentsDiskSpace(path)
 		} else {
-			response += CheckPiDiskSpace("")
+			response += CheckTorrentsDiskSpace("")
 		}
 
-		// grab listing from FritzBox NAS
-		ftpListingCmd := "curl -s ftp://ftpuser:abc123@192.168.178.1/backup/DLNA/torrents/ | awk '{print $5\"\t\"$9}'"
-		ftpListDetails := RemoteCmd{Host: raspberryPIIP, HostKey: piHostKey, Username: os.Getenv("piUser"), Password: os.Getenv("piPass"), Cmd: ftpListingCmd}
-		remoteResult := executeRemoteCmd(ftpListDetails)
-
-		diskUsage := getUSBDiskUsageOnFritzBox(remoteResult.stdout)
-		response += "\n\n:wifi: USB Disk ~/torrents on :fritzbox:\n" + diskUsage
-
+		//response += CheckPiDiskSpace("localhost", "/mnt/usb4TB/DLNA")
 		rtm.SendMessage(rtm.NewOutgoingMessage(response, slackMessage.Channel))
 	} else if args[0] == "mv" || args[0] == "rm" {
 		response := ""
