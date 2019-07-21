@@ -40,7 +40,7 @@ func executeRemoteCmd(details RemoteCmd) RemoteResult {
 		log.Printf("error parsing: %v", err)
 	}
 
-	key, err := ioutil.ReadFile("/home/pi/.ssh/id_rsa")
+	key, err := ioutil.ReadFile("/root/.ssh/id_rsa")
 	signer, err := ssh.ParsePrivateKey(key)
 	if err != nil {
 		log.Printf("Unable to parse private key: %v", err)
