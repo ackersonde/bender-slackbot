@@ -69,7 +69,7 @@ func CheckPlexDiskSpace(path string) string {
 	}
 
 	response := ""
-	out, err := exec.Command("du", "-sh", "/mnt/usb4TB/DLNA/*").Output()
+	out, err := exec.Command("du", "-s", "-h", piPlexPath+path+"/*").Output()
 	if err != nil {
 		response = err.Error()
 	} else {
