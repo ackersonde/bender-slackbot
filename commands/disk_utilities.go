@@ -71,10 +71,11 @@ func CheckPlexDiskSpace(path string) string {
 	response := ""
 	out, err := exec.Command("/usr/bin/du", "-s", "-h", piPlexPath+path+"/*").Output()
 	if err != nil {
-		response = err.Error()
+		response = fmt.Sprintf(fmt.Sprint(err) + ": " + string(out))
 	} else {
 		response = string(out)
 	}
+
 	response = ":plex: *Pi4 Card Disk Usage* `pi4@" + piPlexPath + path + "`\n" + response
 
 	out2, err2 := exec.Command("/bin/df", "-h", "/", "/mnt/usb4TB").Output()
