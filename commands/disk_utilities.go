@@ -70,11 +70,8 @@ func CheckPlexDiskSpace(path string) string {
 
 	response := "" // , "-s", "-h", piPlexPath+path+"/*"
 	//du -h --max-depth=1 /mnt/usb4TB/DLNA/
-	out, err := exec.Command(
-		"/usr/bin/du", "-hd", "1", "/mnt/usb4TB/",
-		"|", "sort", "-k", "1",
-		"|", "sed", "'1d'",
-	).Output()
+	cmd := fmt.Sprintf("du -hd 1 %s | sort -k 1 | sed '1d'", piPlexPath+path)
+	out, err := exec.Command("ash", "-c", cmd).Output()
 	if err != nil {
 		response = fmt.Sprintf(fmt.Sprint(err) + ": " + string(out))
 	} else {
