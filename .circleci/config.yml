@@ -40,16 +40,14 @@ commands:
 
             # Run Bender SlackBot
             ssh $SSH_USER@$SSH_HOST "docker run -d --restart=always \
-              -v ~/bender_app:/tmp/ \
-              -e CTX_DIGITALOCEAN_FIREWALL=$CTX_DIGITALOCEAN_FIREWALL \
-              -e doFloatingIP=$doFloatingIP \
+              -v ~/bender_app:/tmp/ -v /mnt:/mnt \
               -e homeDomain=$homeDomain \
-              -e CTX_CIRCLECI_API_TOKEN=$CTX_CIRCLECI_API_TOKEN \
-              -e raspberryPIIP=$raspberryPIIP \
               -e slackReportChannel=$slackReportChannel \
-              -e piUser=$piUser -e piPass=$piPass \
-              -e CTX_DIGITALOCEAN_TOKEN=$CTX_DIGITALOCEAN_TOKEN \
               -e CIRCLE_BUILD_NUM=$CIRCLE_BUILD_NUM \
+              -e CTX_DIGITALOCEAN_FIREWALL=$CTX_DIGITALOCEAN_FIREWALL \
+              -e CTX_CIRCLECI_API_TOKEN=$CTX_CIRCLECI_API_TOKEN \
+              -e CTX_SERVER_DEPLOY_SECRET=$CTX_SERVER_DEPLOY_SECRET \
+              -e CTX_DIGITALOCEAN_TOKEN=$CTX_DIGITALOCEAN_TOKEN \
               -e CTX_SLACK_API_TOKEN=$CTX_SLACK_API_TOKEN \
               -e CTX_DIGITALOCEAN_SPACES_KEY=$CTX_DIGITALOCEAN_SPACES_KEY \
               -e CTX_DIGITALOCEAN_SPACES_SECRET=$CTX_DIGITALOCEAN_SPACES_SECRET \

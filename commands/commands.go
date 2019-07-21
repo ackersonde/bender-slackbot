@@ -1,9 +1,7 @@
 package commands
 
 import (
-	"bufio"
 	"encoding/hex"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -15,7 +13,6 @@ import (
 	"time"
 
 	"github.com/danackerson/digitalocean/common"
-	humanize "github.com/dustin/go-humanize"
 	"github.com/elgs/gojq"
 	"github.com/nlopes/slack"
 	"golang.org/x/crypto/scrypt"
@@ -236,56 +233,6 @@ func isFinishedStatus(status string) bool {
 		return true
 	}
 	return false
-}
-
-func getUSBDiskUsageOnFritzBox(ftpDirectories string) string {
-	result := ""
-	directoryHint := "4096\t"
-
-	scanner := bufio.NewScanner(strings.NewReader(ftpDirectories))
-	for scanner.Scan() {
-		if strings.HasPrefix(scanner.Text(), directoryHint) {
-			directory := strings.SplitAfter(scanner.Text(), directoryHint)[1]
-			totalSize := scanDirectory(directory + "/")
-			result += fmt.Sprintf("%s\t%s\n", humanize.Bytes(totalSize), directory)
-		} else {
-			fileInfo := strings.Split(scanner.Text(), "\t")
-			fileSize, err := strconv.ParseUint(fileInfo[0], 10, 64)
-			if err != nil {
-				fmt.Println(err.Error())
-			}
-			result += fmt.Sprintf("%s\t%s\n", humanize.Bytes(fileSize), fileInfo[1])
-		}
-	}
-	if err := scanner.Err(); err != nil {
-		log.Println(err)
-	}
-
-	return result
-}
-
-func scanDirectory(directoryName string) uint64 {
-	var size uint64
-
-	ftpListingCmd := `curl -s ftp://ftpuser:abc123@192.168.178.1/backup/DLNA/torrents/` + directoryName + ` | awk '{print $5"\t"$9}'`
-	fmt.Println("Running `" + ftpListingCmd + "`")
-	ftpListDetails := RemoteCmd{Host: raspberryPIIP, HostKey: piHostKey, Username: os.Getenv("piUser"), Password: os.Getenv("piPass"), Cmd: ftpListingCmd}
-	remoteResult := executeRemoteCmd(ftpListDetails)
-
-	scanner := bufio.NewScanner(strings.NewReader(remoteResult.stdout))
-	for scanner.Scan() {
-		fileInfo := strings.Split(scanner.Text(), "\t")
-		fileSize, err := strconv.ParseUint(fileInfo[0], 10, 64)
-		if err != nil {
-			fmt.Println(err.Error())
-		}
-		size += fileSize
-	}
-	if err := scanner.Err(); err != nil {
-		log.Println(err)
-	}
-
-	return size
 }
 
 func getJSONFromRequestURL(url string, requestType string, encodedData string) *gojq.JQ {
