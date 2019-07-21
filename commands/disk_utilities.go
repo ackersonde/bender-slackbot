@@ -25,7 +25,7 @@ func CheckTorrentsDiskSpace(path string) string {
 		path = strings.ReplaceAll(path, "/", "")
 	}
 
-	cmd := "du -h " + piTorrentsPath + path + "/*"
+	cmd := "du -bh " + piTorrentsPath + path + "/*"
 
 	response := ""
 	details := RemoteCmd{Host: raspberryPIIP, Cmd: cmd}
