@@ -15,11 +15,9 @@ import (
 
 // RemoteCmd for execution over SSH connection
 type RemoteCmd struct {
-	Host     string
-	HostKey  string
-	Username string
-	Password string
-	Cmd      string
+	Host          string
+	Cmd           string
+	ConnectConfig *ssh.ClientConfig
 }
 
 // RemoteResult contains remote SSH execution
@@ -28,14 +26,10 @@ type RemoteResult struct {
 	stderr string
 }
 
-func executeRemoteCmd(details RemoteCmd) RemoteResult {
-	defer func() { //catch or finally
-		if err := recover(); err != nil { //catch
-			fmt.Fprintf(os.Stderr, "Exception: %v\n", err)
-		}
-	}()
+var connectConfig = remoteConnectionConfiguration(piHostKey, "pi")
 
-	hostKey, _, _, _, err := ssh.ParseAuthorizedKey([]byte(details.HostKey))
+func remoteConnectionConfiguration(unparsedHostKey string, username string) *ssh.ClientConfig {
+	hostKey, _, _, _, err := ssh.ParseAuthorizedKey([]byte(unparsedHostKey))
 	if err != nil {
 		log.Printf("error parsing: %v", err)
 	}
@@ -46,14 +40,22 @@ func executeRemoteCmd(details RemoteCmd) RemoteResult {
 		log.Printf("Unable to parse private key: %v", err)
 	}
 
-	config := &ssh.ClientConfig{
-		User:            details.Username,
+	return &ssh.ClientConfig{
+		User:            username,
 		Auth:            []ssh.AuthMethod{ssh.PublicKeys(signer)},
 		HostKeyCallback: ssh.FixedHostKey(hostKey),
 	}
+}
+
+func executeRemoteCmd(details RemoteCmd) RemoteResult {
+	defer func() { //catch or finally
+		if err := recover(); err != nil { //catch
+			fmt.Fprintf(os.Stderr, "Exception: %v\n", err)
+		}
+	}()
 
 	connectionString := fmt.Sprintf("%s:%s", details.Host, "22")
-	conn, errConn := ssh.Dial("tcp", connectionString, config)
+	conn, errConn := ssh.Dial("tcp", connectionString, connectConfig)
 	if errConn != nil { //catch
 		fmt.Fprintf(os.Stderr, "Exception: %v\n", errConn)
 	}

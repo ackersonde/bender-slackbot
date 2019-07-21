@@ -25,7 +25,7 @@ func RaspberryPIPrivateTunnelChecks(userCall bool) string {
 	go func() {
 		// get both ipv4+ipv6 internet addresses
 		cmd := "curl https://ipleak.net/json/"
-		details := RemoteCmd{Host: raspberryPIIP, HostKey: piHostKey, Username: "pi", Cmd: cmd}
+		details := RemoteCmd{Host: raspberryPIIP, Cmd: cmd}
 
 		remoteResult := executeRemoteCmd(details)
 
@@ -54,7 +54,7 @@ func RaspberryPIPrivateTunnelChecks(userCall bool) string {
 				// ensure home.ackerson.de is DIFFERENT than PI IP address!
 				go func() {
 					cmd := "dig home.ackerson.de A +short"
-					details := RemoteCmd{Host: raspberryPIIP, HostKey: piHostKey, Username: "pi", Cmd: cmd}
+					details := RemoteCmd{Host: raspberryPIIP, Cmd: cmd}
 
 					remoteResult := executeRemoteCmd(details)
 
@@ -84,7 +84,7 @@ func RaspberryPIPrivateTunnelChecks(userCall bool) string {
 		timeoutIPTables := time.After(5 * time.Second)
 		go func() {
 			cmd := "sudo iptables -L OUTPUT -v --line-numbers | grep all"
-			details := RemoteCmd{Host: raspberryPIIP, HostKey: piHostKey, Username: "pi", Cmd: cmd}
+			details := RemoteCmd{Host: raspberryPIIP, Cmd: cmd}
 
 			remoteResult := executeRemoteCmd(details)
 
@@ -116,7 +116,7 @@ func RaspberryPIPrivateTunnelChecks(userCall bool) string {
 		}
 	} else {
 		cmd := "sudo service openvpn@AMD restart && sudo service transmission-daemon restart"
-		details := RemoteCmd{Host: raspberryPIIP, HostKey: piHostKey, Username: "pi", Cmd: cmd}
+		details := RemoteCmd{Host: raspberryPIIP, Cmd: cmd}
 
 		remoteResult := executeRemoteCmd(details)
 		fmt.Println("restarting VPN & Transmission: " + remoteResult.stdout)

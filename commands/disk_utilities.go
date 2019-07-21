@@ -28,7 +28,7 @@ func CheckTorrentsDiskSpace(path string) string {
 	cmd := "du -h " + piTorrentsPath + path + "/*"
 
 	response := ""
-	details := RemoteCmd{Host: raspberryPIIP, HostKey: piHostKey, Username: "pi", Cmd: cmd}
+	details := RemoteCmd{Host: raspberryPIIP, Cmd: cmd}
 	remoteResult := executeRemoteCmd(details)
 
 	if remoteResult.stdout == "" && remoteResult.stderr != "" {
@@ -39,7 +39,7 @@ func CheckTorrentsDiskSpace(path string) string {
 	response = ":raspberry_pi: *SD Card Disk Usage* @ `" + piTorrentsPath + path + "`\n" + response
 
 	cmd = "df -h /root/"
-	details = RemoteCmd{Host: raspberryPIIP, HostKey: piHostKey, Username: "pi", Cmd: cmd}
+	details = RemoteCmd{Host: raspberryPIIP, Cmd: cmd}
 	remoteResultDF := executeRemoteCmd(details)
 	response += "\n\n" + remoteResultDF.stdout
 
@@ -62,7 +62,7 @@ func DeleteTorrentFile(filename string) string {
 
 		var deleteCmd string
 		cmd := "test -d \"" + path + "\" && echo 'Yes'"
-		details := RemoteCmd{Host: raspberryPIIP, HostKey: piHostKey, Username: "pi", Cmd: cmd}
+		details := RemoteCmd{Host: raspberryPIIP, Cmd: cmd}
 
 		remoteResult := executeRemoteCmd(details)
 		if strings.HasPrefix(remoteResult.stdout, "Yes") {
@@ -71,7 +71,7 @@ func DeleteTorrentFile(filename string) string {
 			deleteCmd = "rm \"" + path + "\""
 		}
 
-		details = RemoteCmd{Host: raspberryPIIP, HostKey: piHostKey, Username: "pi", Cmd: deleteCmd}
+		details = RemoteCmd{Host: raspberryPIIP, Cmd: deleteCmd}
 
 		remoteResultDelete := executeRemoteCmd(details)
 		tunnelIdleSince = time.Now()
@@ -92,13 +92,13 @@ func MoveTorrentFile(api *slack.Client, filename string) {
 	} else {
 		// detox filenames => http://detox.sourceforge.net/ | https://linux.die.net/man/1/detox
 		renameCmd := "cd " + piTorrentsPath + "; rm *.log; detox -r *"
-		renameDetails := RemoteCmd{Host: raspberryPIIP, HostKey: piHostKey, Username: "pi", Cmd: renameCmd}
+		renameDetails := RemoteCmd{Host: raspberryPIIP, Cmd: renameCmd}
 		executeRemoteCmd(renameDetails)
 
 		moveCmd := "cd " + piTorrentsPath + "; find . -type f -exec curl -g --ftp-create-dirs -u ftpuser:abc123 -T \"{}\" \"ftp://192.168.178.1/backup/DLNA/torrents/{}\" \\; > ftp.log 2>&1"
 		log.Println(moveCmd)
 		go func() {
-			details := RemoteCmd{Host: raspberryPIIP, HostKey: piHostKey, Username: "pi", Cmd: moveCmd}
+			details := RemoteCmd{Host: raspberryPIIP, Cmd: moveCmd}
 			var result string
 			remoteResult := executeRemoteCmd(details)
 			log.Printf("%v:%v", details, remoteResult)
@@ -107,9 +107,7 @@ func MoveTorrentFile(api *slack.Client, filename string) {
 			rtm.IncomingEvents <- slack.RTMEvent{Type: "MoveTorrent", Data: result}
 
 			cleanPITorrentsCmd := "cd " + piTorrentsPath + "; rm -Rf *;"
-			details = RemoteCmd{Host: raspberryPIIP, HostKey: piHostKey,
-				Username: "pi",
-				Cmd:      cleanPITorrentsCmd}
+			details = RemoteCmd{Host: raspberryPIIP, Cmd: cleanPITorrentsCmd}
 			remoteResult = executeRemoteCmd(details)
 		}()
 
@@ -137,7 +135,7 @@ func reportMoveProgress(api *slack.Client) {
 	for notDone {
 		go func() {
 			progressCmd := "progress"
-			progressDetails := RemoteCmd{Host: raspberryPIIP, HostKey: piHostKey, Username: "pi", Cmd: progressCmd}
+			progressDetails := RemoteCmd{Host: raspberryPIIP, Cmd: progressCmd}
 
 			remoteResults <- executeRemoteCmd(progressDetails)
 		}()
