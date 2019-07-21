@@ -12,7 +12,7 @@ import (
 var raspberryPIIP = "raspberrypi.fritz.box"
 var pi4 = "pi4.fritz.box"
 
-var piTorrentsPath = "/home/pi/torrents/"
+var piTorrentsPath = "/home/pi/torrents"
 var piPlexPath = "/mnt/usb4TB/DLNA"
 
 // CheckTorrentsDiskSpace now exported
@@ -22,7 +22,10 @@ func CheckTorrentsDiskSpace(path string) string {
 		path = ""
 		userCall = false
 	} else {
-		path = strings.ReplaceAll(path, "/", "")
+		path = strings.TrimSuffix(path, "/")
+		if !strings.HasPrefix(path, "/") {
+			path = "/" + path
+		}
 	}
 
 	cmd := "du -bh " + piTorrentsPath + path + "/*"
