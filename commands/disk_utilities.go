@@ -33,6 +33,8 @@ func CheckTorrentsDiskSpace(path string) string {
 
 	if remoteResult.stdout == "" && remoteResult.stderr != "" {
 		response = remoteResult.stderr
+	} else {
+		response = remoteResult.stdout
 	}
 	response = ":raspberry_pi: *SD Card Disk Usage* @ `" + piTorrentsPath + path + "`\n" + response
 
