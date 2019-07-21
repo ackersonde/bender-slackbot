@@ -80,11 +80,10 @@ func CheckPlexDiskSpace(path string) string {
 
 	out, err = exec.Command("df", "-h", "/").Output()
 	if err != nil {
-		response = err.Error()
+		response += "\n\n" + err.Error()
 	} else {
-		response = string(out)
+		response += "\n\n" + string(out)
 	}
-	response += "\n\n" + response
 
 	if !userCall {
 		customEvent := slack.RTMEvent{Type: "CheckPiDiskSpace", Data: response}
