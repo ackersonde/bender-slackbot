@@ -20,8 +20,7 @@ func prepareScheduler() {
 	gocron.Every(1).Friday().At("09:04").Do(commands.RaspberryPIPrivateTunnelChecks, false)
 	gocron.Every(1).Friday().At("09:05").Do(commands.CheckPiDiskSpace, "---")
 	gocron.Every(1).Day().At("05:30").Do(common.UpdateFirewall)
-	gocron.Every(1).Day().At("15:30").Do(commands.ShowBBGames, false, "")
-	gocron.Every(10).Minutes().Do(commands.DisconnectIdleTunnel)
+	gocron.Every(1).Day().At("17:30").Do(commands.ShowBBGames, false, "")
 	<-gocron.Start()
 
 	// more examples: https://github.com/jasonlvhit/gocron/blob/master/example/example.go#L19

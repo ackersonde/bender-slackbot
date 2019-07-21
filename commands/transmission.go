@@ -2,7 +2,6 @@ package commands
 
 import (
 	"fmt"
-	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -88,55 +87,46 @@ func deleteTorrents(t *transmission.Client, torrentIDStr string) (result string)
 }
 
 func torrentCommand(cmd []string) (result string) {
-	defer func() { //catch or finally
-		if err := recover(); err != nil { //catch
-			fmt.Fprintf(os.Stderr, "Exception: %v\n", err)
-			result = "\nlost connection to Transmission Daemon!\n" + vpnTunnelCmds("status")
-		}
-	}()
+	result = ":closed_lock_with_key: unable to talk to raspberrypi..."
 
-	result = ":closed_lock_with_key: No tunnel exists! Try `vpnc` first..."
-
-	if runningFritzboxTunnel() {
-		if raspberryPIIP == "" {
-			raspberryPIIP = "raspberrypi.fritz.box"
-		}
-
-		// Connect to Transmission RPC daemon
-		conf := transmission.Config{
-			Address: "http://" + raspberryPIIP + ":9091/transmission/rpc",
-		}
-		t, err := transmission.New(conf)
-		if err != nil {
-			fmt.Printf("\nNew err: %v", err)
-		}
-
-		if cmd[0] == "trans" {
-			result = getTorrents(t)
-		} else if cmd[0] == "tranc" {
-			if len(cmd) == 1 {
-				result = "Usage: `tranc <Torrent link>`"
-			} else {
-				paused := false
-				result = addTorrents(t, cmd[1], paused)
-			}
-		} else if cmd[0] == "tranp" {
-			if len(cmd) == 1 {
-				result = "Usage: `tranp <Torrent link>`"
-			} else {
-				paused := true
-				result = addTorrents(t, cmd[1], paused)
-			}
-		} else if cmd[0] == "trand" {
-			if len(cmd) == 1 {
-				result = "Usage: `trand <Torrent ID>`"
-			} else {
-				result = deleteTorrents(t, cmd[1])
-			}
-		}
-
-		tunnelIdleSince = time.Now()
+	if raspberryPIIP == "" {
+		raspberryPIIP = "raspberrypi.fritz.box"
 	}
+
+	// Connect to Transmission RPC daemon
+	conf := transmission.Config{
+		Address: "http://" + raspberryPIIP + ":9091/transmission/rpc",
+	}
+	t, err := transmission.New(conf)
+	if err != nil {
+		fmt.Printf("\nNew err: %v", err)
+	}
+
+	if cmd[0] == "trans" {
+		result = getTorrents(t)
+	} else if cmd[0] == "tranc" {
+		if len(cmd) == 1 {
+			result = "Usage: `tranc <Torrent link>`"
+		} else {
+			paused := false
+			result = addTorrents(t, cmd[1], paused)
+		}
+	} else if cmd[0] == "tranp" {
+		if len(cmd) == 1 {
+			result = "Usage: `tranp <Torrent link>`"
+		} else {
+			paused := true
+			result = addTorrents(t, cmd[1], paused)
+		}
+	} else if cmd[0] == "trand" {
+		if len(cmd) == 1 {
+			result = "Usage: `trand <Torrent ID>`"
+		} else {
+			result = deleteTorrents(t, cmd[1])
+		}
+	}
+
+	tunnelIdleSince = time.Now()
 
 	return result
 }

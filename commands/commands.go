@@ -125,39 +125,35 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 			api.PostMessage(slackMessage.Channel, slack.MsgOptionText("Please provide Droplet ID from `do` cmd!", true), params)
 		}
 	} else if args[0] == "fsck" {
-		if runningFritzboxTunnel() {
-			response := ""
+		response := ""
 
-			if len(args) > 1 {
-				path := strings.Join(args[1:], " ")
-				response += CheckPiDiskSpace(path)
-			} else {
-				response += CheckPiDiskSpace("")
-			}
-
-			// grab listing from FritzBox NAS
-			ftpListingCmd := "curl -s ftp://ftpuser:abc123@192.168.178.1/backup/DLNA/torrents/ | awk '{print $5\"\t\"$9}'"
-			ftpListDetails := RemoteCmd{Host: raspberryPIIP, HostKey: piHostKey, Username: os.Getenv("piUser"), Password: os.Getenv("piPass"), Cmd: ftpListingCmd}
-			remoteResult := executeRemoteCmd(ftpListDetails)
-
-			diskUsage := getUSBDiskUsageOnFritzBox(remoteResult.stdout)
-			response += "\n\n:wifi: USB Disk ~/torrents on :fritzbox:\n" + diskUsage
-
-			rtm.SendMessage(rtm.NewOutgoingMessage(response, slackMessage.Channel))
+		if len(args) > 1 {
+			path := strings.Join(args[1:], " ")
+			response += CheckPiDiskSpace(path)
+		} else {
+			response += CheckPiDiskSpace("")
 		}
+
+		// grab listing from FritzBox NAS
+		ftpListingCmd := "curl -s ftp://ftpuser:abc123@192.168.178.1/backup/DLNA/torrents/ | awk '{print $5\"\t\"$9}'"
+		ftpListDetails := RemoteCmd{Host: raspberryPIIP, HostKey: piHostKey, Username: os.Getenv("piUser"), Password: os.Getenv("piPass"), Cmd: ftpListingCmd}
+		remoteResult := executeRemoteCmd(ftpListDetails)
+
+		diskUsage := getUSBDiskUsageOnFritzBox(remoteResult.stdout)
+		response += "\n\n:wifi: USB Disk ~/torrents on :fritzbox:\n" + diskUsage
+
+		rtm.SendMessage(rtm.NewOutgoingMessage(response, slackMessage.Channel))
 	} else if args[0] == "mv" || args[0] == "rm" {
 		response := ""
 		if len(args) > 1 {
-			if runningFritzboxTunnel() {
-				path := strings.Join(args[1:], " ")
-				if args[0] == "rm" {
-					response = DeleteTorrentFile(path)
-				} else {
-					MoveTorrentFile(api, path)
-				}
-
-				rtm.SendMessage(rtm.NewOutgoingMessage(response, slackMessage.Channel))
+			path := strings.Join(args[1:], " ")
+			if args[0] == "rm" {
+				response = DeleteTorrentFile(path)
+			} else {
+				MoveTorrentFile(api, path)
 			}
+
+			rtm.SendMessage(rtm.NewOutgoingMessage(response, slackMessage.Channel))
 		} else {
 			rtm.SendMessage(rtm.NewOutgoingMessage("Please provide a filename", slackMessage.Channel))
 		}
@@ -184,20 +180,9 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 	} else if args[0] == "sw" {
 		response := ":partly_sunny_rain: <https://darksky.net/forecast/48.3028,11.3591/ca24/en#week|7-day forecast Schwabhausen>"
 		api.PostMessage(slackMessage.Channel, slack.MsgOptionText(response, false), params)
-	} else if args[0] == "vpnc" {
-		result := vpnTunnelCmds("/usr/sbin/vpnc-connect", "fritzbox")
-		rtm.SendMessage(rtm.NewOutgoingMessage(result, slackMessage.Channel))
-	} else if args[0] == "vpnd" {
-		result := vpnTunnelCmds("/usr/sbin/vpnc-disconnect")
-		rtm.SendMessage(rtm.NewOutgoingMessage(result, slackMessage.Channel))
-	} else if args[0] == "vpns" {
-		result := vpnTunnelCmds("status")
-		rtm.SendMessage(rtm.NewOutgoingMessage(result, slackMessage.Channel))
 	} else if args[0] == "trans" || args[0] == "trand" || args[0] == "tranc" || args[0] == "tranp" {
-		if runningFritzboxTunnel() {
-			response := torrentCommand(args)
-			api.PostMessage(slackMessage.Channel, slack.MsgOptionText(response, false), params)
-		}
+		response := torrentCommand(args)
+		api.PostMessage(slackMessage.Channel, slack.MsgOptionText(response, false), params)
 	} else if args[0] == "mvv" {
 		response := "<https://img.srv2.de/customer/sbahnMuenchen/newsticker/newsticker.html|Aktuelles>"
 		response += " | <" + mvvRoute("Schwabhausen", "München, Hauptbahnhof") + "|Going in>"
@@ -210,7 +195,6 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 				":metro: `mvv`: Status | Trip In | Trip Home\n" +
 				":do_droplet: `do|dd <id>`: show|delete DigitalOcean droplet(s)\n" +
 				":algovpn: `algo (nyc1|tor1|lon1|ams3|...)`: show|launch AlgoVPN droplet on :do_droplet: (in given region - default FRA1)\n" +
-				":closed_lock_with_key: `vpn[c|s|d]`: [C]onnect, [S]tatus, [D]rop VPN tunnel to Fritz!Box\n" +
 				":openvpn: `ovpn`: show status of OVPN.se on :raspberry_pi:\n" +
 				":pirate_bay: `torq <search term>`\n" +
 				":transmission: `tran[c|p|s|d]`: [C]reate <URL>, [P]aused <URL>, [S]tatus, [D]elete <ID> torrents on :raspberry_pi:\n" +
