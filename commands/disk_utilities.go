@@ -70,8 +70,7 @@ func CheckPlexDiskSpace(path string) string {
 
 	response := ""
 
-	cmd := "du -sh " + piPlexPath + path + "/*"
-	out, err := exec.Command(cmd).Output()
+	out, err := exec.Command("du", "-sh", piPlexPath+path+"/*").Output()
 	if err != nil {
 		response = err.Error()
 	} else {
@@ -79,8 +78,7 @@ func CheckPlexDiskSpace(path string) string {
 	}
 	response = ":plex: *Pi4 Card Disk Usage* `pi4@" + piPlexPath + path + "`\n" + response
 
-	cmd = "df -h /"
-	out, err = exec.Command(cmd).Output()
+	out, err = exec.Command("df", "-h", "/").Output()
 	if err != nil {
 		response = err.Error()
 	} else {
