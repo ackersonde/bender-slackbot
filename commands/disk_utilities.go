@@ -32,7 +32,7 @@ func CheckTorrentsDiskSpace(path string) string {
 	fmt.Println("chk disk usage: " + cmd)
 
 	response := ""
-	details := RemoteCmd{Host: raspberryPIIP, HostKey: piHostKey, Cmd: cmd}
+	details := RemoteCmd{Host: raspberryPIIP, HostKey: piHostKey, Username: "pi", Cmd: cmd}
 	remoteResult := executeRemoteCmd(details)
 
 	if remoteResult.stdout == "" && remoteResult.stderr != "" &&
@@ -43,7 +43,7 @@ func CheckTorrentsDiskSpace(path string) string {
 	response = ":raspberry_pi: *SD Card Disk Usage* @ `" + piTorrentsPath + path + "`\n" + response
 
 	cmd = "df -h /root/"
-	details = RemoteCmd{Host: raspberryPIIP, HostKey: piHostKey, Cmd: cmd}
+	details = RemoteCmd{Host: raspberryPIIP, HostKey: piHostKey, Username: "pi", Cmd: cmd}
 	remoteResultDF := executeRemoteCmd(details)
 	response += "\n\n" + remoteResultDF.stdout
 
