@@ -72,7 +72,8 @@ func CheckPlexDiskSpace(path string) string {
 	//du -h --max-depth=1 /mnt/usb4TB/DLNA/
 	out, err := exec.Command(
 		"/usr/bin/du", "-hd", "1", piPlexPath+path,
-		"sort", "-k", "1",
+		"|", "sort", "-k", "1",
+		"|", "sed", "'1d'",
 	).Output()
 	if err != nil {
 		response = fmt.Sprintf(fmt.Sprint(err) + ": " + string(out))
