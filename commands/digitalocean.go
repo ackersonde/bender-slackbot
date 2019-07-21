@@ -19,6 +19,7 @@ func ListDODroplets(userCall bool) string {
 	if err != nil {
 		response = fmt.Sprintf("Failed to list droplets: %s", err)
 	} else {
+		response = fmt.Sprintf("Found %d droplet(s):", len(droplets))
 		for _, droplet := range droplets {
 			ipv4, _ := droplet.PublicIPv4()
 			addr := doDropletInfoSite + strconv.Itoa(droplet.ID)
