@@ -12,8 +12,8 @@ import (
 var raspberryPIIP = "raspberrypi.fritz.box"
 var pi4 = "pi4.fritz.box"
 
-var piTorrentsPath = "/home/pi/torrents/"
-var piPlexPath = "/mnt/usb4TB/DLNA/"
+var piTorrentsPath = "/home/pi/torrents"
+var piPlexPath = "/mnt/usb4TB/DLNA"
 
 // CheckTorrentsDiskSpace now exported
 func CheckTorrentsDiskSpace(path string) string {
@@ -22,24 +22,18 @@ func CheckTorrentsDiskSpace(path string) string {
 		path = ""
 		userCall = false
 	} else {
-		path = strings.TrimPrefix(path, "/")
+		path = strings.ReplaceAll(path, "/", "")
 	}
 
-	diskUsage := "du -ah \"" + path
-	diskUsageAll := diskUsage + "*\""
-	diskUsageOne := diskUsage + "\""
-	cmd := "[ \"$(ls -A '" + piTorrentsPath + "')\" ] && " + diskUsageAll + " || " + diskUsageOne
-	fmt.Println("chk disk usage: " + cmd)
+	cmd := "du -h " + piTorrentsPath + path + "/*"
 
 	response := ""
 	details := RemoteCmd{Host: raspberryPIIP, HostKey: piHostKey, Username: "pi", Cmd: cmd}
 	remoteResult := executeRemoteCmd(details)
 
-	if remoteResult.stdout == "" && remoteResult.stderr != "" &&
-		strings.HasPrefix(remoteResult.stderr, "du: cannot access ‘/home/pi/torrents/*’: No such file or directory") {
+	if remoteResult.stdout == "" && remoteResult.stderr != "" {
 		response = remoteResult.stderr
 	}
-	response = strings.Replace(response, piTorrentsPath+path, "", -1)
 	response = ":raspberry_pi: *SD Card Disk Usage* @ `" + piTorrentsPath + path + "`\n" + response
 
 	cmd = "df -h /root/"
