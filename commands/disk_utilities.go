@@ -75,13 +75,13 @@ func CheckPlexDiskSpace(path string) string {
 	} else {
 		response = string(out)
 	}
-	response = ":plex: *Pi4 Card Disk Usage* `pi4@" + piPlexPath + path + "`\n" + string(out)
+	response = ":plex: *Pi4 Card Disk Usage* `pi4@" + piPlexPath + path + "`\n" + response
 
-	out, err = exec.Command("df", "-h", "/", "/mnt/usb4TB").Output()
-	if err != nil {
-		response += "\n\n" + err.Error()
+	out2, err2 := exec.Command("df", "-h", "/", "/mnt/usb4TB").Output()
+	if err2 != nil {
+		response += "\n\n" + err2.Error()
 	} else {
-		response += "\n\n" + string(out)
+		response += "\n\n" + string(out2)
 	}
 
 	if !userCall {
