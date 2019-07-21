@@ -12,7 +12,7 @@ import (
 var raspberryPIIP = "raspberrypi.fritz.box"
 var pi4 = "pi4.fritz.box"
 
-var piTorrentsPath = "/home/pi/torrents"
+var piTorrentsPath = "/home/pi/torrents/"
 var piPlexPath = "/mnt/usb4TB/DLNA"
 
 // CheckTorrentsDiskSpace now exported
