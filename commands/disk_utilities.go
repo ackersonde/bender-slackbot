@@ -3,6 +3,7 @@ package commands
 import (
 	"fmt"
 	"log"
+	"os/exec"
 	"strings"
 	"time"
 
@@ -21,7 +22,7 @@ func CheckTorrentsDiskSpace(path string) string {
 	if path == "---" {
 		path = ""
 		userCall = false
-	} else {
+	} else if path != "" {
 		path = strings.TrimSuffix(path, "/")
 		if !strings.HasPrefix(path, "/") {
 			path = "/" + path
@@ -39,12 +40,53 @@ func CheckTorrentsDiskSpace(path string) string {
 	} else {
 		response = remoteResult.stdout
 	}
-	response = ":raspberry_pi: *SD Card Disk Usage* @ `" + piTorrentsPath + path + "`\n" + response
+	response = ":raspberry_pi: *SD Card Disk Usage* `raspberrypi@" + piTorrentsPath + path + "`\n" + response
 
 	cmd = "df -h /root/"
 	details = RemoteCmd{Host: raspberryPIIP, Cmd: cmd}
 	remoteResultDF := executeRemoteCmd(details)
 	response += "\n\n" + remoteResultDF.stdout
+
+	if !userCall {
+		customEvent := slack.RTMEvent{Type: "CheckPiDiskSpace", Data: response}
+		rtm.IncomingEvents <- customEvent
+	}
+
+	return response
+}
+
+// CheckPlexDiskSpace now exported
+func CheckPlexDiskSpace(path string) string {
+	userCall := true
+	if path == "---" {
+		path = ""
+		userCall = false
+	} else if path != "" {
+		path = strings.TrimSuffix(path, "/")
+		if !strings.HasPrefix(path, "/") {
+			path = "/" + path
+		}
+	}
+
+	response := ""
+
+	cmd := "du -sh " + piPlexPath + path + "/*"
+	out, err := exec.Command(cmd).Output()
+	if err != nil {
+		response = err.Error()
+	} else {
+		response = string(out)
+	}
+	response = ":plex: *Pi4 Card Disk Usage* `pi4@" + piPlexPath + path + "`\n" + response
+
+	cmd = "df -h /"
+	out, err = exec.Command(cmd).Output()
+	if err != nil {
+		response = err.Error()
+	} else {
+		response = string(out)
+	}
+	response += "\n\n" + response
 
 	if !userCall {
 		customEvent := slack.RTMEvent{Type: "CheckPiDiskSpace", Data: response}
