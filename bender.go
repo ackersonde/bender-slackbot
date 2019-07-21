@@ -48,27 +48,33 @@ func main() {
 				botID = ev.Info.User.ID
 
 			case *slack.MessageEvent:
+				originalMessage := ev.Msg.Text
 				callerID := ev.Msg.User
+				userInfo, _ := rtm.GetUserInfo(callerID)
+
+				if userInfo == nil {
+					logger.Printf("rcvd %s from %v\n", originalMessage, ev.Msg.User)
+				} else {
+					logger.Printf("rcvd %s from: %s(%s)\n", originalMessage, userInfo.Name, userInfo.ID)
+				}
 
 				// only respond to messages sent to me by others on the same channel:
 				if ev.Msg.Type == "message" && callerID != botID && ev.Msg.SubType != "message_deleted" &&
 					(strings.Contains(ev.Msg.Text, "<@"+botID+">") ||
 						strings.HasPrefix(ev.Msg.Channel, "D") ||
 						ev.Msg.Channel == commands.SlackReportChannel) {
-					originalMessage := ev.Msg.Text
 					// strip out bot's name and spaces
 					parsedMessage := strings.TrimSpace(strings.Replace(originalMessage, "<@"+botID+">", "", -1))
 					r, n := utf8.DecodeRuneInString(parsedMessage)
 					parsedMessage = string(unicode.ToLower(r)) + parsedMessage[n:]
 
 					var userName string
-					userInfo, _ := rtm.GetUserInfo(ev.Msg.User)
 					if userInfo == nil {
 						userName = "algo-build-bot"
 					} else {
 						userName = userInfo.Name
 					}
-					logger.Printf("%s: %s\n", userName, parsedMessage)
+					logger.Printf("%s: %v\n", userName, parsedMessage)
 
 					commands.CheckCommand(api, ev.Msg, parsedMessage)
 				}
