@@ -68,8 +68,8 @@ func CheckPlexDiskSpace(path string) string {
 		}
 	}
 
-	response := ""
-	out, err := exec.Command("/usr/bin/du", "-s", "-h", piPlexPath+path+"/*").Output()
+	response := "" // , "-s", "-h", piPlexPath+path+"/*"
+	out, err := exec.Command("/usr/bin/du").Output()
 	if err != nil {
 		response = fmt.Sprintf(fmt.Sprint(err) + ": " + string(out))
 	} else {
