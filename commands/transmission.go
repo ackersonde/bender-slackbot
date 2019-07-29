@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/odwrtw/transmission"
+	"github.com/danackerson/transmission"
 )
 
 func getTorrents(t *transmission.Client) (result string) {
@@ -88,10 +88,6 @@ func deleteTorrents(t *transmission.Client, torrentIDStr string) (result string)
 
 func torrentCommand(cmd []string) (result string) {
 	result = ":closed_lock_with_key: unable to talk to raspberrypi..."
-
-	if raspberryPIIP == "" {
-		raspberryPIIP = "raspberrypi.fritz.box"
-	}
 
 	// Connect to Transmission RPC daemon
 	conf := transmission.Config{

@@ -2,6 +2,7 @@ package commands
 
 import (
 	"encoding/hex"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -75,7 +76,7 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 		result = ShowBBGames(true, dateString)
 
 		api.PostMessage(slackMessage.Channel, slack.MsgOptionText(result, false), params)
-	} else if args[0] == "algo" {
+		/*} else if args[0] == "algo" {
 		response := ListDODroplets(true)
 		region := "fra1"
 		if len(args) > 1 {
@@ -100,7 +101,7 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 			response = ":circleci: <https://circleci.com/gh/danackerson/do-algo/" + buildNum + "|do-algo Build " + buildNum + " @ " + region + ">"
 			api.PostMessage(slackMessage.Channel, slack.MsgOptionText(response, false), params)
 
-		}
+		}*/
 	} else if args[0] == "do" {
 		response := ListDODroplets(true)
 		api.PostMessage(slackMessage.Channel, slack.MsgOptionText(response, false), params)
@@ -121,25 +122,31 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 		if len(args) > 1 {
 			path := strings.Join(args[1:], " ")
 			response += CheckTorrentsDiskSpace(path)
+			response += CheckPlexDiskSpace(path)
 		} else {
 			response += CheckTorrentsDiskSpace("")
+			response += CheckPlexDiskSpace("")
 		}
-		response += "\n\n========================================================\n\n"
-		response += CheckPlexDiskSpace("")
 		rtm.SendMessage(rtm.NewOutgoingMessage(response, slackMessage.Channel))
-	} else if args[0] == "mv" || args[0] == "rm" {
+	} else if args[0] == "mv" {
 		response := ""
-		if len(args) > 1 {
-			path := strings.Join(args[1:], " ")
-			if args[0] == "rm" {
-				response = DeleteTorrentFile(path)
+		if len(args) == 3 &&
+			(strings.HasPrefix(args[2], "movies") ||
+				strings.HasPrefix(args[2], "tv")) {
+			sourceFile := args[1]
+			destinationDir := args[2]
+			if strings.Contains(destinationDir, "..") || strings.HasPrefix(destinationDir, "/") {
+				msg := fmt.Sprintln("Please prefix destination w/ either `[movies|tv]`")
+				rtm.IncomingEvents <- slack.RTMEvent{Type: "MoveTorrent", Data: msg}
+			} else if strings.Contains(sourceFile, "..") || strings.HasPrefix(sourceFile, "/") {
+				msg := fmt.Sprintf("Please specify file to move relative to `%s/torrents/`\n", piPlexPath)
+				rtm.IncomingEvents <- slack.RTMEvent{Type: "MoveTorrent", Data: msg}
 			} else {
-				MoveTorrentFile(api, path)
+				MoveTorrentFile(api, sourceFile, destinationDir)
+				rtm.SendMessage(rtm.NewOutgoingMessage(response, slackMessage.Channel))
 			}
-
-			rtm.SendMessage(rtm.NewOutgoingMessage(response, slackMessage.Channel))
 		} else {
-			rtm.SendMessage(rtm.NewOutgoingMessage("Please provide a filename", slackMessage.Channel))
+			rtm.SendMessage(rtm.NewOutgoingMessage("Please provide a src file and destination [e.g. `movies` or `tv`]", slackMessage.Channel))
 		}
 	} else if args[0] == "torq" {
 		var response string
@@ -179,10 +186,10 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 				":metro: `mvv`: Status | Trip In | Trip Home\n" +
 				":do_droplet: `do|dd <id>`: show|delete DigitalOcean droplet(s)\n" +
 				//":algovpn: `algo (nyc1|tor1|lon1|ams3|...)`: show|launch AlgoVPN droplet on :do_droplet: (in given region - default FRA1)\n" +
-				//":openvpn: `ovpn`: show status of OVPN.se on :raspberry_pi:\n" +
+				":openvpn: `ovpn`: show status of OVPN.se on :raspberry_pi:\n" +
 				":pirate_bay: `torq <search term>`\n" +
-				//":transmission: `tran[c|p|s|d]`: [C]reate <URL>, [P]aused <URL>, [S]tatus, [D]elete <ID> torrents on :raspberry_pi:\n" +
-				//":recycle: `rm(|mv) <filename>` from :raspberry_pi: (to `" + piUSBMountPath + "`)\n" +
+				":transmission: `tran[c|p|s|d]`: [C]reate <URL>, [P]aused <URL>, [S]tatus, [D]elete <ID> torrents on :raspberry_pi:\n" +
+				":movie_camera: `mv " + piPlexPath + "/torrents/<filename> [movies|tv/(<path>)]`\n" +
 				":floppy_disk: `fsck`: show disk space on :raspberry_pi:\n" +
 				":baseball: `bb <YYYY-MM-DD>`: show baseball games from given date (default yesterday)\n" +
 				":youtube: `yt <video url>`: Download Youtube video to Papa's handy\n"
