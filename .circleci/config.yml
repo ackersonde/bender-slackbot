@@ -39,7 +39,8 @@ commands:
               $SSH_USER@$SSH_HOST:~/bender_app/
 
             # Run Bender SlackBot
-            ssh $SSH_USER@$SSH_HOST "docker run -d --restart=always \
+            ssh $SSH_USER@$SSH_HOST "docker pull arm32v7/alpine && \
+            docker run -d --restart=always \
               -v ~/bender_app:/tmp/ -v /mnt:/mnt \
               -e homeDomain=$homeDomain \
               -e slackReportChannel=$slackReportChannel \
