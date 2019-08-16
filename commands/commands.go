@@ -25,6 +25,7 @@ var spacesKey = os.Getenv("CTX_DIGITALOCEAN_SPACES_KEY")
 var spacesSecret = os.Getenv("CTX_DIGITALOCEAN_SPACES_SECRET")
 var spacesNamePublic = os.Getenv("CTX_DIGITALOCEAN_SPACES_NAME_PUBLIC")
 var joinAPIKey = os.Getenv("CTX_JOIN_API_KEY")
+var vpnGateway = os.Getenv("CTX_VPNC_GATEWAY")
 
 var circleCIDoAlgoURL = "https://circleci.com/api/v1.1/project/github/danackerson/do-algo"
 var circleCITokenParam = "?circle-token=" + os.Getenv("CTX_CIRCLECI_API_TOKEN")

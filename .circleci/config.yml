@@ -55,6 +55,7 @@ commands:
               -e CTX_DIGITALOCEAN_SPACES_SECRET=$CTX_DIGITALOCEAN_SPACES_SECRET \
               -e CTX_DIGITALOCEAN_SPACES_NAME_PUBLIC=$CTX_DIGITALOCEAN_SPACES_NAME_PUBLIC \
               -e CTX_JOIN_API_KEY=$CTX_JOIN_API_KEY \
+              -e CTX_VPNC_GATEWAY=$CTX_VPNC_GATEWAY \
               --name bender arm32v7/alpine /tmp/run_bender.sh"
             EOF
 

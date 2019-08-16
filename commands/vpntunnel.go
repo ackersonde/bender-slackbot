@@ -53,7 +53,7 @@ func RaspberryPIPrivateTunnelChecks(userCall bool) string {
 				timeoutDig := time.After(10 * time.Second)
 				// ensure home.ackerson.de is DIFFERENT than PI IP address!
 				go func() {
-					cmd := "dig home.ackerson.de A +short"
+					cmd := "dig " + vpnGateway + " A +short"
 					details := RemoteCmd{Host: raspberryPIIP, Cmd: cmd}
 
 					remoteResult := executeRemoteCmd(details)
@@ -69,7 +69,7 @@ func RaspberryPIPrivateTunnelChecks(userCall bool) string {
 						tunnelUp = jsonRes.IP
 					}
 				case <-timeoutDig:
-					fmt.Println("Timed out on dig home.ackerson.de!")
+					fmt.Println("Timed out on dig " + vpnGateway + "!")
 				}
 			}
 		}
