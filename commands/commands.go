@@ -1,29 +1,19 @@
 package commands
 
 import (
-	"encoding/hex"
 	"fmt"
-	"io/ioutil"
 	"log"
-	"net/http"
 	"net/url"
 	"os"
-	"regexp"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/danackerson/digitalocean/common"
-	"github.com/elgs/gojq"
 	"github.com/nlopes/slack"
-	"golang.org/x/crypto/scrypt"
 )
 
 var rtm *slack.RTM
-
-var spacesKey = os.Getenv("CTX_DIGITALOCEAN_SPACES_KEY")
-var spacesSecret = os.Getenv("CTX_DIGITALOCEAN_SPACES_SECRET")
-var spacesNamePublic = os.Getenv("CTX_DIGITALOCEAN_SPACES_NAME_PUBLIC")
 var joinAPIKey = os.Getenv("CTX_JOIN_API_KEY")
 var vpnGateway = os.Getenv("CTX_VPNC_GATEWAY")
 
@@ -51,13 +41,24 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 			uri, err := url.ParseRequestURI(downloadURL)
 			log.Printf("parsed %s from %s", uri.RequestURI(), downloadURL)
 			if err != nil {
-				api.PostMessage(slackMessage.Channel, slack.MsgOptionText("Invalid URL for downloading! ("+err.Error()+")", true), params)
+				api.PostMessage(slackMessage.Channel,
+					slack.MsgOptionText(
+						"Invalid URL for downloading! ("+err.Error()+
+							")", true), params)
 			} else {
-				downloadYoutubeVideo(uri.String())
-				api.PostMessage(slackMessage.Channel, slack.MsgOptionText("Requested YouTube video...", true), params)
+				if downloadYoutubeVideo(uri.String()) {
+					api.PostMessage(slackMessage.Channel,
+						slack.MsgOptionText(
+							"Requested YouTube video...", true), params)
+				} else {
+					api.PostMessage(slackMessage.Channel,
+						slack.MsgOptionText(
+							"Unable to download YouTube video...", true), params)
+				}
 			}
 		} else {
-			api.PostMessage(slackMessage.Channel, slack.MsgOptionText("Please provide YouTube video URL!", true), params)
+			api.PostMessage(slackMessage.Channel,
+				slack.MsgOptionText("Please provide YouTube video URL!", true), params)
 		}
 	} else if args[0] == "bb" {
 		result := ""
@@ -75,34 +76,7 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 			}
 		}
 		result = ShowBBGames(true, dateString)
-
 		api.PostMessage(slackMessage.Channel, slack.MsgOptionText(result, false), params)
-		/*} else if args[0] == "algo" {
-		response := ListDODroplets(true)
-		region := "fra1"
-		if len(args) > 1 {
-			region = args[1]
-		}
-
-		if strings.Contains(response, "york.shire") {
-			response = findAndReturnVPNConfigs(response, region)
-			api.PostMessage(slackMessage.Channel, slack.MsgOptionText(response, false), params)
-		} else {
-			building, buildNum, _ := circleCIDoAlgoBuildingAndBuildNums(region)
-			if !building {
-				buildsURL := circleCIDoAlgoURL + circleCITokenParam
-				data := url.Values{}
-				data.Set("build_parameters[REGION]", region)
-				data.Set("build_parameters[CIRCLE_JOB]", "deploy")
-				buildsParser := getJSONFromRequestURL(buildsURL, "POST", data.Encode())
-
-				buildNumParse, _ := buildsParser.Query("build_num")
-				buildNum = strconv.FormatFloat(buildNumParse.(float64), 'f', -1, 64)
-			}
-			response = ":circleci: <https://circleci.com/gh/danackerson/do-algo/" + buildNum + "|do-algo Build " + buildNum + " @ " + region + ">"
-			api.PostMessage(slackMessage.Channel, slack.MsgOptionText(response, false), params)
-
-		}*/
 	} else if args[0] == "do" {
 		response := ListDODroplets(true)
 		api.PostMessage(slackMessage.Channel, slack.MsgOptionText(response, false), params)
@@ -186,7 +160,6 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 			":sun_behind_rain_cloud: `sw`: Schwabhausen weather\n" +
 				":metro: `mvv`: Status | Trip In | Trip Home\n" +
 				":do_droplet: `do|dd <id>`: show|delete DigitalOcean droplet(s)\n" +
-				//":algovpn: `algo (nyc1|tor1|lon1|ams3|...)`: show|launch AlgoVPN droplet on :do_droplet: (in given region - default FRA1)\n" +
 				":openvpn: `ovpn`: show status of OVPN.se on :raspberry_pi:\n" +
 				":pirate_bay: `torq <search term>`\n" +
 				":transmission: `tran[c|p|s|d]`: [C]reate <URL>, [P]aused <URL>, [S]tatus, [D]elete <ID> torrents on :raspberry_pi:\n" +
@@ -201,180 +174,6 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 	} else {
 		log.Printf("No Command found: %s", slackMessage.Text)
 	}
-}
-
-func circleCIDoAlgoBuildingAndBuildNums(region string) (bool, string, string) {
-	lastSuccessBuildNum := "-1"
-	currentBuildNum := "-1"
-	currentlyBuilding := true
-
-	buildsURL := circleCIDoAlgoURL + circleCITokenParam
-	buildsParser := getJSONFromRequestURL(buildsURL, "GET", "")
-	array, _ := buildsParser.QueryToArray(".")
-	for i := 0; i < len(array); i++ {
-		statusStr, _ := buildsParser.Query("[" + strconv.Itoa(i) + "].status")
-
-		if i == 0 {
-			log.Println("current Do-Algo build status: " + statusStr.(string))
-			currentlyBuilding = !isFinishedStatus(statusStr.(string))
-			buildNumParse, _ := buildsParser.Query("[" + strconv.Itoa(i) + "].build_num")
-			currentBuildNum = strconv.FormatFloat(buildNumParse.(float64), 'f', -1, 64)
-		}
-
-		if statusStr.(string) == "success" || statusStr.(string) == "fixed" {
-			buildNumParse, _ := buildsParser.Query("[" + strconv.Itoa(i) + "].build_num")
-			lastSuccessBuildNum = strconv.FormatFloat(buildNumParse.(float64), 'f', -1, 64)
-			break
-		}
-	}
-
-	return currentlyBuilding, currentBuildNum, lastSuccessBuildNum
-}
-
-func isFinishedStatus(status string) bool {
-	switch status {
-	case
-		"canceled",
-		"success",
-		"fixed",
-		"failed":
-		return true
-	}
-	return false
-}
-
-func getJSONFromRequestURL(url string, requestType string, encodedData string) *gojq.JQ {
-	req, _ := http.NewRequest(requestType, url, strings.NewReader(encodedData))
-	if requestType == "POST" && encodedData != "" {
-		req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
-	}
-	req.Header.Set("Accept", "application/json")
-
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		log.Println("failed to call "+url+": ", err)
-	} else {
-		log.Println("successfully called: " + url)
-	}
-	defer resp.Body.Close()
-
-	contentBytes, _ := ioutil.ReadAll(resp.Body)
-	contentParser, _ := gojq.NewStringQuery(string(contentBytes))
-
-	return contentParser
-}
-
-func waitAndRetrieveLogs(buildURL string, index int) string {
-	outputURL := "N/A"
-
-	for notReady := true; notReady; notReady = (outputURL == "N/A") {
-		buildParser := getJSONFromRequestURL(buildURL, "GET", "")
-		actionsParser, errOutput := buildParser.Query("steps.[" + strconv.Itoa(index) + "].actions.[0].output_url")
-
-		if errOutput != nil {
-			log.Println("waitAndRetrieveLogs: " + errOutput.Error())
-			time.Sleep(5000 * time.Millisecond)
-		} else {
-			outputURL = actionsParser.(string)
-		}
-	}
-
-	return outputURL
-}
-
-func findAndReturnVPNConfigs(doServers string, region string) string {
-	passAlgoVPN := "No successful AlgoVPN deployments found."
-	links := ""
-
-	building, _, lastSuccessBuildNum := circleCIDoAlgoBuildingAndBuildNums(region)
-
-	if building {
-		// sleep 10 secs and check again
-		time.Sleep(10 * time.Second)
-		building, _, lastSuccessBuildNum = circleCIDoAlgoBuildingAndBuildNums(region)
-	}
-
-	if !building && lastSuccessBuildNum != "-1" {
-		// now get build details for this buildNum
-		var outputURL string
-		buildURL := circleCIDoAlgoURL + "/" + lastSuccessBuildNum + circleCITokenParam
-		buildParser := getJSONFromRequestURL(buildURL, "GET", "")
-		for i := 0; i < 9; i++ {
-			stepName, _ := buildParser.Query("steps.[" + strconv.Itoa(i) + "].name")
-			if stepName == "deploy to Digital Ocean Droplet & launch VPN" {
-				outputURL = waitAndRetrieveLogs(buildURL, i)
-				break
-			}
-		}
-
-		// get the log output for this step and parse out IP address and SSH password
-		outputParser := getJSONFromRequestURL(outputURL, "GET", "")
-		message, error := outputParser.QueryToString("[0].message")
-		if error != nil {
-			log.Printf("QueryToString ERR: %s", error.Error())
-		}
-		log.Printf("outputParser val: %s", message)
-
-		checkPassString, _ := regexp.Compile(`The p12 and SSH keys password for new users is (?:[0-9a-zA-Z_@]{8})`)
-		passAlgoVPN = string(checkPassString.Find([]byte(message)))
-
-		ipv4 := getIPv4Address(doServers)
-
-		// lets encrypt the filenames on disk
-		doPersonalAccessToken := os.Getenv("CTX_DIGITALOCEAN_TOKEN")
-		salt := []byte(ipv4 + ":" + doPersonalAccessToken)
-		mobileConfigFileHashed, _ := scrypt.Key([]byte("dan.conf"), salt, 16384, 8, 1, 32)
-		desktopConfigFileHashed, _ := scrypt.Key([]byte("dan.mobileconfig"), salt, 16384, 8, 1, 32)
-
-		localMobileConfigFilePath := "/algo_vpn/" + ipv4 + "/wireguard/phone.conf"
-		localDesktopConfigFilePath := "/algo_vpn/" + ipv4 + "/wireguard/laptop.conf"
-		fi, _ := os.Stat(localMobileConfigFilePath)
-		mobileConfigFileSize := fi.Size()
-		fi, _ = os.Stat(localDesktopConfigFilePath)
-		desktopConfigFileSize := fi.Size()
-
-		remoteMobileConfigURL := "/.recycle/" + hex.EncodeToString(mobileConfigFileHashed) + "/" + ipv4 + ".conf"
-		remoteDesktopConfigURL := "/.recycle/" + hex.EncodeToString(desktopConfigFileHashed) + "/macOS_" + ipv4 + ".conf"
-
-		err := common.CopyFileToDOSpaces(spacesNamePublic, remoteMobileConfigURL, localMobileConfigFilePath, mobileConfigFileSize)
-		if err != nil {
-			log.Printf("Unable to upload %s to Spaces %s", remoteMobileConfigURL, err.Error())
-		} else {
-			err := common.CopyFileToDOSpaces(spacesNamePublic, remoteDesktopConfigURL, localDesktopConfigFilePath, desktopConfigFileSize)
-			if err != nil {
-				log.Printf("Unable to upload %s to Spaces %s", remoteDesktopConfigURL, err.Error())
-			} else {
-				joinStatus := "*Import* VPN profile"
-
-				icon := "http://www.setaram.com/wp-content/themes/setaram/library/images/lock.png"
-				smallIcon := "http://www.setaram.com/wp-content/themes/setaram/library/images/lock.png"
-
-				// 2. Change below Join Push alert to S3 bucket URL
-				sendPayloadToJoinAPI(remoteMobileConfigURL, "dan_"+ipv4+".conf", icon, smallIcon)
-				digitalOceanSpacesURL := spacesNamePublic + ".ams3.digitaloceanspaces.com"
-				links = ":link: <https://" + digitalOceanSpacesURL + remoteMobileConfigURL + "|" + ipv4 + ".conf> (" + joinStatus + ")\n"
-				links += ":link: <https://" + digitalOceanSpacesURL + remoteDesktopConfigURL + "|macOS_" + ipv4 + ".conf> (dbl click on Mac)\n"
-			}
-		}
-	}
-
-	return ":algovpn: " + passAlgoVPN + "\n" + links
-}
-
-func getIPv4Address(serverList string) string {
-	var ipV4 []byte
-
-	parts := strings.Split(serverList, "\n")
-	for i := range parts {
-		// FORMAT => ":do_droplet: <addr|name> (IPv4) [ID: DO_ID]"
-		if strings.Contains(parts[i], "york.shire") {
-			reIPv4, _ := regexp.Compile(`(?:[0-9]{1,3}\.){3}[0-9]{1,3}`)
-			ipV4 = reIPv4.Find([]byte(parts[i]))
-			break
-		}
-	}
-
-	return string(ipV4)
 }
 
 func mvvRoute(origin string, destination string) string {
@@ -399,16 +198,4 @@ func mvvRoute(origin string, destination string) string {
 		"&locationServerActive=1&name_origin=" + origin + "&itdDateDay=" + day + "&type_origin=any" +
 		"&name_destination=" + destination + "&itdTimeMinute=" + minute + "&Session=0&stateless=1" +
 		"&SpEncId=0&itdDateYear=" + year
-}
-
-func downloadYoutubeVideo(origURL string) bool {
-	resp, err := http.Get("https://ackerson.de/bb_download?gameURL=" + origURL)
-	if err != nil {
-		log.Printf("ERR: downloading YTube video: %s", err.Error())
-	}
-	if resp.StatusCode == 200 {
-		return true
-	}
-
-	return false
 }

@@ -76,7 +76,7 @@ func executeRemoteCmd(details RemoteCmd) RemoteResult {
 	return RemoteResult{stdoutBuf.String(), errStr}
 }
 
-func sendPayloadToJoinAPI(downloadFilename string, humanFilename string, icon string, smallIcon string) string {
+func sendPayloadToJoinAPI(fileURL string, humanFilename string, icon string, smallIcon string) string {
 	response := "Sorry, couldn't resend..."
 	humanFilenameEnc := &url.URL{Path: humanFilename}
 	humanFilenameEncoded := humanFilenameEnc.String()
@@ -84,17 +84,9 @@ func sendPayloadToJoinAPI(downloadFilename string, humanFilename string, icon st
 	pushURL := "https://joinjoaomgcd.appspot.com/_ah/api/messaging/v1/sendPush"
 	defaultParams := "?deviceId=d888b2e9a3a24a29a15178b2304a40b3&icon=" + icon + "&smallicon=" + smallIcon
 	fileOnPhone := "&title=" + humanFilenameEncoded
-
-	if !strings.HasPrefix(downloadFilename, "/") {
-		downloadFilename = "/" + downloadFilename
-	}
-
-	fileURL := spacesNamePublic + ".ams3.digitaloceanspaces.com" + downloadFilename
 	apiKey := "&apikey=" + joinAPIKey
 
-	fileURLEnc := &url.URL{Path: fileURL}
-	fileURL = fileURLEnc.String()
-	completeURL := pushURL + defaultParams + apiKey + fileOnPhone + "&file=https://" + fileURL
+	completeURL := pushURL + defaultParams + apiKey + fileOnPhone + "&file=" + fileURL
 	// Get the data
 	log.Printf("joinPushURL: %s\n", completeURL)
 	resp, err := http.Get(completeURL)
