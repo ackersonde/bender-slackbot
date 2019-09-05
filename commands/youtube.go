@@ -103,7 +103,7 @@ func downloadYoutubeVideo(origURL string) bool {
 		if err == nil {
 			log.Printf("preparing to download: %s\n", URI.String())
 
-			uploadToPath := "/youtube/" + vid.Title
+			uploadToPath := "/youtube/" + vid.Title + "." + vid.Formats[0].Extension
 			tempPublicURL, err := uploadInternetFileToDropbox(URI.String(), uploadToPath, config)
 			if err != nil {
 				log.Printf("%s %s\n", tempPublicURL, err.Error())
