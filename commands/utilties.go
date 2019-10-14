@@ -3,6 +3,7 @@ package commands
 import (
 	"bytes"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
@@ -14,17 +15,36 @@ import (
 
 // RemoteCmd for execution over SSH connection
 type RemoteCmd struct {
-	Host     string
-	HostKey  string
-	Username string
-	Password string
-	Cmd      string
+	Host          string
+	Cmd           string
+	ConnectConfig *ssh.ClientConfig
 }
 
 // RemoteResult contains remote SSH execution
 type RemoteResult struct {
 	stdout string
 	stderr string
+}
+
+var connectConfig = remoteConnectionConfiguration(piHostKey, "pi")
+
+func remoteConnectionConfiguration(unparsedHostKey string, username string) *ssh.ClientConfig {
+	hostKey, _, _, _, err := ssh.ParseAuthorizedKey([]byte(unparsedHostKey))
+	if err != nil {
+		log.Printf("error parsing: %v", err)
+	}
+
+	key, err := ioutil.ReadFile("/root/.ssh/id_rsa")
+	signer, err := ssh.ParsePrivateKey(key)
+	if err != nil {
+		log.Printf("Unable to parse private key: %v", err)
+	}
+
+	return &ssh.ClientConfig{
+		User:            username,
+		Auth:            []ssh.AuthMethod{ssh.PublicKeys(signer)},
+		HostKeyCallback: ssh.FixedHostKey(hostKey),
+	}
 }
 
 func executeRemoteCmd(details RemoteCmd) RemoteResult {
@@ -34,19 +54,8 @@ func executeRemoteCmd(details RemoteCmd) RemoteResult {
 		}
 	}()
 
-	hostKey, _, _, _, err := ssh.ParseAuthorizedKey([]byte(details.HostKey))
-	if err != nil {
-		log.Printf("error parsing: %v", err)
-	}
-
-	config := &ssh.ClientConfig{
-		User:            details.Username,
-		Auth:            []ssh.AuthMethod{ssh.Password(details.Password)},
-		HostKeyCallback: ssh.FixedHostKey(hostKey),
-	}
-
 	connectionString := fmt.Sprintf("%s:%s", details.Host, "22")
-	conn, errConn := ssh.Dial("tcp", connectionString, config)
+	conn, errConn := ssh.Dial("tcp", connectionString, connectConfig)
 	if errConn != nil { //catch
 		fmt.Fprintf(os.Stderr, "Exception: %v\n", errConn)
 	}
@@ -67,7 +76,7 @@ func executeRemoteCmd(details RemoteCmd) RemoteResult {
 	return RemoteResult{stdoutBuf.String(), errStr}
 }
 
-func sendPayloadToJoinAPI(downloadFilename string, humanFilename string, icon string, smallIcon string) string {
+func sendPayloadToJoinAPI(fileURL string, humanFilename string, icon string, smallIcon string) string {
 	response := "Sorry, couldn't resend..."
 	humanFilenameEnc := &url.URL{Path: humanFilename}
 	humanFilenameEncoded := humanFilenameEnc.String()
@@ -75,17 +84,9 @@ func sendPayloadToJoinAPI(downloadFilename string, humanFilename string, icon st
 	pushURL := "https://joinjoaomgcd.appspot.com/_ah/api/messaging/v1/sendPush"
 	defaultParams := "?deviceId=d888b2e9a3a24a29a15178b2304a40b3&icon=" + icon + "&smallicon=" + smallIcon
 	fileOnPhone := "&title=" + humanFilenameEncoded
-
-	if !strings.HasPrefix(downloadFilename, "/") {
-		downloadFilename = "/" + downloadFilename
-	}
-
-	fileURL := spacesNamePublic + ".ams3.digitaloceanspaces.com" + downloadFilename
 	apiKey := "&apikey=" + joinAPIKey
 
-	fileURLEnc := &url.URL{Path: fileURL}
-	fileURL = fileURLEnc.String()
-	completeURL := pushURL + defaultParams + apiKey + fileOnPhone + "&file=https://" + fileURL
+	completeURL := pushURL + defaultParams + apiKey + fileOnPhone + "&file=" + fileURL
 	// Get the data
 	log.Printf("joinPushURL: %s\n", completeURL)
 	resp, err := http.Get(completeURL)

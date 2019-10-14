@@ -41,30 +41,28 @@ func ResetMediaServer() bool {
 	result := false
 	client := accessInsecureHTTPClient()
 
-	if runningFritzboxTunnel() {
-		asusToken := loginToRouter(client)
+	asusToken := loginToRouter(client)
 
-		// Restart Media Server
-		body2 := strings.NewReader(`preferred_lang=EN&firmver=3.0.0.4&current_page=mediaserver.asp&next_page=mediaserver.asp&flag=nodetect&action_mode=apply&action_script=restart_media&action_wait=5&daapd_enable=0&dms_enable=1&dms_dir_x=%3C%2Fmnt%2FTOSHIBA_EXT%2FDLNA&dms_dir_type_x=%3CV&dms_dir_manual=1&daapd_friendly_name=RT-AC88U-D7F8&dms_friendly_name=EntertainME&dms_rebuild=0&dms_web=1&dms_dir_manual_x=1&type_A_audio=on&type_P_image=on&type_V_video=on`)
-		req2, err3 := http.NewRequest("POST", "https://192.168.1.1:8443/start_apply.htm", body2)
-		if err3 != nil {
-			logger.Printf("Err Restart Request: %+v\n", err3)
-		}
-		req2.Header.Set("Cookie", asusToken)
-		req2.Header.Set("Referer", "https://192.168.1.1:8443/mediaserver.asp")
-		req2.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	// Restart Media Server
+	body2 := strings.NewReader(`preferred_lang=EN&firmver=3.0.0.4&current_page=mediaserver.asp&next_page=mediaserver.asp&flag=nodetect&action_mode=apply&action_script=restart_media&action_wait=5&daapd_enable=0&dms_enable=1&dms_dir_x=%3C%2Fmnt%2FTOSHIBA_EXT%2FDLNA&dms_dir_type_x=%3CV&dms_dir_manual=1&daapd_friendly_name=RT-AC88U-D7F8&dms_friendly_name=EntertainME&dms_rebuild=0&dms_web=1&dms_dir_manual_x=1&type_A_audio=on&type_P_image=on&type_V_video=on`)
+	req2, err3 := http.NewRequest("POST", "https://192.168.1.1:8443/start_apply.htm", body2)
+	if err3 != nil {
+		logger.Printf("Err Restart Request: %+v\n", err3)
+	}
+	req2.Header.Set("Cookie", asusToken)
+	req2.Header.Set("Referer", "https://192.168.1.1:8443/mediaserver.asp")
+	req2.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-		resp2, err4 := client.Do(req2)
-		if err4 != nil {
-			logger.Printf("Err Restart Do: %+v\n", err4)
-		}
-		defer resp2.Body.Close()
-		if resp2.StatusCode == 200 { // OK
-			bodyBytes, _ := ioutil.ReadAll(resp2.Body)
-			bodyString := string(bodyBytes)
-			if strings.Contains(bodyString, "no_changes_and_no_committing()") {
-				result = true
-			}
+	resp2, err4 := client.Do(req2)
+	if err4 != nil {
+		logger.Printf("Err Restart Do: %+v\n", err4)
+	}
+	defer resp2.Body.Close()
+	if resp2.StatusCode == 200 { // OK
+		bodyBytes, _ := ioutil.ReadAll(resp2.Body)
+		bodyString := string(bodyBytes)
+		if strings.Contains(bodyString, "no_changes_and_no_committing()") {
+			result = true
 		}
 	}
 

@@ -1,4 +1,8 @@
-version: 2
+version: 2.1
+
+orbs:
+  ipsec: danackerson/ipsec@0.2.4
+
 jobs:
   build:
     docker:
@@ -11,121 +15,58 @@ jobs:
           command: |
             apk add -U --no-cache curl build-base git libc6-compat
             go get -t -d -v ./...
-            env CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build bender.go
-
-      - setup_remote_docker
-      - run:
-          name: "Install Docker CE"
-          command: |
-            curl -fsSLO https://download.docker.com/linux/static/stable/x86_64/docker-$CTX_DOCKER_ENGINE_VERSION.tgz && tar --strip-components=1 -xvzf docker-$CTX_DOCKER_ENGINE_VERSION.tgz -C /usr/local/bin
-            rm docker-$CTX_DOCKER_ENGINE_VERSION.tgz
-
-      - run:
-          name: "Build, run, test & push docker image"
-          command: |
-            docker build --compress -t danackerson/bender:vc$CIRCLE_BUILD_NUM \
-              --build-arg vpnc_gateway=$VPNC_GATEWAY \
-              --build-arg vpnc_id=$VPNC_ID \
-              --build-arg vpnc_secret=$VPNC_SECRET \
-              --build-arg vpnc_username=$VPNC_USERNAME \
-              --build-arg vpnc_password=$VPNC_PASSWORD .
-
-            docker run -d -e slackToken=$CTX_SLACK_API_TOKEN \
-            -e raspberryPIIP=$raspberryPIIP \
-            -e slackReportChannel=$slackReportChannel \
-            -e piUser=$piUser -e piPass=$piPass \
-            -e digitalOceanToken=$CTX_DIGITALOCEAN_TOKEN \
-            --name bender danackerson/bender:vc$CIRCLE_BUILD_NUM
-
-            echo `docker logs bender`
-            docker login -u $CTX_DOCKER_USER -p $CTX_DOCKER_PASS
-            docker tag danackerson/bender:vc$CIRCLE_BUILD_NUM danackerson/bender:latest
-            docker push danackerson/bender:vc$CIRCLE_BUILD_NUM
-            docker push danackerson/bender:latest
-
-            echo vc$CIRCLE_BUILD_NUM > last_docker_push
-
+            env GOOS=linux GOARCH=arm GOARM=7 go build bender.go
       - persist_to_workspace:
           root: /go/src/github.com/danackerson/bender-slackbot
           paths:
-            - last_docker_push
+            - bender
+            - run_bender.sh
 
-  deploy:
-    docker:
-      - image: alpine
+commands:
+  prepare_deploy_script:
     steps:
-      - add-ssh-keys:
-          fingerprints:
-            - $CTX_SSH_DEPLOY_FINGERPRINT
-
-      - run:
-          name: Disable Digital Ocean firewall for deploy
-          command: |
-            apk add -U curl openssh-client
-            curl -s https://raw.githubusercontent.com/danackerson/digitalocean/master/utils/addSSHipFW.sh | sh
-
       - attach_workspace:
           at: /tmp
-
       - run:
-          name: "deploy to DigitalOcean Droplet"
+          name: "Prepare deploy script"
           command: |
-            export DEPLOY_SERVER=deploy.ackerson.de
-            if [ $DEPLOY_SERVER_IP ]; then
-              export DEPLOY_SERVER=$DEPLOY_SERVER_IP
-            fi
-            echo "Deploy to $DEPLOY_SERVER"
-            export DEPLOY_CONNECT="ssh -o StrictHostKeyChecking=no ackersond@$DEPLOY_SERVER"
+            # Prepare docker env
+            cat \<<EOF >deploy_script.sh
+            ssh -o StrictHostKeyChecking=no $SSH_USER@$SSH_HOST "\
+              mkdir bender_app || true"
+            ssh $SSH_USER@$SSH_HOST "docker rm -f bender || true"
+            scp /tmp/bender /tmp/run_bender.sh \
+              $SSH_USER@$SSH_HOST:~/bender_app/
 
-            if [ -f /tmp/last_docker_push ]; then
-              export LAST_DOCKER_PUSH=`cat /tmp/last_docker_push`
-            else
-              export LAST_DOCKER_PUSH=latest
-            fi
-
-            $DEPLOY_CONNECT docker login -u $CTX_DOCKER_USER -p \"$CTX_DOCKER_PASS\"
-            $DEPLOY_CONNECT docker pull danackerson/bender:$LAST_DOCKER_PUSH
-            $DEPLOY_CONNECT docker rm -f bender || true
-
-            # not all Env vars are created equal - some have ':' or '{}' or <shudder> '\/'s
-            # in this case we base64 encode the parameter: `base64 <<< [string in question]`
-            # taking the result and pasting it into the environment variable of this CircleCI project
-            # above is an example how to decode this on the fly (e.g. slackToken)
-            $DEPLOY_CONNECT docker run -d --restart=always --privileged=true \
-              --volumes-from homepage -v /home/ackersond/algo_vpn:/algo_vpn:ro \
-              -e CTX_DIGITALOCEAN_FIREWALL=$CTX_DIGITALOCEAN_FIREWALL \
-              -e doFloatingIP=$doFloatingIP \
+            # Run Bender SlackBot
+            ssh $SSH_USER@$SSH_HOST "docker pull arm32v7/alpine && \
+            docker run -d --restart=always \
+              -v ~/bender_app:/tmp/ -v /mnt:/mnt \
               -e homeDomain=$homeDomain \
-              -e CTX_CIRCLECI_API_TOKEN=$CTX_CIRCLECI_API_TOKEN \
-              -e raspberryPIIP=$raspberryPIIP \
               -e slackReportChannel=$slackReportChannel \
-              -e piUser=$piUser -e piPass=$piPass \
+              -e CIRCLE_BUILD_NUM=$CIRCLE_BUILD_NUM \
+              -e PLEX_TOKEN=$PLEX_TOKEN \
+              -e CTX_DIGITALOCEAN_FIREWALL=$CTX_DIGITALOCEAN_FIREWALL \
+              -e CTX_CIRCLECI_API_TOKEN=$CTX_CIRCLECI_API_TOKEN \
+              -e CTX_SERVER_DEPLOY_SECRET=$CTX_SERVER_DEPLOY_SECRET \
               -e CTX_DIGITALOCEAN_TOKEN=$CTX_DIGITALOCEAN_TOKEN \
-              -e CIRCLE_BUILD_NUM=$LAST_DOCKER_PUSH \
               -e CTX_SLACK_API_TOKEN=$CTX_SLACK_API_TOKEN \
-              -e CTX_DIGITALOCEAN_SPACES_KEY=$CTX_DIGITALOCEAN_SPACES_KEY \
-              -e CTX_DIGITALOCEAN_SPACES_SECRET=$CTX_DIGITALOCEAN_SPACES_SECRET \
-              -e CTX_DIGITALOCEAN_SPACES_NAME_PUBLIC=$CTX_DIGITALOCEAN_SPACES_NAME_PUBLIC \
               -e CTX_JOIN_API_KEY=$CTX_JOIN_API_KEY \
-              --name bender danackerson/bender:$LAST_DOCKER_PUSH
+              -e CTX_VPNC_GATEWAY=$CTX_VPNC_GATEWAY \
+              -e CTX_DROPBOX_ACCESS_TOKEN=$CTX_DROPBOX_ACCESS_TOKEN \
+              --name bender arm32v7/alpine /tmp/run_bender.sh"
+            EOF
 
-            if [ $DEPLOY_SERVER_IP ]; then
-              $DEPLOY_CONNECT docker restart traefik
-            fi
-
-      - run:
-          name: Reenable Digital Ocean firewall
-          command: |
-            curl -s https://raw.githubusercontent.com/danackerson/digitalocean/master/utils/dropSSHipFW.sh | sh
-          when: always
+            chmod u+x deploy_script.sh
 
 workflows:
-  version: 2
   build-deploy:
     jobs:
         - build:
             context: org-global
-        - deploy:
+        - ipsec/remote-deploy:
             context: org-global
             requires:
               - build
+            pre-steps:
+              - prepare_deploy_script
