@@ -31,7 +31,9 @@ const (
 	Games Category = 400
 )
 
-var proxies = []string{"tpb.cool", "piratebay.tech", "thepiratebay.fail", "piratebay.icu", "thepirate.host"}
+var proxies = []string{"indiaboat.art", "proxtpb.art", "247tpb.club", "proxy247.art", "unblocktheship.org", "blue247.pw"}
+
+//var proxies = []string{"tpb.cool", "piratebay.tech", "thepiratebay.fail", "piratebay.icu", "thepirate.host"}
 
 func searchProxy(url string) []Torrent {
 	for _, proxy := range proxies {
