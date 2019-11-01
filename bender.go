@@ -16,12 +16,12 @@ import (
 var botID = "N/A" // U2NQSPHHD bender bot userID
 
 func prepareScheduler() {
-	gocron.Every(1).Friday().At("09:03").Do(commands.ListDODroplets, false)
+	//gocron.Every(1).Friday().At("09:03").Do(commands.ListDODroplets, false)
 	gocron.Every(1).Friday().At("09:04").Do(commands.RaspberryPIPrivateTunnelChecks, false)
 	gocron.Every(1).Friday().At("09:05").Do(commands.CheckTorrentsDiskSpace, "---")
 	gocron.Every(1).Friday().At("09:05").Do(commands.CheckPlexDiskSpace, "---")
 	gocron.Every(1).Day().At("05:30").Do(common.UpdateFirewall)
-	gocron.Every(1).Day().At("17:30").Do(commands.ShowBBGames, false, "")
+	//gocron.Every(1).Day().At("17:30").Do(commands.ShowBBGames, false, "")
 	<-gocron.Start()
 
 	// more examples: https://github.com/jasonlvhit/gocron/blob/master/example/example.go#L19
