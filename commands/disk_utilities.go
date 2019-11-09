@@ -46,7 +46,6 @@ func CheckTorrentsDiskSpace(path string) string {
 	details = RemoteCmd{Host: raspberryPIIP, Cmd: cmd}
 	remoteResultDF := executeRemoteCmd(details)
 	response += "\n\n" + remoteResultDF.stdout
-	response += "\n\n========================================================\n\n"
 
 	if !userCall {
 		customEvent := slack.RTMEvent{Type: "CheckPiDiskSpace", Data: response}
@@ -85,10 +84,11 @@ func CheckPlexDiskSpace(path string) string {
 
 	out2, err2 := exec.Command("/bin/df", "-h", "/", "/mnt/usb4TB").Output()
 	if err2 != nil {
-		response += "\n\n" + err2.Error()
+		response += err2.Error()
 	} else {
-		response += "\n\n" + string(out2)
+		response += string(out2)
 	}
+	response += "\n\n==============================\n\n"
 
 	if !userCall {
 		customEvent := slack.RTMEvent{Type: "CheckPiDiskSpace", Data: response}
