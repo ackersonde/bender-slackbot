@@ -8,7 +8,6 @@ import (
 	"unicode/utf8"
 
 	"github.com/danackerson/bender-slackbot/commands"
-	"github.com/danackerson/digitalocean/common"
 	"github.com/jasonlvhit/gocron"
 	"github.com/nlopes/slack"
 )
@@ -20,7 +19,7 @@ func prepareScheduler() {
 	gocron.Every(1).Friday().At("09:04").Do(commands.RaspberryPIPrivateTunnelChecks, false)
 	gocron.Every(1).Friday().At("09:05").Do(commands.CheckTorrentsDiskSpace, "---")
 	gocron.Every(1).Friday().At("09:05").Do(commands.CheckPlexDiskSpace, "---")
-	gocron.Every(1).Day().At("05:30").Do(common.UpdateFirewall)
+	//gocron.Every(1).Day().At("05:30").Do(common.UpdateFirewall)
 	//gocron.Every(1).Day().At("17:30").Do(commands.ShowBBGames, false, "")
 	<-gocron.Start()
 
