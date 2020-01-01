@@ -11,12 +11,12 @@ jobs:
       - run:
           name: "Install Docker CE"
           command: |
+            apk add -U curl build-base git libc6-compat
             curl -fsSLO https://download.docker.com/linux/static/stable/x86_64/docker-$CTX_DOCKER_ENGINE_VERSION.tgz && tar --strip-components=1 -xvzf docker-$CTX_DOCKER_ENGINE_VERSION.tgz -C /usr/local/bin
             rm docker-$CTX_DOCKER_ENGINE_VERSION.tgz && rm -f /var/cache/apk/*
       - run:
           name: "Build & push docker image"
           command: |
-            apk add -U --no-cache curl build-base git libc6-compat
             go get -t -d -v ./...
             env GOOS=linux GOARCH=386 go build bender.go
 
