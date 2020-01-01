@@ -34,6 +34,7 @@ func remoteConnectionConfiguration(unparsedHostKey string, username string) *ssh
 		log.Printf("error parsing: %v", err)
 	}
 
+	// TODO: read this ssh key from mounted K8S volume
 	key, err := ioutil.ReadFile("/root/.ssh/id_rsa")
 	signer, err := ssh.ParsePrivateKey(key)
 	if err != nil {
