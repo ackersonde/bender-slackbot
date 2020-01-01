@@ -46,3 +46,4 @@ spec:
               value: {{CTX_VPNC_GATEWAY}}
             - name: CTX_DROPBOX_ACCESS_TOKEN
               value: {{CTX_DROPBOX_ACCESS_TOKEN}}
+#TODO - need to safely mount /mnt on Pi

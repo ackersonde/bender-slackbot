@@ -88,23 +88,6 @@ jobs:
             fi
           when: always
 
-            # Run Bender SlackBot
-            ssh $SSH_USER@$SSH_HOST "docker pull arm32v7/alpine && \
-            docker run -d --restart=always \
-              -v ~/bender_app:/app/ -v /mnt:/mnt \
-              -e homeDomain=$homeDomain \
-              -e slackReportChannel=$slackReportChannel \
-              -e CIRCLE_BUILD_NUM=$CIRCLE_BUILD_NUM \
-              -e PLEX_TOKEN=$PLEX_TOKEN \
-              -e CTX_DIGITALOCEAN_FIREWALL=$CTX_DIGITALOCEAN_FIREWALL \
-              -e CTX_CIRCLECI_API_TOKEN=$CTX_CIRCLECI_API_TOKEN \
-              -e CTX_SERVER_DEPLOY_SECRET=$CTX_SERVER_DEPLOY_SECRET \
-              -e CTX_DIGITALOCEAN_TOKEN=$CTX_DIGITALOCEAN_TOKEN \
-              -e CTX_SLACK_API_TOKEN=$CTX_SLACK_API_TOKEN \
-              -e CTX_JOIN_API_KEY=$CTX_JOIN_API_KEY \
-              -e CTX_VPNC_GATEWAY=$CTX_VPNC_GATEWAY \
-              -e CTX_DROPBOX_ACCESS_TOKEN=$CTX_DROPBOX_ACCESS_TOKEN
-
 workflows:
   build-deploy:
     jobs:
