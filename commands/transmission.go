@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/danackerson/transmission"
+	"github.com/odwrtw/transmission"
 )
 
 func getTorrents(t *transmission.Client) (result string) {

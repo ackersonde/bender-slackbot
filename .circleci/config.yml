@@ -1,8 +1,5 @@
 version: 2.1
 
-orbs:
-  ipsec: danackerson/ipsec@0.2.4
-
 jobs:
   build:
     docker:
@@ -10,38 +7,91 @@ jobs:
     working_directory: /go/src/github.com/danackerson/bender-slackbot
     steps:
       - checkout
+      - setup_remote_docker
       - run:
-          name: "Fetch dependencies and build bender app"
+          name: "Install Docker CE"
+          command: |
+            curl -fsSLO https://download.docker.com/linux/static/stable/x86_64/docker-$CTX_DOCKER_ENGINE_VERSION.tgz && tar --strip-components=1 -xvzf docker-$CTX_DOCKER_ENGINE_VERSION.tgz -C /usr/local/bin
+            rm docker-$CTX_DOCKER_ENGINE_VERSION.tgz && rm -f /var/cache/apk/*
+      - run:
+          name: "Build & push docker image"
           command: |
             apk add -U --no-cache curl build-base git libc6-compat
             go get -t -d -v ./...
-            env GOOS=linux GOARCH=arm GOARM=7 go build bender.go
+            env GOOS=linux GOARCH=386 go build bender.go
+
+            echo vc$CIRCLE_BUILD_NUM > last_docker_push
+
+            docker build --compress -t danackerson/bender:vc$CIRCLE_BUILD_NUM .
+            docker login -u $CTX_DOCKER_USER -p $CTX_DOCKER_PASS
+            docker tag danackerson/bender:vc$CIRCLE_BUILD_NUM danackerson/bender:latest
+            docker push danackerson/bender:vc$CIRCLE_BUILD_NUM
+            docker push danackerson/bender:latest
       - persist_to_workspace:
           root: /go/src/github.com/danackerson/bender-slackbot
           paths:
             - bender
             - run_bender.sh
 
-commands:
-  prepare_deploy_script:
+  deploy:
+    docker:
+      - image: google/cloud-sdk:alpine
+    working_directory: ~/deploy
     steps:
-      - attach_workspace:
-          at: /tmp
       - run:
-          name: "Prepare deploy script"
+          name: Store Service Accounts
           command: |
-            # Prepare docker env
-            cat \<<EOF >deploy_script.sh
-            ssh -o StrictHostKeyChecking=no $SSH_USER@$SSH_HOST "\
-              mkdir bender_app || true"
-            ssh $SSH_USER@$SSH_HOST "docker rm -f bender || true"
-            scp /tmp/bender /tmp/run_bender.sh \
-              $SSH_USER@$SSH_HOST:~/bender_app/
+            apk -u add jq
+            echo $CTX_GOOGLE_DEPLOY_SERVICE_JSON > ${HOME}/gcloud-service-key.json
+            chmod 600 $HOME/gcloud-service-key.json
+
+            gcloud auth activate-service-account --key-file=${HOME}/gcloud-service-key.json
+            gcloud --quiet config set project ${CTX_GOOGLE_PROJECT_ID}
+            gcloud --quiet config set compute/zone europe-west3-c
+      - run:
+          name: Prepare deploy network access
+          command: |
+            ORIG_RANGE=`gcloud compute firewall-rules describe default-allow-ssh \
+              --format=json | jq -r '.sourceRanges | @csv'`
+            ORIG_RANGE=`echo ${ORIG_RANGE//\"}`
+            echo $ORIG_RANGE > /tmp/orig_range.txt
+
+            export DEPLOY_IP=`curl -s https://icanhazip.com`
+            gcloud compute firewall-rules update default-allow-ssh \
+              --source-ranges=$ORIG_RANGE,$DEPLOY_IP
+      - checkout
+      - run:
+          name: "Prepare & deploy K8S config"
+          command: |
+            sed -i -e "s@{{CIRCLE_BUILD_NUM}}@$CIRCLE_BUILD_NUM@" bender.yml
+            sed -i -e "s@{{homeDomain}}@$homeDomain@" bender.yml
+            sed -i -e "s@{{slackReportChannel}}@$slackReportChannel@" bender.yml
+            sed -i -e "s@{{PLEX_TOKEN}}@$PLEX_TOKEN@" bender.yml
+            sed -i -e "s@{{CTX_DIGITALOCEAN_FIREWALL}}@$CTX_DIGITALOCEAN_FIREWALL@" bender.yml
+            sed -i -e "s@{{CTX_CIRCLECI_API_TOKEN}}@$CTX_CIRCLECI_API_TOKEN@" bender.yml
+            sed -i -e "s@{{CTX_SERVER_DEPLOY_SECRET}}@$CTX_SERVER_DEPLOY_SECRET@" bender.yml
+            sed -i -e "s@{{CTX_DIGITALOCEAN_TOKEN}}@$CTX_DIGITALOCEAN_TOKEN@" bender.yml
+            sed -i -e "s@{{CTX_SLACK_API_TOKEN}}@$CTX_SLACK_API_TOKEN@" bender.yml
+            sed -i -e "s@{{CTX_JOIN_API_KEY}}@$CTX_JOIN_API_KEY@" bender.yml
+            sed -i -e "s@{{CTX_VPNC_GATEWAY}}@$CTX_VPNC_GATEWAY@" bender.yml
+            sed -i -e "s@{{CTX_DROPBOX_ACCESS_TOKEN}}@$CTX_DROPBOX_ACCESS_TOKEN@" bender.yml
+
+            scp -o StrictHostKeyChecking=no bender.yml ackersond@$K8S_SERVER:~/
+            ssh ackersond@$K8S_SERVER -- "sudo kubectl apply -f bender.yml"
+      - run:
+          name: Remove deploy network access
+          command: |
+            export ORIG_RANGE=`cat /tmp/orig_range.txt`
+            if [ ! -z "$ORIG_RANGE" ]; then
+              gcloud compute firewall-rules update default-allow-ssh \
+                --source-ranges=$ORIG_RANGE
+            fi
+          when: always
 
             # Run Bender SlackBot
             ssh $SSH_USER@$SSH_HOST "docker pull arm32v7/alpine && \
             docker run -d --restart=always \
-              -v ~/bender_app:/tmp/ -v /mnt:/mnt \
+              -v ~/bender_app:/app/ -v /mnt:/mnt \
               -e homeDomain=$homeDomain \
               -e slackReportChannel=$slackReportChannel \
               -e CIRCLE_BUILD_NUM=$CIRCLE_BUILD_NUM \
@@ -53,20 +103,14 @@ commands:
               -e CTX_SLACK_API_TOKEN=$CTX_SLACK_API_TOKEN \
               -e CTX_JOIN_API_KEY=$CTX_JOIN_API_KEY \
               -e CTX_VPNC_GATEWAY=$CTX_VPNC_GATEWAY \
-              -e CTX_DROPBOX_ACCESS_TOKEN=$CTX_DROPBOX_ACCESS_TOKEN \
-              --name bender arm32v7/alpine /tmp/run_bender.sh"
-            EOF
-
-            chmod u+x deploy_script.sh
+              -e CTX_DROPBOX_ACCESS_TOKEN=$CTX_DROPBOX_ACCESS_TOKEN
 
 workflows:
   build-deploy:
     jobs:
         - build:
             context: org-global
-        - ipsec/remote-deploy:
+        - deploy:
             context: org-global
             requires:
               - build
-            pre-steps:
-              - prepare_deploy_script

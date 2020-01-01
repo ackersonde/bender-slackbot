@@ -1,0 +1,48 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  namespace: default
+  name: bender
+  labels:
+    app: bender
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: bender
+  template:
+    metadata:
+      labels:
+        app: bender
+    spec:
+      restartPolicy: Always
+      imagePullSecrets:
+        - name: dockerhub
+      containers:
+        - name: bender
+          image: danackerson/bender
+          env:
+            - name: CIRCLE_BUILD_NUM
+              value: "{{CIRCLE_BUILD_NUM}}"
+            - name: homeDomain
+              value: {{homeDomain}}
+            - name: slackReportChannel
+              value: {{slackReportChannel}}
+            - name: PLEX_TOKEN
+              value: {{PLEX_TOKEN}}
+            - name: CTX_DIGITALOCEAN_FIREWALL
+              value: {{CTX_DIGITALOCEAN_FIREWALL}}
+            - name: CTX_CIRCLECI_API_TOKEN
+              value: {{CTX_CIRCLECI_API_TOKEN}}
+            - name: CTX_SERVER_DEPLOY_SECRET
+              value: {{CTX_SERVER_DEPLOY_SECRET}}
+            - name: CTX_DIGITALOCEAN_TOKEN
+              value: {{CTX_DIGITALOCEAN_TOKEN}}
+            - name: CTX_SLACK_API_TOKEN
+              value: {{CTX_SLACK_API_TOKEN}}
+            - name: CTX_JOIN_API_KEY
+              value: {{CTX_JOIN_API_KEY}}
+            - name: CTX_VPNC_GATEWAY
+              value: {{CTX_VPNC_GATEWAY}}
+            - name: CTX_DROPBOX_ACCESS_TOKEN
+              value: {{CTX_DROPBOX_ACCESS_TOKEN}}
