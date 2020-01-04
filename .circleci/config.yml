@@ -72,36 +72,34 @@ jobs:
             export slackReportChannel_B64=`echo -n $slackReportChannel | base64`
             sed -i -e "s@{{slackReportChannel_B64}}@$slackReportChannel_B64@" bender.yml
 
-            echo "$PLEX_TOKEN" | base64 | tr -d \\n > .base64_enc
+            echo -n "$PLEX_TOKEN" | base64 | tr -d \\n > .base64_enc
             export PLEX_TOKEN_B64=`cat .base64_enc`
             sed -i -e "s@{{PLEX_TOKEN_B64}}@$PLEX_TOKEN_B64@" bender.yml
 
-            echo "$CTX_CIRCLECI_API_TOKEN" | base64 | tr -d \\n > .base64_enc
+            echo -n "$CTX_CIRCLECI_API_TOKEN" | base64 | tr -d \\n > .base64_enc
             export CTX_CIRCLECI_API_TOKEN_B64=`cat .base64_enc`
             sed -i -e "s@{{CTX_CIRCLECI_API_TOKEN_B64}}@$CTX_CIRCLECI_API_TOKEN_B64@" bender.yml
 
-            echo "$CTX_DIGITALOCEAN_TOKEN" | base64 | tr -d \\n > .base64_enc
+            echo -n "$CTX_DIGITALOCEAN_TOKEN" | base64 | tr -d \\n > .base64_enc
             export CTX_DIGITALOCEAN_TOKEN_B64=`cat .base64_enc`
             sed -i -e "s@{{CTX_DIGITALOCEAN_TOKEN_B64}}@$CTX_DIGITALOCEAN_TOKEN_B64@" bender.yml
 
-            echo "$CTX_SLACK_API_TOKEN" | base64 | tr -d \\n > .base64_enc
+            echo -n "$CTX_SLACK_API_TOKEN" | base64 | tr -d \\n > .base64_enc
             export CTX_SLACK_API_TOKEN_B64=`cat .base64_enc`
             sed -i -e "s@{{CTX_SLACK_API_TOKEN_B64}}@$CTX_SLACK_API_TOKEN_B64@" bender.yml
 
-            echo "$CTX_JOIN_API_KEY" | base64 | tr -d \\n > .base64_enc
+            echo -n "$CTX_JOIN_API_KEY" | base64 | tr -d \\n > .base64_enc
             export CTX_JOIN_API_KEY_B64=`cat .base64_enc`
             sed -i -e "s@{{CTX_JOIN_API_KEY_B64}}@$CTX_JOIN_API_KEY_B64@" bender.yml
 
             export CTX_VPNC_GATEWAY_B64=`echo -n $CTX_VPNC_GATEWAY | base64`
             sed -i -e "s@{{CTX_VPNC_GATEWAY_B64}}@$CTX_VPNC_GATEWAY_B64@" bender.yml
 
-            echo "$CTX_DROPBOX_ACCESS_TOKEN" | base64 | tr -d \\n > .base64_enc
+            echo -n "$CTX_DROPBOX_ACCESS_TOKEN" | base64 | tr -d \\n > .base64_enc
             export CTX_DROPBOX_ACCESS_TOKEN_B64=`cat .base64_enc`
             sed -i -e "s@{{CTX_DROPBOX_ACCESS_TOKEN_B64}}@$CTX_DROPBOX_ACCESS_TOKEN_B64@" bender.yml
 
-            echo "$CTX_SERVER_DEPLOY_SECRET" | base64 | tr -d \\n > .base64_enc
-            export CTX_SERVER_DEPLOY_SECRET_B64=`cat .base64_enc`
-            sed -i -e "s@{{CTX_SERVER_DEPLOY_SECRET_B64}}@$CTX_SERVER_DEPLOY_SECRET_B64@" bender.yml
+            sed -i -e "s@{{CTX_SERVER_DEPLOY_SECRET}}@$CTX_SERVER_DEPLOY_SECRET@" bender.yml
 
             rm .base64_enc
             scp -o StrictHostKeyChecking=no bender.yml ackersond@$K8S_SERVER:~/

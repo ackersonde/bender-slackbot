@@ -66,4 +66,4 @@ kind: Secret
 metadata:
   name: server-deploy-key-secret
 data:
-  id_rsa: {{CTX_SERVER_DEPLOY_SECRET_B64}}
+  id_rsa: {{CTX_SERVER_DEPLOY_SECRET}}
