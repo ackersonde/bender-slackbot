@@ -38,7 +38,6 @@ spec:
           secretName: server-deploy-key-secret
           defaultMode: 256
       - name: local-torrents-dir
-        readOnly: true
         hostPath:
           path: /home/pi/torrents
           type: Directory
