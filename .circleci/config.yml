@@ -103,7 +103,8 @@ jobs:
 
             rm .base64_enc
             scp -o StrictHostKeyChecking=no bender.yml ackersond@$K8S_SERVER:~/
-            ssh ackersond@$K8S_SERVER -- "sudo kubectl apply -f bender.yml"
+            ssh ackersond@$K8S_SERVER -- "sudo mkdir -p /home/pi/torrents && \
+              sudo kubectl apply -f bender.yml"
       - run:
           name: Remove deploy network access
           command: |
