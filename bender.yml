@@ -1,15 +1,7 @@
-kind: Namespace
-apiVersion: v1
-metadata:
-  name: bender
-  labels:
-    name: bender
-
----
 kind: Deployment
 apiVersion: apps/v1
 metadata:
-  namespace: bender
+  namespace: default
   name: bender
   labels:
     app: bender
