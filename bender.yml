@@ -22,25 +22,18 @@ spec:
         - name: bender
           image: danackerson/bender
           envFrom:
-            - secretRef:
-                name: bender-env-secrets
+          - secretRef:
+              name: bender-env-secrets
           volumeMounts:
           # https://www.jannikarndt.de/blog/2018/03/ssh_key_as_kubernetes_secret/
           - name: ssh-key-volume
             readOnly: true
             mountPath: "/root/.ssh"
-          - name: local-torrents-dir
-            readOnly: true
-            mountPath: "/home/pi/torrents"
       volumes:
       - name: ssh-key-volume
         secret:
           secretName: server-deploy-key-secret
           defaultMode: 256
-      - name: local-torrents-dir
-        hostPath:
-          path: /home/pi/torrents
-          type: Directory
 
 ---
 apiVersion: v1
