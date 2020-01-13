@@ -20,7 +20,7 @@ spec:
         - name: dockerhub
       containers:
         - name: bender
-          image: danackerson/bender
+          image: danackerson/bender:vc{{CIRCLE_BUILD_NUM}}
           envFrom:
           - secretRef:
               name: bender-env-secrets

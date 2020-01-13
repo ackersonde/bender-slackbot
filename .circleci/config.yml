@@ -23,16 +23,18 @@ jobs:
             go get -t -d -v ./...
             env GOOS=linux GOARCH=arm GOARM=7 go build bender.go
 
-            docker build --compress -t danackerson/bender:vc$CIRCLE_BUILD_NUM .
+            #docker build --compress -t danackerson/bender:vc$CIRCLE_BUILD_NUM .
             docker login -u $CTX_DOCKER_USER -p $CTX_DOCKER_PASS
+            docker buildx build --platform linux/arm/v7 danackerson/bender:vc$CIRCLE_BUILD_NUM --push .
             docker tag danackerson/bender:vc$CIRCLE_BUILD_NUM danackerson/bender:latest
-            docker push danackerson/bender:vc$CIRCLE_BUILD_NUM
+            #docker push danackerson/bender:vc$CIRCLE_BUILD_NUM
             docker push danackerson/bender:latest
       - run:
           name: "Prepare K8S YAML config"
           command: |
             export CIRCLE_BUILD_NUM_B64=`echo -n $CIRCLE_BUILD_NUM | base64`
             sed -i -e "s@{{CIRCLE_BUILD_NUM_B64}}@$CIRCLE_BUILD_NUM_B64@" bender.yml
+            sed -i -e "s@{{CIRCLE_BUILD_NUM}}@$CIRCLE_BUILD_NUM@" bender.yml
 
             export homeDomain_B64=`echo -n $homeDomain | base64`
             sed -i -e "s@{{homeDomain_B64}}@$homeDomain_B64@" bender.yml
