@@ -6,6 +6,5 @@ RUN cp /usr/share/zoneinfo/Europe/Berlin /etc/localtime && \
 echo "Europe/Berlin" > /etc/timezone
 
 ADD bender /app/
-ADD last_docker_push /app/
 WORKDIR /app
 ENTRYPOINT ["/app/bender"]
