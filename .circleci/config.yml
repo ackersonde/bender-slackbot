@@ -25,9 +25,9 @@ jobs:
 
             #docker build --compress -t danackerson/bender:vc$CIRCLE_BUILD_NUM .
             docker login -u $CTX_DOCKER_USER -p $CTX_DOCKER_PASS
-            docker buildx build --platform linux/arm/v7 danackerson/bender:vc$CIRCLE_BUILD_NUM --push .
+            docker builder build --platform linux/arm/v7 danackerson/bender:vc$CIRCLE_BUILD_NUM .
             docker tag danackerson/bender:vc$CIRCLE_BUILD_NUM danackerson/bender:latest
-            #docker push danackerson/bender:vc$CIRCLE_BUILD_NUM
+            docker push danackerson/bender:vc$CIRCLE_BUILD_NUM
             docker push danackerson/bender:latest
       - run:
           name: "Prepare K8S YAML config"
