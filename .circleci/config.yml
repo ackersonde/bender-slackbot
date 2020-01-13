@@ -24,6 +24,7 @@ jobs:
             env GOOS=linux GOARCH=arm GOARM=7 go build bender.go
 
             #docker build --compress -t danackerson/bender:vc$CIRCLE_BUILD_NUM .
+            mkdir ~/.docker
             echo "{ \"experimental\": true }" > ~/.docker/config.json
             docker login -u $CTX_DOCKER_USER -p $CTX_DOCKER_PASS
 
