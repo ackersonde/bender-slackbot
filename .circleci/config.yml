@@ -1,5 +1,8 @@
 version: 2.1
 
+orbs:
+  ipsec: danackerson/ipsec@0.2.4
+
 jobs:
   build:
     docker:
@@ -18,50 +21,15 @@ jobs:
           name: "Build & push docker image"
           command: |
             go get -t -d -v ./...
-            env GOOS=linux GOARCH=386 go build bender.go
-
-            echo vc$CIRCLE_BUILD_NUM > last_docker_push
+            env GOOS=linux GOARCH=arm GOARM=7 go build bender.go
 
             docker build --compress -t danackerson/bender:vc$CIRCLE_BUILD_NUM .
             docker login -u $CTX_DOCKER_USER -p $CTX_DOCKER_PASS
             docker tag danackerson/bender:vc$CIRCLE_BUILD_NUM danackerson/bender:latest
             docker push danackerson/bender:vc$CIRCLE_BUILD_NUM
             docker push danackerson/bender:latest
-      - persist_to_workspace:
-          root: /go/src/github.com/danackerson/bender-slackbot
-          paths:
-            - bender
-            - run_bender.sh
-
-  deploy:
-    docker:
-      - image: google/cloud-sdk:alpine
-    working_directory: ~/deploy
-    steps:
       - run:
-          name: Store Service Accounts
-          command: |
-            apk -u add jq
-            echo $CTX_GOOGLE_DEPLOY_SERVICE_JSON > ${HOME}/gcloud-service-key.json
-            chmod 600 $HOME/gcloud-service-key.json
-
-            gcloud auth activate-service-account --key-file=${HOME}/gcloud-service-key.json
-            gcloud --quiet config set project ${CTX_GOOGLE_PROJECT_ID}
-            gcloud --quiet config set compute/zone europe-west3-c
-      - run:
-          name: Prepare deploy network access
-          command: |
-            ORIG_RANGE=`gcloud compute firewall-rules describe default-allow-ssh \
-              --format=json | jq -r '.sourceRanges | @csv'`
-            ORIG_RANGE=`echo ${ORIG_RANGE//\"}`
-            echo $ORIG_RANGE > /tmp/orig_range.txt
-
-            export DEPLOY_IP=`curl -s https://icanhazip.com`
-            gcloud compute firewall-rules update default-allow-ssh \
-              --source-ranges=$ORIG_RANGE,$DEPLOY_IP
-      - checkout
-      - run:
-          name: "Prepare env secrets & deploy K8S config"
+          name: "Prepare K8S YAML config"
           command: |
             export CIRCLE_BUILD_NUM_B64=`echo -n $CIRCLE_BUILD_NUM | base64`
             sed -i -e "s@{{CIRCLE_BUILD_NUM_B64}}@$CIRCLE_BUILD_NUM_B64@" bender.yml
@@ -102,25 +70,34 @@ jobs:
             sed -i -e "s@{{CTX_SERVER_DEPLOY_SECRET}}@$CTX_SERVER_DEPLOY_SECRET@" bender.yml
 
             rm .base64_enc
-            scp -o StrictHostKeyChecking=no bender.yml ackersond@$K8S_SERVER:~/
-            ssh ackersond@$K8S_SERVER -- "sudo mkdir -p /home/pi/torrents && \
-              sudo kubectl apply -f bender.yml"
+      - persist_to_workspace:
+          root: /go/src/github.com/danackerson/bender-slackbot
+          paths:
+            - bender.yml
+
+commands:
+  prepare_deploy_script:
+    steps:
+      - attach_workspace:
+          at: /tmp
       - run:
-          name: Remove deploy network access
+          name: "Prepare deploy script"
           command: |
-            export ORIG_RANGE=`cat /tmp/orig_range.txt`
-            if [ ! -z "$ORIG_RANGE" ]; then
-              gcloud compute firewall-rules update default-allow-ssh \
-                --source-ranges=$ORIG_RANGE
-            fi
-          when: always
+            cat \<<EOF >deploy_script.sh
+            scp -o StrictHostKeyChecking=no /tmp/bender.yml $SSH_USER@$SSH_HOST:~/k3s/
+            ssh $SSH_USER@$SSH_HOST -- "sudo kubectl apply -f k3s/bender.yml"
+            EOF
+
+            chmod u+x deploy_script.sh
 
 workflows:
   build-deploy:
     jobs:
         - build:
             context: org-global
-        - deploy:
+        - ipsec/remote-deploy:
             context: org-global
             requires:
               - build
+            pre-steps:
+              - prepare_deploy_script
