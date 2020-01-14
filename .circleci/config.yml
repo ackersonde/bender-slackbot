@@ -15,7 +15,7 @@ jobs:
       - run:
           name: "Build & push docker image"
           command: |
-            apk add -U curl build-base git libc6-compat
+            apk add -U curl build-base git libc6-compat docker-cli
 
             go get -t -d -v ./...
             env GOOS=linux GOARCH=arm GOARM=7 go build bender.go
