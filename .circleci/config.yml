@@ -25,7 +25,7 @@ jobs:
 
             #docker build --compress -t danackerson/bender:vc$CIRCLE_BUILD_NUM .
             mkdir ~/.docker
-            echo "{ \"experimental\": enabled }" > ~/.docker/config.json
+            echo "{ \"experimental\": \"enabled\" }" > ~/.docker/config.json
             docker login -u $CTX_DOCKER_USER -p $CTX_DOCKER_PASS
             cat ~/.docker/config.json | grep enabled
 
