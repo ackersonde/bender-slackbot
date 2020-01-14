@@ -23,7 +23,8 @@ jobs:
             go get -t -d -v ./...
             env GOOS=linux GOARCH=arm GOARM=7 go build bender.go
 
-            docker build --compress -t danackerson/bender:vc$CIRCLE_BUILD_NUM .
+            docker run --rm --privileged multiarch/qemu-user-static:register
+            docker build -t danackerson/bender:vc$CIRCLE_BUILD_NUM .
             docker login -u $CTX_DOCKER_USER -p $CTX_DOCKER_PASS
             docker tag danackerson/bender:vc$CIRCLE_BUILD_NUM danackerson/bender:latest
             docker push danackerson/bender:vc$CIRCLE_BUILD_NUM
