@@ -45,7 +45,7 @@ func CheckTorrentsDiskSpace(path string) string {
 	cmd = "df -h /root/"
 	details = RemoteCmd{Host: raspberryPIIP, Cmd: cmd}
 	remoteResultDF := executeRemoteCmd(details)
-	response += "\n\n" + remoteResultDF.stdout
+	response += "\n\n" + remoteResultDF.stdout + "\n"
 
 	if !userCall {
 		customEvent := slack.RTMEvent{Type: "CheckPiDiskSpace", Data: response}
@@ -82,7 +82,7 @@ func CheckPlexDiskSpace(path string) string {
 
 	response = ":plex: *Pi4 Card Disk Usage* `pi4@" + piPlexPath + path + "`\n" + response
 
-	out2, err2 := exec.Command("/bin/df", "-h", "/", "/mnt/usb4TB").Output()
+	out2, err2 := exec.Command("/bin/df", "-h", "/mnt/usb4TB").Output()
 	if err2 != nil {
 		response += err2.Error()
 	} else {
@@ -93,40 +93,6 @@ func CheckPlexDiskSpace(path string) string {
 	if !userCall {
 		customEvent := slack.RTMEvent{Type: "CheckPiDiskSpace", Data: response}
 		rtm.IncomingEvents <- customEvent
-	}
-
-	return response
-}
-
-// DeleteTorrentFile now exported
-func DeleteTorrentFile(filename string) string {
-	var response string
-
-	if filename == "*" || filename == "" || strings.Contains(filename, "../") {
-		response = "Please enter an existing filename - try `fsck`"
-	} else {
-		path := piTorrentsPath + filename
-
-		var deleteCmd string
-		cmd := "test -d \"" + path + "\" && echo 'Yes'"
-		details := RemoteCmd{Host: raspberryPIIP, Cmd: cmd}
-
-		remoteResult := executeRemoteCmd(details)
-		if strings.HasPrefix(remoteResult.stdout, "Yes") {
-			deleteCmd = "rm -Rf \"" + path + "\""
-		} else {
-			deleteCmd = "rm \"" + path + "\""
-		}
-
-		details = RemoteCmd{Host: raspberryPIIP, Cmd: deleteCmd}
-
-		remoteResultDelete := executeRemoteCmd(details)
-		tunnelIdleSince = time.Now()
-		if remoteResultDelete.stderr != "" {
-			response = remoteResultDelete.stderr
-		} else {
-			response = remoteResultDelete.stdout
-		}
 	}
 
 	return response
