@@ -15,6 +15,11 @@ jobs:
           name: "Install Docker CE"
           command: |
             apk add -U curl build-base git libc6-compat
+
+            mkdir ~/.docker
+            json='{"experimental": "enabled"}'
+            echo $json > ~/.docker/confi2g.json
+
             curl -fsSLO https://download.docker.com/linux/static/stable/x86_64/docker-$CTX_DOCKER_ENGINE_VERSION.tgz && tar --strip-components=1 -xvzf docker-$CTX_DOCKER_ENGINE_VERSION.tgz -C /usr/local/bin
             rm docker-$CTX_DOCKER_ENGINE_VERSION.tgz && rm -f /var/cache/apk/*
       - run:
@@ -24,13 +29,9 @@ jobs:
             env GOOS=linux GOARCH=arm GOARM=7 go build bender.go
 
             #docker build --compress -t danackerson/bender:vc$CIRCLE_BUILD_NUM .
-            mkdir ~/.docker
-            json='{"experimental": "enabled"}'
-            echo $json > ~/.docker/config.json
-            docker login -u $CTX_DOCKER_USER -p $CTX_DOCKER_PASS
-            cat ~/.docker/config.json | grep enabled
-
             docker builder build --platform linux/arm/v7 danackerson/bender:vc$CIRCLE_BUILD_NUM .
+
+            docker login -u $CTX_DOCKER_USER -p $CTX_DOCKER_PASS
             docker tag danackerson/bender:vc$CIRCLE_BUILD_NUM danackerson/bender:latest
             docker push danackerson/bender:vc$CIRCLE_BUILD_NUM
             docker push danackerson/bender:latest
