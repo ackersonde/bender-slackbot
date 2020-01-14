@@ -18,7 +18,7 @@ jobs:
 
             mkdir ~/.docker
             json='{"experimental": "enabled"}'
-            echo $json > ~/.docker/confi2g.json
+            echo $json > ~/.docker/config.json
 
             curl -fsSLO https://download.docker.com/linux/static/stable/x86_64/docker-$CTX_DOCKER_ENGINE_VERSION.tgz && tar --strip-components=1 -xvzf docker-$CTX_DOCKER_ENGINE_VERSION.tgz -C /usr/local/bin
             rm docker-$CTX_DOCKER_ENGINE_VERSION.tgz && rm -f /var/cache/apk/*
