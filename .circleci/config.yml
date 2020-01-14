@@ -15,7 +15,7 @@ jobs:
       - run:
           name: "Install Docker CE"
           command: |
-            apk add -U curl build-base git libc6-compat
+            apk add -U curl build-base git libc6-compat docker-cli
 
             mkdir ~/.docker
             json='{"experimental": "enabled"}'
