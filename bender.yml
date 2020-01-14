@@ -29,11 +29,18 @@ spec:
           - name: ssh-key-volume
             readOnly: true
             mountPath: "/root/.ssh"
+          - name: local-media-dir
+            readOnly: false
+            mountPath: "/mnt/usb4TB/DLNA"
       volumes:
       - name: ssh-key-volume
         secret:
           secretName: server-deploy-key-secret
           defaultMode: 256
+      - name: local-media-dir
+        hostPath:
+          path: /mnt/usb4TB/DLNA
+          type: Directory
 
 ---
 apiVersion: v1
