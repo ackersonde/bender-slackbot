@@ -1,4 +1,4 @@
-FROM alpine
+FROM arm32v7/alpine
 RUN apk --no-cache add curl openssh-client ca-certificates tzdata
 
 # Set local time (for cronjob sense)
