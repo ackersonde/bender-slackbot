@@ -16,7 +16,7 @@ var botID = "N/A" // U2NQSPHHD bender bot userID
 
 func prepareScheduler() {
 	//gocron.Every(1).Friday().At("09:03").Do(commands.ListDODroplets, false)
-	gocron.Every(1).Friday().At("09:04").Do(commands.RaspberryPIPrivateTunnelChecks, false)
+	gocron.Every(1).Friday().At("09:04").Do(commands.VpnPiTunnelChecks, false)
 	gocron.Every(1).Friday().At("09:05").Do(commands.CheckTorrentsDiskSpace, "---")
 	gocron.Every(1).Friday().At("09:05").Do(commands.CheckPlexDiskSpace, "---")
 	//gocron.Every(1).Day().At("05:30").Do(common.UpdateFirewall)
@@ -28,7 +28,7 @@ func prepareScheduler() {
 
 func main() {
 	api := slack.New(os.Getenv("CTX_SLACK_API_TOKEN"))
-	logger := log.New(os.Stdout, "slack-bot: ", log.Lshortfile|log.LstdFlags)
+	logger := log.New(os.Stdout, "", log.LstdFlags)
 
 	slack.OptionLog(logger)
 	slack.OptionDebug(false)
@@ -49,34 +49,29 @@ func main() {
 
 			case *slack.MessageEvent:
 				originalMessage := ev.Msg.Text
-				callerID := ev.Msg.User
-				userInfo, _ := rtm.GetUserInfo(callerID)
+				if ev.Msg.User != "" {
+					userInfo, err2 := rtm.GetUserInfo(ev.Msg.User)
 
-				if userInfo == nil {
-					logger.Printf("rcvd %s from %v\n", originalMessage, ev.Msg.User)
-				} else {
-					logger.Printf("rcvd %s from: %s(%s)\n", originalMessage, userInfo.Name, userInfo.ID)
-				}
-
-				// only respond to messages sent to me by others on the same channel:
-				if ev.Msg.Type == "message" && callerID != botID && ev.Msg.SubType != "message_deleted" &&
-					(strings.Contains(ev.Msg.Text, "<@"+botID+">") ||
-						strings.HasPrefix(ev.Msg.Channel, "D") ||
-						ev.Msg.Channel == commands.SlackReportChannel) {
-					// strip out bot's name and spaces
-					parsedMessage := strings.TrimSpace(strings.Replace(originalMessage, "<@"+botID+">", "", -1))
-					r, n := utf8.DecodeRuneInString(parsedMessage)
-					parsedMessage = string(unicode.ToLower(r)) + parsedMessage[n:]
-
-					var userName string
-					if userInfo == nil {
-						userName = "algo-build-bot"
-					} else {
-						userName = userInfo.Name
+					if err2 != nil {
+						logger.Printf("ERR: %s", err2.Error())
 					}
-					logger.Printf("%s: %v\n", userName, parsedMessage)
 
-					commands.CheckCommand(api, ev.Msg, parsedMessage)
+					if userInfo != nil {
+						// only respond to messages sent to me by others on the same channel:
+						if ev.Msg.Type == "message" && ev.Msg.User != botID && ev.Msg.SubType != "message_deleted" &&
+							(strings.Contains(ev.Msg.Text, "<@"+botID+">") ||
+								strings.HasPrefix(ev.Msg.Channel, "D") ||
+								ev.Msg.Channel == commands.SlackReportChannel) {
+							// strip out bot's name and spaces
+							parsedMessage := strings.TrimSpace(strings.Replace(originalMessage, "<@"+botID+">", "", -1))
+							r, n := utf8.DecodeRuneInString(parsedMessage)
+							parsedMessage = string(unicode.ToLower(r)) + parsedMessage[n:]
+
+							logger.Printf("%s(%s) asks '%v'\n", userInfo.Name, userInfo.ID, parsedMessage)
+
+							commands.CheckCommand(api, ev.Msg, parsedMessage)
+						}
+					}
 				}
 
 			case *slack.RTMError:
@@ -91,7 +86,7 @@ func main() {
 				// via it's builtin channel. here we check for custom events and act
 				// accordingly
 				if msg.Type == "ListDODroplets" || msg.Type == "MoveTorrent" ||
-					msg.Type == "RaspberryPIPrivateTunnelChecks" ||
+					msg.Type == "VpnPiTunnelChecks" ||
 					msg.Type == "CheckPiDiskSpace" || msg.Type == "ShowBBGames" {
 					response := msg.Data.(string)
 					params := slack.MsgOptionAsUser(true)

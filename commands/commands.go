@@ -16,6 +16,7 @@ import (
 var rtm *slack.RTM
 var joinAPIKey = os.Getenv("CTX_JOIN_API_KEY")
 var vpnGateway = os.Getenv("CTX_VPNC_GATEWAY")
+var circleCIBuildNum = os.Getenv("CIRCLE_BUILD_NUM")
 
 var circleCIDoAlgoURL = "https://circleci.com/api/v1.1/project/github/danackerson/do-algo"
 var circleCITokenParam = "?circle-token=" + os.Getenv("CTX_CIRCLECI_API_TOKEN")
@@ -140,9 +141,13 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 			_, response = SearchFor("", Category(cat))
 		}
 		api.PostMessage(slackMessage.Channel, slack.MsgOptionText(response, false), params)
-	} else if args[0] == "ovpn" {
-		response := RaspberryPIPrivateTunnelChecks(true)
+	} else if args[0] == "vpns" {
+		response := VpnPiTunnelChecks(true)
 		rtm.SendMessage(rtm.NewOutgoingMessage(response, slackMessage.Channel))
+	} else if args[0] == "version" {
+		response := ":circleci: <https://circleci.com/gh/danackerson/bender-slackbot/" +
+			circleCIBuildNum + "|" + circleCIBuildNum + ">"
+		api.PostMessage(slackMessage.Channel, slack.MsgOptionText(response, false), params)
 	} else if args[0] == "sw" {
 		response := ":partly_sunny_rain: <https://darksky.net/forecast/48.3028,11.3591/ca24/en#week|7-day forecast Schwabhausen>"
 		api.PostMessage(slackMessage.Channel, slack.MsgOptionText(response, false), params)
@@ -160,13 +165,14 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 			":sun_behind_rain_cloud: `sw`: Schwabhausen weather\n" +
 				":metro: `mvv`: Status | Trip In | Trip Home\n" +
 				":do_droplet: `do|dd <id>`: show|delete DigitalOcean droplet(s)\n" +
-				":openvpn: `ovpn`: show status of OVPN.se on :raspberry_pi:\n" +
+				":protonvpn: `vpns`: show status of VPN on :raspberry_pi:\n" +
 				":pirate_bay: `torq <search term>`\n" +
 				":transmission: `tran[c|p|s|d]`: [C]reate <URL>, [P]aused <URL>, [S]tatus, [D]elete <ID> torrents on :raspberry_pi:\n" +
 				":movie_camera: `mv " + piPlexPath + "/torrents/<filename> [movies|tv/(<path>)]`\n" +
 				":floppy_disk: `fsck`: show disk space on :raspberry_pi:\n" +
 				":baseball: `bb <YYYY-MM-DD>`: show baseball games from given date (default yesterday)\n" +
-				":youtube: `yt <video url>`: Download Youtube video to Papa's handy\n"
+				":youtube: `yt <video url>`: Download Youtube video to Papa's handy\n" +
+				":circleci: `version`: Which build number is this Bender?\n"
 		api.PostMessage(slackMessage.Channel, slack.MsgOptionText(response, true), params)
 	} else if callingUserProfile != nil {
 		rtm.SendMessage(rtm.NewOutgoingMessage("whaddya say <@"+callingUserProfile.Name+">? Try `help` instead...",

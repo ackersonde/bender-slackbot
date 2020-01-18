@@ -10,7 +10,7 @@ import (
 	"github.com/nlopes/slack"
 )
 
-var raspberryPIIP = "192.168.178.25"
+var raspberryPIIP = "192.168.178.59"
 var pi4 = "pi4.fritz.box"
 
 var piTorrentsPath = "/home/pi/torrents"
@@ -40,7 +40,8 @@ func CheckTorrentsDiskSpace(path string) string {
 	} else {
 		response = remoteResult.stdout
 	}
-	response = ":raspberry_pi: *SD Card Disk Usage* `raspberrypi@" + piTorrentsPath + path + "`\n" + response
+	response = ":raspberry_pi: *SD Card Disk Usage* `vpnpi@" + piTorrentsPath +
+		path + "`\n" + response
 
 	cmd = "df -h /root/"
 	details = RemoteCmd{Host: raspberryPIIP, Cmd: cmd}
@@ -73,14 +74,15 @@ func CheckPlexDiskSpace(path string) string {
 	if !strings.HasSuffix(path, "/*") {
 		cmd += " | sed '1d'"
 	}
-	out, err := exec.Command("ash", "-c", cmd).Output()
+	out, err := exec.Command("sh", "-c", cmd).Output() // ash -> sh ?
 	if err != nil {
 		response = fmt.Sprintf(fmt.Sprint(err) + ": " + string(out))
 	} else {
 		response = string(strings.Replace(string(out), piPlexPath+"/", "", -1))
 	}
 
-	response = ":plex: *Pi4 Card Disk Usage* `pi4@" + piPlexPath + path + "`\n" + response
+	response = ":plex: *Pi4 Card Disk Usage* `pi4@" + piPlexPath + path +
+		"`\n" + response + "\n"
 
 	out2, err2 := exec.Command("/bin/df", "-h", "/mnt/usb4TB").Output()
 	if err2 != nil {
@@ -88,7 +90,7 @@ func CheckPlexDiskSpace(path string) string {
 	} else {
 		response += string(out2)
 	}
-	response += "\n\n==============================\n\n"
+	response += "\n==============================\n"
 
 	if !userCall {
 		customEvent := slack.RTMEvent{Type: "CheckPiDiskSpace", Data: response}
@@ -115,13 +117,17 @@ func MoveTorrentFile(api *slack.Client, sourceFile string, destinationDir string
 		if strings.HasPrefix(destinationDir, "tv") {
 			librarySection = "5"
 		}
-		refreshCmd := fmt.Sprintf("curl http://pi4:32400/library/sections/%s/refresh?X-Plex-Token=%s", librarySection, plexToken)
+		refreshCmd := fmt.Sprintf(
+			"curl http://pi4:32400/library/sections/%s/refresh?X-Plex-Token=%s",
+			librarySection, plexToken)
 		out, err := exec.Command("ash", "-c", refreshCmd).Output()
 		if err != nil {
 			response += fmt.Sprintf(fmt.Sprint(err) + ": " + string(out))
 			response = ":x: ERR: `" + refreshCmd + "` => " + response
 		} else {
-			response += fmt.Sprintf("refreshed <http://pi4:32400/web/index.html|Plex library %s>\n", librarySection)
+			response += fmt.Sprintf(
+				"refreshed <http://pi4:32400/web/index.html|Plex library %s>\n",
+				librarySection)
 		}
 	}
 

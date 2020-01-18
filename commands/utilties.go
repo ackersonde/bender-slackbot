@@ -34,8 +34,8 @@ func remoteConnectionConfiguration(unparsedHostKey string, username string) *ssh
 		log.Printf("error parsing: %v", err)
 	}
 
-	// TODO: read this ssh key from mounted K8S volume
-	key, err := ioutil.ReadFile("/root/.ssh/id_rsa")
+	// TODO: change back to /root/.ssh/id_rsa
+	key, err := ioutil.ReadFile("/Users/ackersond/.ssh/id_circleci_rsa")
 	signer, err := ssh.ParsePrivateKey(key)
 	if err != nil {
 		log.Printf("Unable to parse private key: %v", err)
@@ -59,6 +59,7 @@ func executeRemoteCmd(details RemoteCmd) RemoteResult {
 	conn, errConn := ssh.Dial("tcp", connectionString, connectConfig)
 	if errConn != nil { //catch
 		fmt.Fprintf(os.Stderr, "Exception: %v\n", errConn)
+		return RemoteResult{"", errConn.Error()}
 	}
 	session, _ := conn.NewSession()
 	defer session.Close()
