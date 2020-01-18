@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/nlopes/slack"
+	"github.com/rs/zerolog/log"
 )
 
 var tunnelOnTime time.Time
@@ -41,9 +42,9 @@ func homeAndInternetIPsDoNotMatch(tunnelIP string) bool {
 		if res != "" {
 			err := json.Unmarshal([]byte(res), &jsonRes)
 			if err != nil {
-				fmt.Printf("unable to parse JSON string (%v)\n%s\n", err, res)
+				log.Printf("unable to parse JSON string (%v)\n%s\n", err, res)
 			} else {
-				fmt.Printf("ipleak.net: %v\n", jsonRes)
+				log.Printf("ipleak.net: %v\n", jsonRes)
 			}
 
 			// We're not in Kansas anymore + using tunnel IP for Internet
@@ -53,7 +54,7 @@ func homeAndInternetIPsDoNotMatch(tunnelIP string) bool {
 				// ensure home.ackerson.de is DIFFERENT than PI IP address!
 				go func() {
 					cmd := "dig " + vpnGateway + " A +short"
-					fmt.Printf("%s\n", cmd)
+					log.Printf("%s\n", cmd)
 					details := RemoteCmd{Host: raspberryPIIP, Cmd: cmd}
 
 					remoteResult := executeRemoteCmd(details)
@@ -134,7 +135,7 @@ func VpnPiTunnelChecks(userCall bool) string {
 
 	// endpointDNS:de-14.protonvpn.com endpointIP:37.120.217.164 internalIP:10.6.4.224 time:39 minutes
 	vpnTunnelSpecs := inspectVPNConnection()
-	fmt.Printf("Using VPN server: %s\n", vpnTunnelSpecs["endpointDNS"])
+	log.Printf("Using VPN server: %s\n", vpnTunnelSpecs["endpointDNS"])
 	if len(vpnTunnelSpecs) > 0 {
 		tunnelIP = vpnTunnelSpecs["endpointIP"]
 	}
