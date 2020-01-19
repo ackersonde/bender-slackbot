@@ -83,12 +83,12 @@ commands:
       - run:
           name: "Prepare deploy script"
           command: |
-            cat \<<EOF >deploy_script.sh
+            cat \<<EOF >/tmp/deploy_script.sh
             scp -o StrictHostKeyChecking=no /tmp/bender.yml $SSH_USER@$SSH_HOST:~/k3s/
             ssh $SSH_USER@$SSH_HOST -- "sudo kubectl apply -f k3s/bender.yml"
             EOF
 
-            chmod u+x deploy_script.sh
+            chmod u+x /tmp/deploy_script.sh
       - persist_to_workspace:
           root: /tmp
           paths:
