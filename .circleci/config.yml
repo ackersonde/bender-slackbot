@@ -21,12 +21,12 @@ jobs:
             env GOOS=linux GOARCH=arm GOARM=7 go build bender.go
 
             docker run --rm --privileged multiarch/qemu-user-static:register
-            docker build --compress -t danackerson/bender:vc$CIRCLE_BUILD_NUM .
+            docker build --compress -t danackerson/slackbot:vc$CIRCLE_BUILD_NUM .
 
             docker login -u $CTX_DOCKER_USER -p $CTX_DOCKER_PASS
-            docker tag danackerson/bender:vc$CIRCLE_BUILD_NUM danackerson/bender:latest
-            docker push danackerson/bender:vc$CIRCLE_BUILD_NUM
-            docker push danackerson/bender:latest
+            docker tag danackerson/slackbot:vc$CIRCLE_BUILD_NUM danackerson/slackbot:latest
+            docker push danackerson/slackbot:vc$CIRCLE_BUILD_NUM
+            docker push danackerson/slackbot:latest
       - run:
           name: "Prepare K8S YAML config"
           command: |
