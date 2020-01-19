@@ -1,7 +1,7 @@
 version: 2.1
 
 orbs:
-  ipsec: danackerson/ipsec@1.0.3
+  ipsec: danackerson/ipsec@1.0.4
 
 jobs:
   build:
@@ -89,6 +89,10 @@ commands:
             EOF
 
             chmod u+x deploy_script.sh
+      - persist_to_workspace:
+          root: /tmp
+          paths:
+            - bender.yml
 
 workflows:
   build-deploy:
