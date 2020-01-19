@@ -101,7 +101,7 @@ func inspectVPNConnection() map[string]string {
 			/* look for 1) ESTABLISHED "ago" 2) ...X.Y.Z[<endpointDNS>] 3) internalIP/32 ===
 			   proton[34]: ESTABLISHED 89 minutes ago, 192.168.178.59[192.168.178.59]...37.120.217.164[de-14.protonvpn.com]
 			   proton{811}:  INSTALLED, TUNNEL, reqid 1, ESP in UDP SPIs: c147cfa6_i c8f7804c_o
-			   proton{811}:   10.6.4.224/32 === 0.0.0.0/0
+			   proton{811}:  10.6.4.224/32 === 0.0.0.0/0
 			*/
 			re := regexp.MustCompile(`(?s)ESTABLISHED (?P<time>[0-9]+\s\w+)\sago.*\.\.\.(?P<endpointIP>.*)\[(?P<endpointDNS>.*)].*:\s+(?P<internalIP>.*)\/32\s===.*`)
 			matches := re.FindAllStringSubmatch(res, -1)
