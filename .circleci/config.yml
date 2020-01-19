@@ -93,6 +93,8 @@ commands:
           root: /tmp
           paths:
             - bender.yml
+            - deploy_script.sh
+
 
 workflows:
   build-deploy:
