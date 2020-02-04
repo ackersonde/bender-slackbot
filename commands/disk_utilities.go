@@ -93,9 +93,9 @@ func CheckPlexDiskSpace(path string) string {
 	remoteResult = executeRemoteCmd(details)
 
 	if remoteResult.stdout == "" && remoteResult.stderr != "" {
-		response = remoteResult.stderr
+		response = response + "\n" + remoteResult.stderr
 	} else {
-		response = remoteResult.stdout
+		response = response + "\n" + remoteResult.stdout
 	}
 	response += "\n==============================\n"
 
