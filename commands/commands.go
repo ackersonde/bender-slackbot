@@ -97,11 +97,11 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 		response := ""
 		if len(args) > 1 {
 			path := strings.Join(args[1:], " ")
-			response += CheckTorrentsDiskSpace(path)
-			response += CheckPlexDiskSpace(path)
+			response += CheckMediaDiskSpace(path)
+			response += CheckServerDiskSpace(path)
 		} else {
-			response += CheckTorrentsDiskSpace("")
-			response += CheckPlexDiskSpace("")
+			response += CheckMediaDiskSpace("")
+			response += CheckServerDiskSpace("")
 		}
 		rtm.SendMessage(rtm.NewOutgoingMessage(response, slackMessage.Channel))
 	} else if args[0] == "mv" {

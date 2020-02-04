@@ -17,8 +17,8 @@ var botID = "N/A" // U2NQSPHHD bender bot userID
 func prepareScheduler() {
 	//gocron.Every(1).Friday().At("09:03").Do(commands.ListDODroplets, false)
 	gocron.Every(1).Friday().At("09:04").Do(commands.VpnPiTunnelChecks, false)
-	gocron.Every(1).Friday().At("09:05").Do(commands.CheckTorrentsDiskSpace, "---")
-	gocron.Every(1).Friday().At("09:05").Do(commands.CheckPlexDiskSpace, "---")
+	gocron.Every(1).Friday().At("09:05").Do(commands.CheckMediaDiskSpace, "---")
+	gocron.Every(1).Friday().At("09:05").Do(commands.CheckServerDiskSpace, "---")
 	//gocron.Every(1).Day().At("05:30").Do(common.UpdateFirewall)
 	//gocron.Every(1).Day().At("17:30").Do(commands.ShowBBGames, false, "")
 	<-gocron.Start()

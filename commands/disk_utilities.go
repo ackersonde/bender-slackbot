@@ -17,8 +17,8 @@ var pi4 = "pi4.fritz.box"
 var piTorrentsPath = "/home/pi/torrents"
 var piPlexPath = "/mnt/usb4TB/DLNA"
 
-// CheckTorrentsDiskSpace now exported
-func CheckTorrentsDiskSpace(path string) string {
+// CheckServerDiskSpace now exported
+func CheckServerDiskSpace(path string) string {
 	userCall := true
 	if path == "---" {
 		path = ""
@@ -30,25 +30,15 @@ func CheckTorrentsDiskSpace(path string) string {
 		}
 	}
 
-	cmd := "du -bh " + piTorrentsPath + path + "/*"
-
 	response := ""
-	details := RemoteCmd{Host: raspberryPIIP, Cmd: cmd}
-	remoteResult := executeRemoteCmd(details)
-
-	if remoteResult.stdout == "" && remoteResult.stderr != "" {
-		response = remoteResult.stderr
+	out2, err2 := exec.Command("/bin/df", "-h", "/").Output()
+	if err2 != nil {
+		response += err2.Error()
 	} else {
-		response = remoteResult.stdout
+		response += string(out2)
 	}
-	response = ":raspberry_pi: *SD Card Disk Usage* `vpnpi@" + piTorrentsPath +
-		path + "`\n" + response
 
-	cmd = "df -h /root/"
-	details = RemoteCmd{Host: raspberryPIIP, Cmd: cmd}
-	remoteResultDF := executeRemoteCmd(details)
-	response += "\n\n" + remoteResultDF.stdout + "\n"
-
+	response = ":raspberry_pi: *SD Card Disk Usage* `pi4`\n" + response
 	if !userCall {
 		customEvent := slack.RTMEvent{Type: "CheckPiDiskSpace", Data: response}
 		rtm.IncomingEvents <- customEvent
@@ -57,8 +47,8 @@ func CheckTorrentsDiskSpace(path string) string {
 	return response
 }
 
-// CheckPlexDiskSpace now exported
-func CheckPlexDiskSpace(path string) string {
+// CheckMediaDiskSpace now exported
+func CheckMediaDiskSpace(path string) string {
 	userCall := true
 	if path == "---" {
 		path = ""
@@ -88,7 +78,7 @@ func CheckPlexDiskSpace(path string) string {
 	response = ":plex: *Pi4 Card Disk Usage* `vpnpi@" + piPlexPath + path +
 		"`\n" + response + "\n"
 
-	cmd = fmt.Sprintf("/bin/df -h %s", piPlexPath+path)
+	cmd = fmt.Sprintf("/bin/df -h %s /", piPlexPath+path)
 	details = RemoteCmd{Host: raspberryPIIP, Cmd: cmd}
 	remoteResult = executeRemoteCmd(details)
 
