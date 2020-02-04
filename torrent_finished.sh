@@ -16,8 +16,8 @@ localDestPath="/home/pi/torrents"
 transmission-remote localhost:9091 -t "${TR_TORRENT_ID}" --move "${localDestPath}"
 transmission-remote localhost:9091 -t "${TR_TORRENT_ID}" --remove
 
-if scp -i /home/pi/.ssh/id_rsa -r "${localDestPath}/$TR_TORRENT_NAME" pi@pi4:/mnt/usb4TB/DLNA/torrents/ ; then
+if mv "${localDestPath}/$TR_TORRENT_NAME" /mnt/usb4TB/DLNA/torrents/ ; then
     rm -Rf "${localDestPath}/$TR_TORRENT_NAME"
-    ssh pi@pi4 -- detox -r '/mnt/usb4TB/DLNA/torrents/$TR_TORRENT_NAME'
-    curl http://pi4:32400/library/sections/$PLEX_TORRENT_LIBRARY_SECTION/refresh?X-Plex-Token=$PLEX_TOKEN
+    detox -r '/mnt/usb4TB/DLNA/torrents/$TR_TORRENT_NAME'
+    curl http://vpnpi:32400/library/sections/$PLEX_TORRENT_LIBRARY_SECTION/refresh?X-Plex-Token=$PLEX_TOKEN
 fi
