@@ -2,6 +2,7 @@ package commands
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
 	"strings"
@@ -74,7 +75,7 @@ func CheckPlexDiskSpace(path string) string {
 	if !strings.HasSuffix(path, "/*") {
 		cmd += " | sed '1d'"
 	}
-
+	log.Printf("cmd: %s", cmd)
 	details := RemoteCmd{Host: raspberryPIIP, Cmd: cmd}
 	remoteResult := executeRemoteCmd(details)
 
@@ -84,7 +85,7 @@ func CheckPlexDiskSpace(path string) string {
 		response = remoteResult.stdout
 	}
 
-	response = ":plex: *Pi4 Card Disk Usage* `pi4@" + piPlexPath + path +
+	response = ":plex: *Pi4 Card Disk Usage* `vpnpi@" + piPlexPath + path +
 		"`\n" + response + "\n"
 
 	cmd = fmt.Sprintf("/bin/df -h %s", piPlexPath+path)
