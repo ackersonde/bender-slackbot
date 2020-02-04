@@ -74,21 +74,30 @@ func CheckPlexDiskSpace(path string) string {
 	if !strings.HasSuffix(path, "/*") {
 		cmd += " | sed '1d'"
 	}
-	out, err := exec.Command("sh", "-c", cmd).Output() // ash -> sh ?
-	if err != nil {
-		response = fmt.Sprintf(fmt.Sprint(err) + ": " + string(out))
+
+	details := RemoteCmd{Host: raspberryPIIP, Cmd: cmd}
+	remoteResult := executeRemoteCmd(details)
+
+	if remoteResult.stdout == "" && remoteResult.stderr != "" {
+		response = remoteResult.stderr
 	} else {
-		response = string(strings.Replace(string(out), piPlexPath+"/", "", -1))
+		response = remoteResult.stdout
 	}
+
+	response = ":raspberry_pi: *SD Card Disk Usage* `vpnpi@" + piTorrentsPath +
+		path + "`\n" + response
 
 	response = ":plex: *Pi4 Card Disk Usage* `pi4@" + piPlexPath + path +
 		"`\n" + response + "\n"
 
-	out2, err2 := exec.Command("/bin/df", "-h", "/mnt/usb4TB").Output()
-	if err2 != nil {
-		response += err2.Error()
+	cmd = fmt.Sprintf("/bin/df -h %s", piPlexPath+path)
+	details = RemoteCmd{Host: raspberryPIIP, Cmd: cmd}
+	remoteResult = executeRemoteCmd(details)
+
+	if remoteResult.stdout == "" && remoteResult.stderr != "" {
+		response = remoteResult.stderr
 	} else {
-		response += string(out2)
+		response = remoteResult.stdout
 	}
 	response += "\n==============================\n"
 
