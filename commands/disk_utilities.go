@@ -84,9 +84,6 @@ func CheckPlexDiskSpace(path string) string {
 		response = remoteResult.stdout
 	}
 
-	response = ":raspberry_pi: *SD Card Disk Usage* `vpnpi@" + piTorrentsPath +
-		path + "`\n" + response
-
 	response = ":plex: *Pi4 Card Disk Usage* `pi4@" + piPlexPath + path +
 		"`\n" + response + "\n"
 
