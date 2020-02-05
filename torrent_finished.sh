@@ -11,13 +11,13 @@ PLEX_TORRENT_LIBRARY_SECTION=3
 PLEX_TOKEN=$PLEX_TOKEN
 # https://support.plex.tv/articles/201638786-plex-media-server-url-commands/
 
-localDestPath="/home/pi/torrents"
+sourcePath="/home/pi/torrents"
+destinationPath="/mnt/usb4TB/DLNA/torrents"
 
-transmission-remote localhost:9091 -t "${TR_TORRENT_ID}" --move "${localDestPath}"
+transmission-remote localhost:9091 -t "${TR_TORRENT_ID}" --move "${sourcePath}"
 transmission-remote localhost:9091 -t "${TR_TORRENT_ID}" --remove
 
-if mv "${localDestPath}/$TR_TORRENT_NAME" /mnt/usb4TB/DLNA/torrents/ ; then
-    rm -Rf "${localDestPath}/$TR_TORRENT_NAME"
-    detox -r '/mnt/usb4TB/DLNA/torrents/$TR_TORRENT_NAME'
-    curl http://vpnpi:32400/library/sections/$PLEX_TORRENT_LIBRARY_SECTION/refresh?X-Plex-Token=$PLEX_TOKEN
+if mv "${sourcePath}/$TR_TORRENT_NAME" "${destinationPath}"/ ; then
+    detox -r "${destinationPath}/$TR_TORRENT_NAME"
+    curl http://192.168.179.59:32400/library/sections/$PLEX_TORRENT_LIBRARY_SECTION/refresh?X-Plex-Token=$PLEX_TOKEN
 fi
