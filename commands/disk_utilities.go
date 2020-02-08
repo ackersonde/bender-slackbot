@@ -117,8 +117,9 @@ func MoveTorrentFile(api *slack.Client, sourceFile string, destinationDir string
 			librarySection = "2"
 		}
 		refreshCmd := fmt.Sprintf(
-			"curl http://"+raspberryPIIP+":32400/library/sections/%s/refresh?X-Plex-Token=%s",
-			librarySection, plexToken)
+			"curl http://"+raspberryPIIP+":32400/library/sections/3/refresh?X-Plex-Token=%s && "+
+				"curl http://"+raspberryPIIP+":32400/library/sections/%s/refresh?X-Plex-Token=%s",
+			plexToken, librarySection, plexToken)
 		out, err := exec.Command("ash", "-c", refreshCmd).Output()
 		if err != nil {
 			response += fmt.Sprintf(fmt.Sprint(err) + ": " + string(out))
@@ -130,7 +131,7 @@ func MoveTorrentFile(api *slack.Client, sourceFile string, destinationDir string
 		}
 	}
 
-	api.PostMessage(SlackReportChannel, slack.MsgOptionText(response, true), params)
+	api.PostMessage(SlackReportChannel, slack.MsgOptionText(response, false), params)
 
 	//reportMoveProgress(api)
 }
