@@ -79,7 +79,7 @@ func deleteTorrents(t *transmission.Client, torrentIDStr string) (result string)
 	result = fmt.Sprintf(":x: deleting torrent #%d\n", torrentID)
 	torrentToDelete := &transmission.Torrent{ID: torrentID}
 	removeErr := t.RemoveTorrents([]*transmission.Torrent{torrentToDelete}, false)
-	if err != nil {
+	if removeErr != nil {
 		log.Printf("\nRemove err: %v", removeErr)
 	}
 

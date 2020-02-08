@@ -38,7 +38,7 @@ func CheckServerDiskSpace(path string) string {
 		response += string(out2)
 	}
 
-	response = ":raspberry_pi: *SD Card Disk Usage* `pi4`\n" + response
+	response = ":k8s: *SD Card Disk Usage* `pi4`\n" + response
 	if !userCall {
 		customEvent := slack.RTMEvent{Type: "CheckPiDiskSpace", Data: response}
 		rtm.IncomingEvents <- customEvent
@@ -75,7 +75,7 @@ func CheckMediaDiskSpace(path string) string {
 		response = remoteResult.stdout
 	}
 
-	response = ":plex: *Pi4 Card Disk Usage* `vpnpi@" + piPlexPath + path +
+	response = ":plex: USB *Disk Usage* `vpnpi@" + piPlexPath + path +
 		"`\n" + response + "\n"
 
 	cmd = fmt.Sprintf("/bin/df -h %s /", piPlexPath+path)
@@ -87,7 +87,7 @@ func CheckMediaDiskSpace(path string) string {
 	} else {
 		response = response + "\n" + remoteResult.stdout
 	}
-	response += "\n==============================\n"
+	response += "\n=============================\n"
 
 	if !userCall {
 		customEvent := slack.RTMEvent{Type: "CheckPiDiskSpace", Data: response}
@@ -103,19 +103,21 @@ func MoveTorrentFile(api *slack.Client, sourceFile string, destinationDir string
 	response := ""
 
 	moveCmd := fmt.Sprintf("mv %s/%s %s/%s", piPlexPath, sourceFile, piPlexPath, destinationDir)
-	out, err := exec.Command("ash", "-c", moveCmd).Output()
-	if err != nil {
-		response = fmt.Sprintf(fmt.Sprint(err) + ": " + string(out))
+	details := RemoteCmd{Host: raspberryPIIP, Cmd: moveCmd}
+	remoteResult := executeRemoteCmd(details)
+
+	if remoteResult.stdout == "" && remoteResult.stderr != "" {
+		response = fmt.Sprintf(fmt.Sprint(remoteResult.stderr) + ": " + string(remoteResult.stdout))
 		response = ":x: ERR: `" + moveCmd + "` => " + response
 	} else {
 		response += fmt.Sprintf("moved: %s to %s\n", sourceFile, destinationDir)
 		librarySection := "1"
 		plexToken := os.Getenv("PLEX_TOKEN")
 		if strings.HasPrefix(destinationDir, "tv") {
-			librarySection = "5"
+			librarySection = "2"
 		}
 		refreshCmd := fmt.Sprintf(
-			"curl http://pi4:32400/library/sections/%s/refresh?X-Plex-Token=%s",
+			"curl http://"+raspberryPIIP+":32400/library/sections/%s/refresh?X-Plex-Token=%s",
 			librarySection, plexToken)
 		out, err := exec.Command("ash", "-c", refreshCmd).Output()
 		if err != nil {
@@ -123,7 +125,7 @@ func MoveTorrentFile(api *slack.Client, sourceFile string, destinationDir string
 			response = ":x: ERR: `" + refreshCmd + "` => " + response
 		} else {
 			response += fmt.Sprintf(
-				"refreshed <http://pi4:32400/web/index.html|Plex library %s>\n",
+				"refreshed <http://vpnpi:32400/web/index.html|Plex library %s>\n",
 				librarySection)
 		}
 	}

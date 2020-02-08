@@ -164,13 +164,13 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 		response :=
 			":sun_behind_rain_cloud: `sw`: Schwabhausen weather\n" +
 				":metro: `mvv`: Status | Trip In | Trip Home\n" +
-				":do_droplet: `do|dd <id>`: show|delete DigitalOcean droplet(s)\n" +
+				":baseball: `bb <YYYY-MM-DD>`: show baseball games from given date (default yesterday)\n" +
+				//":do_droplet: `do|dd <id>`: show|delete DigitalOcean droplet(s)\n" +
 				":protonvpn: `vpns`: show status of VPN on :raspberry_pi:\n" +
 				":pirate_bay: `torq <search term>`\n" +
 				":transmission: `tran[c|p|s|d]`: [C]reate <URL>, [P]aused <URL>, [S]tatus, [D]elete <ID> torrents on :raspberry_pi:\n" +
 				":movie_camera: `mv " + piPlexPath + "/torrents/<filename> [movies|tv/(<path>)]`\n" +
 				":floppy_disk: `fsck`: show disk space on :raspberry_pi:\n" +
-				":baseball: `bb <YYYY-MM-DD>`: show baseball games from given date (default yesterday)\n" +
 				":youtube: `yt <video url>`: Download Youtube video to Papa's handy\n" +
 				":circleci: `version`: Which build number is this Bender?\n"
 		api.PostMessage(slackMessage.Channel, slack.MsgOptionText(response, true), params)

@@ -131,9 +131,8 @@ func inspectVPNConnection() map[string]string {
 // VpnPiTunnelChecks ensures good VPN connection
 func VpnPiTunnelChecks(userCall bool) string {
 	tunnelIP := ""
-	response := ":protonvpn: VPN status: DOWN :rotating_light:"
+	response := ":protonvpn: VPN: DOWN :rotating_light:"
 
-	// endpointDNS:de-14.protonvpn.com endpointIP:37.120.217.164 internalIP:10.6.4.224 time:39 minutes
 	vpnTunnelSpecs := inspectVPNConnection()
 	log.Printf("Using VPN server: %s\n", vpnTunnelSpecs["endpointDNS"])
 	if len(vpnTunnelSpecs) > 0 {
@@ -142,7 +141,7 @@ func VpnPiTunnelChecks(userCall bool) string {
 
 	if homeAndInternetIPsDoNotMatch(tunnelIP) &&
 		nftablesUseVPNTunnel(tunnelIP, vpnTunnelSpecs["internalIP"]) {
-		response = ":protonvpn: PI status: UP :raspberry_pi: @ " + tunnelIP +
+		response = ":protonvpn: VPN: UP @ " + tunnelIP +
 			" for " + vpnTunnelSpecs["time"] + " (using " +
 			vpnTunnelSpecs["endpointDNS"] + ")"
 	}
