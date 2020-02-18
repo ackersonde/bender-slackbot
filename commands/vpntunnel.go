@@ -48,7 +48,7 @@ func homeAndInternetIPsDoNotMatch(tunnelIP string) bool {
 			}
 
 			// We're not in Kansas anymore + using tunnel IP for Internet
-			if jsonRes.RegionName == "Land Berlin" && jsonRes.IP == tunnelIP {
+			if jsonRes.IP == tunnelIP {
 				resultsDig := make(chan string, 10)
 				timeoutDig := time.After(10 * time.Second)
 				// ensure home.ackerson.de is DIFFERENT than PI IP address!
