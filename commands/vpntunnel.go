@@ -3,14 +3,20 @@ package commands
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"net/http"
 	"regexp"
+	"sort"
 	"strings"
 	"time"
 
+	"github.com/danackerson/bender-slackbot/structures"
 	"github.com/nlopes/slack"
 	"github.com/rs/zerolog/log"
 )
 
+var vpnLogicalsURI = "https://api.protonmail.ch/vpn/logicals"
+var maxVPNServerLoad = 80
 var tunnelOnTime time.Time
 var tunnelIdleSince time.Time
 var maxTunnelIdleTime = float64(5 * 60) // 5 mins in seconds
@@ -128,8 +134,53 @@ func inspectVPNConnection() map[string]string {
 	return map[string]string{}
 }
 
+func findBestVPNServer(vpnCountry string) structures.LogicalServer {
+	protonVPNServers := new(structures.ProtonVPNServers)
+	protonVPNServersResp, err := http.Get(vpnLogicalsURI)
+	if err != nil {
+		log.Printf("protonVPN API ERR: %s\n", err)
+	} else {
+		defer protonVPNServersResp.Body.Close()
+		protonVPNServersJSON, err2 := ioutil.ReadAll(protonVPNServersResp.Body)
+		if err2 != nil {
+			log.Printf("protonVPN ERR2: %s\n", err2)
+		}
+		json.Unmarshal([]byte(protonVPNServersJSON), &protonVPNServers)
+	}
+
+	// we're only interested in premium VPN servers from one country
+	i := 0
+	for k, x := range protonVPNServers.LogicalServers {
+		if protonVPNServers.LogicalServers[k].EntryCountry == vpnCountry &&
+			protonVPNServers.LogicalServers[k].Tier >= 2 {
+			protonVPNServers.LogicalServers[i] = x
+			i++
+		} else {
+			continue
+		}
+	}
+	protonVPNServers.LogicalServers = protonVPNServers.LogicalServers[:i]
+
+	// order servers by highest score
+	sort.Slice(protonVPNServers.LogicalServers, func(i, j int) bool {
+		return protonVPNServers.LogicalServers[i].Score > protonVPNServers.LogicalServers[j].Score
+	})
+
+	var bestServer structures.LogicalServer
+
+	// suggest highest scoring VPN server with load < maxVPNServerLoad
+	for k := range protonVPNServers.LogicalServers {
+		if protonVPNServers.LogicalServers[k].Load < maxVPNServerLoad {
+			bestServer = protonVPNServers.LogicalServers[k]
+			break
+		}
+	}
+
+	return bestServer
+}
+
 // VpnPiTunnelChecks ensures good VPN connection
-func VpnPiTunnelChecks(userCall bool) string {
+func VpnPiTunnelChecks(vpnCountry string, userCall bool) string {
 	tunnelIP := ""
 	response := ":protonvpn: VPN: DOWN :rotating_light:"
 
@@ -145,6 +196,14 @@ func VpnPiTunnelChecks(userCall bool) string {
 			" for " + vpnTunnelSpecs["time"] + " (using " +
 			vpnTunnelSpecs["endpointDNS"] + ")"
 	}
+
+	bestVPNServer := findBestVPNServer(vpnCountry)
+	response = response + "\n\nCurrent best, premium VPN server => " +
+		fmt.Sprintf("%s Tier:%d Load:%d Score:%f\n",
+			bestVPNServer.Domain,
+			bestVPNServer.Tier,
+			bestVPNServer.Load,
+			bestVPNServer.Score)
 
 	if !userCall {
 		customEvent := slack.RTMEvent{Type: "VpnPiTunnelChecks", Data: response}

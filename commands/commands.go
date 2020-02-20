@@ -142,7 +142,11 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 		}
 		api.PostMessage(slackMessage.Channel, slack.MsgOptionText(response, false), params)
 	} else if args[0] == "vpns" {
-		response := VpnPiTunnelChecks(true)
+		vpnCountry := "DE"
+		if len(args) > 1 {
+			vpnCountry = args[1]
+		}
+		response := VpnPiTunnelChecks(vpnCountry, true)
 		rtm.SendMessage(rtm.NewOutgoingMessage(response, slackMessage.Channel))
 	} else if args[0] == "version" {
 		response := ":circleci: <https://circleci.com/gh/danackerson/bender-slackbot/" +
