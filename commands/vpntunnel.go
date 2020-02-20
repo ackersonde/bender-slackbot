@@ -88,6 +88,41 @@ func homeAndInternetIPsDoNotMatch(tunnelIP string) bool {
 	return false
 }
 
+func nftablesUseVPNTunnel(tunnelIP string, internalIP string) bool {
+	resultsNFTables := make(chan string, 10)
+	timeoutNFTables := time.After(5 * time.Second)
+	go func() {
+		cmd := "sudo nft list ruleset"
+		details := RemoteCmd{Host: raspberryPIIP, Cmd: cmd}
+
+		remoteResult := executeRemoteCmd(details)
+
+		tunnelIdleSince = time.Now()
+		resultsNFTables <- remoteResult.stdout
+	}()
+
+	select {
+	case resNFTables := <-resultsNFTables:
+		if strings.Contains(resNFTables, "ip daddr "+tunnelIP) &&
+			strings.Contains(resNFTables, "ip saddr "+tunnelIP) &&
+			strings.Contains(resNFTables, "oifname \"eth0\" ip saddr "+internalIP) &&
+			strings.Contains(resNFTables, "iifname \"eth0\" ip daddr "+internalIP) {
+			return true
+		}
+
+		cmd := "sudo nft -f /etc/nftables.conf && sudo ipsec restart && sudo service transmission-daemon restart"
+		details := RemoteCmd{Host: raspberryPIIP, Cmd: cmd}
+
+		remoteResult := executeRemoteCmd(details)
+		fmt.Println("reset nftables, VPN & transmission: " + remoteResult.stdout)
+
+	case <-timeoutNFTables:
+		fmt.Println("Timed out on `sudo nft list ruleset`!")
+	}
+
+	return false
+}
+
 func inspectVPNConnection() map[string]string {
 	results := make(chan string, 10)
 	timeout := time.After(10 * time.Second)
@@ -198,12 +233,12 @@ func VpnPiTunnelChecks(vpnCountry string, userCall bool) string {
 	}
 
 	bestVPNServer := findBestVPNServer(vpnCountry)
-	response = response + "\n\nCurrent best, premium VPN server => " +
-		fmt.Sprintf("%s Tier:%d Load:%d Score:%f\n",
-			bestVPNServer.Domain,
+	response = response + "\n\nBest VPN server in " + vpnCountry + " => " +
+		fmt.Sprintf("Tier:%d Load:%d Score:%f %s\n",
 			bestVPNServer.Tier,
 			bestVPNServer.Load,
-			bestVPNServer.Score)
+			bestVPNServer.Score,
+			bestVPNServer.Domain)
 
 	if !userCall {
 		customEvent := slack.RTMEvent{Type: "VpnPiTunnelChecks", Data: response}
@@ -213,37 +248,42 @@ func VpnPiTunnelChecks(vpnCountry string, userCall bool) string {
 	return response
 }
 
-func nftablesUseVPNTunnel(tunnelIP string, internalIP string) bool {
-	resultsNFTables := make(chan string, 10)
-	timeoutNFTables := time.After(5 * time.Second)
-	go func() {
-		cmd := "sudo nft list ruleset"
-		details := RemoteCmd{Host: raspberryPIIP, Cmd: cmd}
+// UpdateVpnPiTunnel to use provided vpnServerDomain and restart the tunnel
+func UpdateVpnPiTunnel(vpnServerDomain string, userCall bool) string {
+	vpnServerDomain = strings.ToLower(vpnServerDomain)
+	if !strings.HasSuffix(vpnServerDomain, ".protonvpn.com") {
+		vpnServerDomain = vpnServerDomain + ".protonvpn.com"
+	}
+	response := "Failed to change VPN server to " + vpnServerDomain
 
-		remoteResult := executeRemoteCmd(details)
+	sedCmd := `sudo sed -rie 's@[A-Za-z]{2}-[0-9]{2}\.protonvpn\.com@` + vpnServerDomain + `@g' `
+	cmd := sedCmd + "/etc/ipsec.conf"
+	details := RemoteCmd{Host: raspberryPIIP, Cmd: cmd}
 
-		tunnelIdleSince = time.Now()
-		resultsNFTables <- remoteResult.stdout
-	}()
+	remoteResult := executeRemoteCmd(details)
+	if remoteResult.stderr == "" {
+		cmd = sedCmd + "/etc/nftables.conf"
+		details = RemoteCmd{Host: raspberryPIIP, Cmd: cmd}
 
-	select {
-	case resNFTables := <-resultsNFTables:
-		if strings.Contains(resNFTables, "ip daddr "+tunnelIP) &&
-			strings.Contains(resNFTables, "ip saddr "+tunnelIP) &&
-			strings.Contains(resNFTables, "oifname \"eth0\" ip saddr "+internalIP) &&
-			strings.Contains(resNFTables, "iifname \"eth0\" ip daddr "+internalIP) {
-			return true
+		remoteResult = executeRemoteCmd(details)
+		if remoteResult.stderr == "" {
+			// files updated - now restart everything
+			cmd = `sudo service transmission-daemon stop &&
+			sudo nft -f /etc/nftables.conf && sudo ipsec update &&
+			sudo ipsec restart && sudo service transmission-daemon start`
+			details = RemoteCmd{Host: raspberryPIIP, Cmd: cmd}
+
+			remoteResult = executeRemoteCmd(details)
+			if remoteResult.stderr == "" {
+				response = "Changed VPN server to " + vpnServerDomain
+			}
 		}
-
-		cmd := "sudo nft -f /etc/nftables.conf && sudo ipsec restart && sudo service transmission-daemon restart"
-		details := RemoteCmd{Host: raspberryPIIP, Cmd: cmd}
-
-		remoteResult := executeRemoteCmd(details)
-		fmt.Println("reset nftables, VPN & transmission: " + remoteResult.stdout)
-
-	case <-timeoutNFTables:
-		fmt.Println("Timed out on `sudo nft list ruleset`!")
 	}
 
-	return false
+	if !userCall {
+		customEvent := slack.RTMEvent{Type: "UpdateVpnPiTunnel", Data: response}
+		rtm.IncomingEvents <- customEvent
+	}
+
+	return response
 }

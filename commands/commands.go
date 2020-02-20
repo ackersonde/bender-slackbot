@@ -144,10 +144,17 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 	} else if args[0] == "vpns" {
 		vpnCountry := "DE"
 		if len(args) > 1 {
-			vpnCountry = args[1]
+			vpnCountry = strings.ToUpper(args[1])
 		}
 		response := VpnPiTunnelChecks(vpnCountry, true)
 		rtm.SendMessage(rtm.NewOutgoingMessage(response, slackMessage.Channel))
+	} else if args[0] == "vpnc" {
+		if len(args) > 1 {
+			response := UpdateVpnPiTunnel(args[1], true)
+			rtm.SendMessage(rtm.NewOutgoingMessage(response, slackMessage.Channel))
+		} else {
+			rtm.SendMessage(rtm.NewOutgoingMessage("Please provide a new VPN server (hint: output from `vpns`)", slackMessage.Channel))
+		}
 	} else if args[0] == "version" {
 		response := ":circleci: <https://circleci.com/gh/danackerson/bender-slackbot/" +
 			circleCIBuildNum + "|" + circleCIBuildNum + ">"
@@ -170,7 +177,7 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 				":metro: `mvv`: Status | Trip In | Trip Home\n" +
 				":baseball: `bb <YYYY-MM-DD>`: show baseball games from given date (default yesterday)\n" +
 				//":do_droplet: `do|dd <id>`: show|delete DigitalOcean droplet(s)\n" +
-				":protonvpn: `vpns`: show status of VPN on :raspberry_pi:\n" +
+				":protonvpn: `vpn[s|c]`: [S]how status of VPN on :raspberry_pi:, [C]hange VPN to best in given country or DE\n" +
 				":pirate_bay: `torq <search term>`\n" +
 				":transmission: `tran[c|p|s|d]`: [C]reate <URL>, [P]aused <URL>, [S]tatus, [D]elete <ID> torrents on :raspberry_pi:\n" +
 				":movie_camera: `mv " + piPlexPath + "/torrents/<filename> [movies|tv/(<path>)]`\n" +

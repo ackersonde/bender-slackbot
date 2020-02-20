@@ -86,7 +86,7 @@ func main() {
 				// via it's builtin channel. here we check for custom events and act
 				// accordingly
 				if msg.Type == "ListDODroplets" || msg.Type == "MoveTorrent" ||
-					msg.Type == "VpnPiTunnelChecks" ||
+					msg.Type == "VpnPiTunnelChecks" || msg.Type == "UpdateVpnPiTunnel" ||
 					msg.Type == "CheckPiDiskSpace" || msg.Type == "ShowBBGames" {
 					response := msg.Data.(string)
 					params := slack.MsgOptionAsUser(true)
