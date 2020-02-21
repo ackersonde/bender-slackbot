@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"regexp"
 	"strings"
 
 	"golang.org/x/crypto/ssh"
@@ -22,6 +23,7 @@ type RemoteCmd struct {
 
 // RemoteResult contains remote SSH execution
 type RemoteResult struct {
+	err    error
 	stdout string
 	stderr string
 }
@@ -57,7 +59,7 @@ func executeRemoteCmd(details RemoteCmd) RemoteResult {
 	connectionString := fmt.Sprintf("%s:%s", details.Host, "22")
 	conn, errConn := ssh.Dial("tcp", connectionString, connectConfig)
 	if errConn != nil { //catch
-		return RemoteResult{"", errConn.Error()}
+		return RemoteResult{nil, "", errConn.Error()}
 	}
 	session, _ := conn.NewSession()
 	defer session.Close()
@@ -66,14 +68,14 @@ func executeRemoteCmd(details RemoteCmd) RemoteResult {
 	session.Stdout = &stdoutBuf
 	var stderrBuf bytes.Buffer
 	session.Stderr = &stderrBuf
-	session.Run(details.Cmd)
+	err := session.Run(details.Cmd)
 
 	errStr := ""
 	if stderrBuf.String() != "" {
 		errStr = strings.TrimSpace(stderrBuf.String())
 	}
 
-	return RemoteResult{stdoutBuf.String(), errStr}
+	return RemoteResult{err, stdoutBuf.String(), errStr}
 }
 
 func sendPayloadToJoinAPI(fileURL string, humanFilename string, icon string, smallIcon string) string {
@@ -100,4 +102,19 @@ func sendPayloadToJoinAPI(fileURL string, humanFilename string, icon string, sma
 	}
 
 	return response
+}
+
+// Slack gets excited when it recognizes a string that might be a URL
+// e.g. de-16.protonvpn.com or Terminator.Dark.Fate.2019.1080p.WEBRip.x264-[YTS.LT].mp4
+// are sent to Bender as <http://de-16.protonvpn.com|de-16.protonvpn.com> or
+// Terminator.Dark.Fate.2019.1080p.WEBRip.x264-\[<http://YTS.LT|YTS.LT>\].mp4
+// respectively
+func scrubParamOfHTTPMagicCrap(sourceString string) string {
+	if strings.Contains(sourceString, "<http") {
+		// strip out url tags leaving just the text
+		re := regexp.MustCompile(`<http.*\|(.*)>`)
+		sourceString = re.ReplaceAllString(sourceString, `$1`)
+	}
+
+	return sourceString
 }

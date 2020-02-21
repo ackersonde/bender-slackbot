@@ -250,7 +250,6 @@ func VpnPiTunnelChecks(vpnCountry string, userCall bool) string {
 
 // UpdateVpnPiTunnel to use provided vpnServerDomain and restart the tunnel
 func UpdateVpnPiTunnel(vpnServerDomain string, userCall bool) string {
-	vpnServerDomain = strings.ToLower(vpnServerDomain)
 	if !strings.HasSuffix(vpnServerDomain, ".protonvpn.com") {
 		vpnServerDomain = vpnServerDomain + ".protonvpn.com"
 	}
@@ -261,12 +260,13 @@ func UpdateVpnPiTunnel(vpnServerDomain string, userCall bool) string {
 	details := RemoteCmd{Host: raspberryPIIP, Cmd: cmd}
 
 	remoteResult := executeRemoteCmd(details)
-	if remoteResult.stderr == "" {
+	// TODO: stderr often doesn't have real errors :(
+	if remoteResult.err == nil {
 		cmd = sedCmd + "/etc/nftables.conf"
 		details = RemoteCmd{Host: raspberryPIIP, Cmd: cmd}
 
 		remoteResult = executeRemoteCmd(details)
-		if remoteResult.stderr == "" {
+		if remoteResult.err == nil {
 			// files updated - now restart everything
 			cmd = `sudo service transmission-daemon stop &&
 			sudo nft -f /etc/nftables.conf && sudo ipsec update &&
@@ -274,10 +274,14 @@ func UpdateVpnPiTunnel(vpnServerDomain string, userCall bool) string {
 			details = RemoteCmd{Host: raspberryPIIP, Cmd: cmd}
 
 			remoteResult = executeRemoteCmd(details)
-			if remoteResult.stderr == "" {
+			if remoteResult.err == nil {
 				response = "Changed VPN server to " + vpnServerDomain
 			}
 		}
+	}
+
+	if remoteResult.err != nil {
+		response += "(" + remoteResult.err.Error() + ")"
 	}
 
 	if !userCall {

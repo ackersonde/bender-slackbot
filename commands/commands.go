@@ -109,7 +109,7 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 		if len(args) == 3 &&
 			(strings.HasPrefix(args[2], "movies") ||
 				strings.HasPrefix(args[2], "tv")) {
-			sourceFile := args[1]
+			sourceFile := scrubParamOfHTTPMagicCrap(args[1])
 			destinationDir := args[2]
 			if strings.Contains(destinationDir, "..") || strings.HasPrefix(destinationDir, "/") {
 				msg := fmt.Sprintln("Please prefix destination w/ either `[movies|tv]`")
@@ -150,7 +150,8 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 		rtm.SendMessage(rtm.NewOutgoingMessage(response, slackMessage.Channel))
 	} else if args[0] == "vpnc" {
 		if len(args) > 1 {
-			response := UpdateVpnPiTunnel(args[1], true)
+			vpnServerDomain := strings.ToLower(scrubParamOfHTTPMagicCrap(args[1]))
+			response := UpdateVpnPiTunnel(vpnServerDomain, true)
 			rtm.SendMessage(rtm.NewOutgoingMessage(response, slackMessage.Channel))
 		} else {
 			rtm.SendMessage(rtm.NewOutgoingMessage("Please provide a new VPN server (hint: output from `vpns`)", slackMessage.Channel))
