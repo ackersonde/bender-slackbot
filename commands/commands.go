@@ -151,7 +151,7 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 	} else if args[0] == "vpnc" {
 		if len(args) > 1 {
 			vpnServerDomain := strings.ToLower(scrubParamOfHTTPMagicCrap(args[1]))
-			response := UpdateVpnPiTunnel(vpnServerDomain, true)
+			response := updateVpnPiTunnel(vpnServerDomain)
 			rtm.SendMessage(rtm.NewOutgoingMessage(response, slackMessage.Channel))
 		} else {
 			rtm.SendMessage(rtm.NewOutgoingMessage("Please provide a new VPN server (hint: output from `vpns`)", slackMessage.Channel))

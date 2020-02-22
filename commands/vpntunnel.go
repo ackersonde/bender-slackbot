@@ -214,6 +214,20 @@ func findBestVPNServer(vpnCountry string) structures.LogicalServer {
 	return bestServer
 }
 
+// ChangeToFastestVPNServer on cronjob call
+func ChangeToFastestVPNServer(vpnCountry string, userCall bool) string {
+	response := "Failed auto VPN update"
+
+	bestVPNServer := findBestVPNServer(vpnCountry)
+	response = updateVpnPiTunnel(bestVPNServer.Domain)
+	if !userCall {
+		customEvent := slack.RTMEvent{Type: "ChangeToFastestVPNServer", Data: response}
+		rtm.IncomingEvents <- customEvent
+	}
+
+	return response
+}
+
 // VpnPiTunnelChecks ensures good VPN connection
 func VpnPiTunnelChecks(vpnCountry string, userCall bool) string {
 	tunnelIP := ""
@@ -248,8 +262,7 @@ func VpnPiTunnelChecks(vpnCountry string, userCall bool) string {
 	return response
 }
 
-// UpdateVpnPiTunnel to use provided vpnServerDomain and restart the tunnel
-func UpdateVpnPiTunnel(vpnServerDomain string, userCall bool) string {
+func updateVpnPiTunnel(vpnServerDomain string) string {
 	if !strings.HasSuffix(vpnServerDomain, ".protonvpn.com") {
 		vpnServerDomain = vpnServerDomain + ".protonvpn.com"
 	}
@@ -282,11 +295,6 @@ func UpdateVpnPiTunnel(vpnServerDomain string, userCall bool) string {
 
 	if remoteResult.err != nil {
 		response += "(" + remoteResult.err.Error() + ")"
-	}
-
-	if !userCall {
-		customEvent := slack.RTMEvent{Type: "UpdateVpnPiTunnel", Data: response}
-		rtm.IncomingEvents <- customEvent
 	}
 
 	return response

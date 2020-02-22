@@ -13,14 +13,16 @@ import (
 )
 
 var botID = "N/A" // U2NQSPHHD bender bot userID
+var vpnCountry = "DE"
 
 func prepareScheduler() {
-	//gocron.Every(1).Friday().At("09:03").Do(commands.ListDODroplets, false)
-	gocron.Every(1).Friday().At("09:04").Do(commands.VpnPiTunnelChecks, "DE", false)
+	gocron.Every(1).Day().At("08:04").Do(commands.ChangeToFastestVPNServer, vpnCountry, false)
+	gocron.Every(1).Friday().At("09:04").Do(commands.VpnPiTunnelChecks, vpnCountry, false)
 	gocron.Every(1).Friday().At("09:05").Do(commands.CheckMediaDiskSpace, "---")
 	gocron.Every(1).Friday().At("09:05").Do(commands.CheckServerDiskSpace, "---")
 	//gocron.Every(1).Day().At("05:30").Do(common.UpdateFirewall)
 	//gocron.Every(1).Day().At("17:30").Do(commands.ShowBBGames, false, "")
+	//gocron.Every(1).Friday().At("09:03").Do(commands.ListDODroplets, false)
 	<-gocron.Start()
 
 	// more examples: https://github.com/jasonlvhit/gocron/blob/master/example/example.go#L19
@@ -86,7 +88,7 @@ func main() {
 				// via it's builtin channel. here we check for custom events and act
 				// accordingly
 				if msg.Type == "ListDODroplets" || msg.Type == "MoveTorrent" ||
-					msg.Type == "VpnPiTunnelChecks" || msg.Type == "UpdateVpnPiTunnel" ||
+					msg.Type == "VpnPiTunnelChecks" || msg.Type == "ChangeToFastestVPNServer" ||
 					msg.Type == "CheckPiDiskSpace" || msg.Type == "ShowBBGames" {
 					response := msg.Data.(string)
 					params := slack.MsgOptionAsUser(true)
