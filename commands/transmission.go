@@ -2,11 +2,12 @@ package commands
 
 import (
 	"fmt"
+	"log"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/danackerson/transmission"
+	"github.com/odwrtw/transmission"
 )
 
 func getTorrents(t *transmission.Client) (result string) {
@@ -34,7 +35,7 @@ func getTorrents(t *transmission.Client) (result string) {
 				listTorrent.Name + " *" + percentComplete + "%* " + info
 		}
 	} else {
-		fmt.Printf("\nGetTorrents err: %v", err)
+		log.Printf("\nGetTorrents err: %v", err)
 	}
 
 	return result
@@ -60,7 +61,7 @@ func addTorrents(t *transmission.Client, torrentLink string, paused bool) (resul
 	args := transmission.AddTorrentArg{Filename: torrentLink, Paused: paused}
 	_, err := t.AddTorrent(args)
 	if err != nil {
-		fmt.Printf("\nAdd err: %v", err)
+		log.Printf("\nAdd err: %v", err)
 	}
 
 	result += getTorrents(t)
@@ -71,15 +72,15 @@ func addTorrents(t *transmission.Client, torrentLink string, paused bool) (resul
 func deleteTorrents(t *transmission.Client, torrentIDStr string) (result string) {
 	torrentID, err := strconv.Atoi(torrentIDStr)
 	if err != nil {
-		fmt.Printf("\nRemove err: %v", err)
+		log.Printf("\nRemove err: %v", err)
 		return fmt.Sprintf("Unable to remove torrent ID #%s. Is it a valid ID?", torrentIDStr)
 	}
 
 	result = fmt.Sprintf(":x: deleting torrent #%d\n", torrentID)
 	torrentToDelete := &transmission.Torrent{ID: torrentID}
 	removeErr := t.RemoveTorrents([]*transmission.Torrent{torrentToDelete}, false)
-	if err != nil {
-		fmt.Printf("\nRemove err: %v", removeErr)
+	if removeErr != nil {
+		log.Printf("\nRemove err: %v", removeErr)
 	}
 
 	result += getTorrents(t)
@@ -95,7 +96,7 @@ func torrentCommand(cmd []string) (result string) {
 	}
 	t, err := transmission.New(conf)
 	if err != nil {
-		fmt.Printf("\nNew err: %v", err)
+		log.Printf("\nNew err: %v", err)
 	}
 
 	if cmd[0] == "trans" {

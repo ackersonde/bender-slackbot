@@ -2,6 +2,7 @@ package commands
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
 	"strings"
@@ -10,14 +11,14 @@ import (
 	"github.com/nlopes/slack"
 )
 
-var raspberryPIIP = "192.168.178.25"
+var raspberryPIIP = "192.168.178.59"
 var pi4 = "pi4.fritz.box"
 
 var piTorrentsPath = "/home/pi/torrents"
 var piPlexPath = "/mnt/usb4TB/DLNA"
 
-// CheckTorrentsDiskSpace now exported
-func CheckTorrentsDiskSpace(path string) string {
+// CheckServerDiskSpace now exported
+func CheckServerDiskSpace(path string) string {
 	userCall := true
 	if path == "---" {
 		path = ""
@@ -29,24 +30,15 @@ func CheckTorrentsDiskSpace(path string) string {
 		}
 	}
 
-	cmd := "du -bh " + piTorrentsPath + path + "/*"
-
 	response := ""
-	details := RemoteCmd{Host: raspberryPIIP, Cmd: cmd}
-	remoteResult := executeRemoteCmd(details)
-
-	if remoteResult.stdout == "" && remoteResult.stderr != "" {
-		response = remoteResult.stderr
+	out2, err2 := exec.Command("/bin/df", "-h", "/").Output()
+	if err2 != nil {
+		response += err2.Error()
 	} else {
-		response = remoteResult.stdout
+		response += string(out2)
 	}
-	response = ":raspberry_pi: *SD Card Disk Usage* `raspberrypi@" + piTorrentsPath + path + "`\n" + response
 
-	cmd = "df -h /root/"
-	details = RemoteCmd{Host: raspberryPIIP, Cmd: cmd}
-	remoteResultDF := executeRemoteCmd(details)
-	response += "\n\n" + remoteResultDF.stdout
-
+	response = ":k8s: *SD Card Disk Usage* `pi4`\n" + response
 	if !userCall {
 		customEvent := slack.RTMEvent{Type: "CheckPiDiskSpace", Data: response}
 		rtm.IncomingEvents <- customEvent
@@ -55,8 +47,8 @@ func CheckTorrentsDiskSpace(path string) string {
 	return response
 }
 
-// CheckPlexDiskSpace now exported
-func CheckPlexDiskSpace(path string) string {
+// CheckMediaDiskSpace now exported
+func CheckMediaDiskSpace(path string) string {
 	userCall := true
 	if path == "---" {
 		path = ""
@@ -73,60 +65,33 @@ func CheckPlexDiskSpace(path string) string {
 	if !strings.HasSuffix(path, "/*") {
 		cmd += " | sed '1d'"
 	}
-	out, err := exec.Command("ash", "-c", cmd).Output()
-	if err != nil {
-		response = fmt.Sprintf(fmt.Sprint(err) + ": " + string(out))
+	log.Printf("cmd: %s", cmd)
+	details := RemoteCmd{Host: raspberryPIIP, Cmd: cmd}
+	remoteResult := executeRemoteCmd(details)
+
+	if remoteResult.stdout == "" && remoteResult.stderr != "" {
+		response = remoteResult.stderr
 	} else {
-		response = string(strings.Replace(string(out), piPlexPath+"/", "", -1))
+		response = remoteResult.stdout
 	}
 
-	response = ":plex: *Pi4 Card Disk Usage* `pi4@" + piPlexPath + path + "`\n" + response
+	response = ":plex: USB *Disk Usage* `vpnpi@" + piPlexPath + path +
+		"`\n" + response + "\n"
 
-	out2, err2 := exec.Command("/bin/df", "-h", "/", "/mnt/usb4TB").Output()
-	if err2 != nil {
-		response += err2.Error()
+	cmd = fmt.Sprintf("/bin/df -h %s /", piPlexPath+path)
+	details = RemoteCmd{Host: raspberryPIIP, Cmd: cmd}
+	remoteResult = executeRemoteCmd(details)
+
+	if remoteResult.stdout == "" && remoteResult.stderr != "" {
+		response = response + "\n" + remoteResult.stderr
 	} else {
-		response += string(out2)
+		response = response + "\n" + remoteResult.stdout
 	}
-	response += "\n\n==============================\n\n"
+	response += "\n=============================\n"
 
 	if !userCall {
 		customEvent := slack.RTMEvent{Type: "CheckPiDiskSpace", Data: response}
 		rtm.IncomingEvents <- customEvent
-	}
-
-	return response
-}
-
-// DeleteTorrentFile now exported
-func DeleteTorrentFile(filename string) string {
-	var response string
-
-	if filename == "*" || filename == "" || strings.Contains(filename, "../") {
-		response = "Please enter an existing filename - try `fsck`"
-	} else {
-		path := piTorrentsPath + filename
-
-		var deleteCmd string
-		cmd := "test -d \"" + path + "\" && echo 'Yes'"
-		details := RemoteCmd{Host: raspberryPIIP, Cmd: cmd}
-
-		remoteResult := executeRemoteCmd(details)
-		if strings.HasPrefix(remoteResult.stdout, "Yes") {
-			deleteCmd = "rm -Rf \"" + path + "\""
-		} else {
-			deleteCmd = "rm \"" + path + "\""
-		}
-
-		details = RemoteCmd{Host: raspberryPIIP, Cmd: deleteCmd}
-
-		remoteResultDelete := executeRemoteCmd(details)
-		tunnelIdleSince = time.Now()
-		if remoteResultDelete.stderr != "" {
-			response = remoteResultDelete.stderr
-		} else {
-			response = remoteResultDelete.stdout
-		}
 	}
 
 	return response
@@ -138,28 +103,35 @@ func MoveTorrentFile(api *slack.Client, sourceFile string, destinationDir string
 	response := ""
 
 	moveCmd := fmt.Sprintf("mv %s/%s %s/%s", piPlexPath, sourceFile, piPlexPath, destinationDir)
-	out, err := exec.Command("ash", "-c", moveCmd).Output()
-	if err != nil {
-		response = fmt.Sprintf(fmt.Sprint(err) + ": " + string(out))
+	details := RemoteCmd{Host: raspberryPIIP, Cmd: moveCmd}
+	remoteResult := executeRemoteCmd(details)
+
+	if remoteResult.stdout == "" && remoteResult.stderr != "" {
+		response = fmt.Sprintf(fmt.Sprint(remoteResult.stderr) + ": " + string(remoteResult.stdout))
 		response = ":x: ERR: `" + moveCmd + "` => " + response
 	} else {
 		response += fmt.Sprintf("moved: %s to %s\n", sourceFile, destinationDir)
 		librarySection := "1"
 		plexToken := os.Getenv("PLEX_TOKEN")
 		if strings.HasPrefix(destinationDir, "tv") {
-			librarySection = "5"
+			librarySection = "2"
 		}
-		refreshCmd := fmt.Sprintf("curl http://pi4:32400/library/sections/%s/refresh?X-Plex-Token=%s", librarySection, plexToken)
+		refreshCmd := fmt.Sprintf(
+			"curl http://"+raspberryPIIP+":32400/library/sections/3/refresh?X-Plex-Token=%s && "+
+				"curl http://"+raspberryPIIP+":32400/library/sections/%s/refresh?X-Plex-Token=%s",
+			plexToken, librarySection, plexToken)
 		out, err := exec.Command("ash", "-c", refreshCmd).Output()
 		if err != nil {
 			response += fmt.Sprintf(fmt.Sprint(err) + ": " + string(out))
 			response = ":x: ERR: `" + refreshCmd + "` => " + response
 		} else {
-			response += fmt.Sprintf("refreshed <http://pi4:32400/web/index.html|Plex library %s>\n", librarySection)
+			response += fmt.Sprintf(
+				"refreshed <http://vpnpi:32400/web/index.html|Plex library %s>\n",
+				librarySection)
 		}
 	}
 
-	api.PostMessage(SlackReportChannel, slack.MsgOptionText(response, true), params)
+	api.PostMessage(SlackReportChannel, slack.MsgOptionText(response, false), params)
 
 	//reportMoveProgress(api)
 }

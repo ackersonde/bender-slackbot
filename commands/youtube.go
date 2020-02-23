@@ -3,15 +3,16 @@ package commands
 import (
 	"errors"
 	"io"
-	"log"
 	"net/http"
 	"os"
 	"strconv"
 	"strings"
 
+	"github.com/rs/zerolog/log"
+
 	"github.com/dropbox/dropbox-sdk-go-unofficial/dropbox"
 	"github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/files"
-	"github.com/otium/ytdl"
+	"github.com/rylio/ytdl"
 )
 
 var dropboxAccessToken = os.Getenv("CTX_DROPBOX_ACCESS_TOKEN")
@@ -99,7 +100,11 @@ func downloadYoutubeVideo(origURL string) bool {
 
 	vid, err := ytdl.GetVideoInfo(origURL)
 	if err == nil {
-		URI, err := vid.GetDownloadURL(vid.Formats[0])
+		client := ytdl.Client{
+			HTTPClient: http.DefaultClient,
+			Logger:     log.Logger,
+		}
+		URI, err := client.GetDownloadURL(vid, vid.Formats[0])
 		if err == nil {
 			log.Printf("preparing to download: %s\n", URI.String())
 

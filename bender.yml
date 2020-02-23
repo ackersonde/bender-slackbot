@@ -1,0 +1,61 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  namespace: default
+  name: bender
+  labels:
+    app: bender
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: bender
+  template:
+    metadata:
+      labels:
+        app: bender
+    spec:
+      restartPolicy: Always
+      imagePullSecrets:
+        - name: dockerhub
+      containers:
+        - name: bender
+          image: danackerson/slackbot:vc{{CIRCLE_BUILD_NUM}}
+          envFrom:
+          - secretRef:
+              name: bender-env-secrets
+          volumeMounts:
+          # https://www.jannikarndt.de/blog/2018/03/ssh_key_as_kubernetes_secret/
+          - name: ssh-key-volume
+            readOnly: true
+            mountPath: "/root/.ssh"
+      volumes:
+      - name: ssh-key-volume
+        secret:
+          secretName: server-deploy-key-secret
+          defaultMode: 256
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: bender-env-secrets
+data:
+  CIRCLE_BUILD_NUM: {{CIRCLE_BUILD_NUM_B64}}
+  homeDomain: {{homeDomain_B64}}
+  slackReportChannel: {{slackReportChannel_B64}}
+  PLEX_TOKEN: {{PLEX_TOKEN_B64}}
+  CTX_CIRCLECI_API_TOKEN: {{CTX_CIRCLECI_API_TOKEN_B64}}
+  CTX_DIGITALOCEAN_TOKEN: {{CTX_DIGITALOCEAN_TOKEN_B64}}
+  CTX_SLACK_API_TOKEN: {{CTX_SLACK_API_TOKEN_B64}}
+  CTX_JOIN_API_KEY: {{CTX_JOIN_API_KEY_B64}}
+  CTX_DROPBOX_ACCESS_TOKEN: {{CTX_DROPBOX_ACCESS_TOKEN_B64}}
+  CTX_VPNC_GATEWAY: {{CTX_VPNC_GATEWAY_B64}}
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: server-deploy-key-secret
+data:
+  id_rsa: {{CTX_SERVER_DEPLOY_SECRET}}
