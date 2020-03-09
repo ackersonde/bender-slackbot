@@ -172,8 +172,6 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 		response += " | <" + mvvRoute("München, Hauptbahnhof", "Schwabhausen") + "|Going home>"
 
 		api.PostMessage(slackMessage.Channel, slack.MsgOptionText(response, false), params)
-<<<<<<< HEAD
-=======
 	} else if args[0] == "www" {
 		fritzBox := ":fritz: <https://fritz.ackerson.de/|fritz.box>\n"
 		pi4 := ":k8s: <https://dash.ackerson.de/#/overview?namespace=default|k8s>\n"
@@ -184,7 +182,6 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 
 		response := fritzBox + pi4 + vpnpi
 		api.PostMessage(slackMessage.Channel, slack.MsgOptionText(response, false), params)
->>>>>>> 5ff9d34... link fritz.box
 	} else if args[0] == "help" {
 		response :=
 			":sun_behind_rain_cloud: `sw`: Schwabhausen weather\n" +
