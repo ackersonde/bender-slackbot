@@ -173,11 +173,11 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 
 		api.PostMessage(slackMessage.Channel, slack.MsgOptionText(response, false), params)
 	} else if args[0] == "www" {
-		fritzBox := ":fritzbox: <https://fritz.ackerson.de/|fritz.box>\n"
-		pi4 := ":k8s: <https://dash.ackerson.de/#/overview?namespace=default|k8s>\n"
-		pi4 += ":chart_with_upwards_trend: <http://pi4:19999/#menu_cpu_submenu_utilization;theme=slate;help=true|netDNA>\n"
-		pi4 += ":pihole: <https://hole.ackerson.de/admin/|pihole>\n"
-		vpnpi := ":transmission: <http://vpnpi:9091/transmission/web/|transmission>\n"
+		fritzBox := ":fritzbox: <https://fritz.ackerson.de/|fritz.box> | "
+		pi4 := ":k8s: <https://dash.ackerson.de/#/overview?namespace=default|k8s> | "
+		pi4 += ":netdata: <http://pi4:19999/#menu_cpu_submenu_utilization;theme=slate;help=true|netDNA>\n"
+		pi4 += ":pihole: <https://hole.ackerson.de/admin/|pihole> | "
+		vpnpi := ":transmission: <http://vpnpi:9091/transmission/web/|transmission> | "
 		vpnpi += ":plex: <http://vpnpi:32400/web/index.html#|plex>\n"
 
 		response := fritzBox + pi4 + vpnpi
