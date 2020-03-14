@@ -78,7 +78,7 @@ jobs:
           name: "Tunnel home and deploy"
           command: |
             apk add --no-cache openssh openresolv wireguard-tools
-            sudo wg-quick up tunnel.conf
+            wg-quick up tunnel.conf
 
             scp -o StrictHostKeyChecking=no /tmp/bender.yml $SSH_USER@$SSH_HOST:~/k3s/
             ssh $SSH_USER@$SSH_HOST -- "sudo kubectl apply -f k3s/bender.yml"
