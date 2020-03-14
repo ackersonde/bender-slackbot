@@ -75,6 +75,7 @@ jobs:
             sed -i -e "s@{{CTX_WG_CIRCLECI_PRESHARED_KEY}}@$CTX_WG_CIRCLECI_PRESHARED_KEY@" tunnel.conf
             sed -i -e "s@{{CTX_WG_SERVER_ENDPOINT}}@$CTX_WG_SERVER_ENDPOINT@" tunnel.conf
             mv tunnel.conf /etc/wireguard
+            ls -lrt /etc/wireguard
       - run:
           name: "Tunnel home and deploy"
           command: |
