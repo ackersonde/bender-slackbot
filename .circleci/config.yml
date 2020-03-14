@@ -1,8 +1,5 @@
 version: 2.1
 
-orbs:
-  ipsec: danackerson/ipsec@1.1.1
-
 jobs:
   build:
     docker:
@@ -70,34 +67,24 @@ jobs:
             sed -i -e "s@{{CTX_SERVER_DEPLOY_SECRET}}@$CTX_SERVER_DEPLOY_SECRET@" bender.yml
 
             rm .base64_enc
-      - persist_to_workspace:
-          root: /go/src/github.com/danackerson/bender-slackbot
-          paths:
-            - bender.yml
-
-commands:
-  prepare_deploy_script:
-    steps:
-      - attach_workspace:
-          at: /tmp
       - run:
-          name: "Prepare deploy script"
+          name: "Prepare tunnel config"
           command: |
-            cat \<<EOF >/tmp/deploy_script.sh
+            sed -i -e "s@{{CTX_WG_CIRCLECI_PRIVATE_KEY}}@$CTX_WG_CIRCLECI_PRIVATE_KEY@" tunnel.conf
+            sed -i -e "s@{{CTX_WG_SERVER_PUBLIC_KEY}}@$CTX_WG_SERVER_PUBLIC_KEY@" tunnel.conf
+            sed -i -e "s@{{CTX_WG_CIRCLECI_PRESHARED_KEY}}@$CTX_WG_CIRCLECI_PRESHARED_KEY@" tunnel.conf
+            sed -i -e "s@{{CTX_WG_SERVER_ENDPOINT}}@$CTX_WG_SERVER_ENDPOINT@" tunnel.conf
+      - run:
+          name: "Tunnel home and deploy"
+          command: |
+            apk add --no-cache openssh openresolv wireguard-tools
+            sudo wg-quick up tunnel.conf
+
             scp -o StrictHostKeyChecking=no /tmp/bender.yml $SSH_USER@$SSH_HOST:~/k3s/
             ssh $SSH_USER@$SSH_HOST -- "sudo kubectl apply -f k3s/bender.yml"
-            EOF
-
-            chmod u+x /tmp/deploy_script.sh
 
 workflows:
   build-deploy:
     jobs:
-        - build:
-            context: org-global
-        - ipsec/remote-deploy:
-            context: org-global
-            requires:
-              - build
-            pre-steps:
-              - prepare_deploy_script
+      - build:
+          context: org-global
