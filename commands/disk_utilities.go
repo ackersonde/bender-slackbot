@@ -13,6 +13,7 @@ import (
 
 var raspberryPIIP = "vpnpi.fritz.box"
 var pi4 = "pi4.fritz.box"
+var raspi3 = "192.168.178.25"
 
 var piTorrentsPath = "/home/pi/torrents"
 var piPlexPath = "/mnt/usb4TB/DLNA"

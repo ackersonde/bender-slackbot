@@ -51,8 +51,8 @@ func wireguardShow() string {
 	response := ":wireguard: "
 	cmd := fmt.Sprintf("sudo wg show")
 	log.Printf("cmd: %s", cmd)
-	details := RemoteCmd{Host: pi4, Cmd: cmd}
-	remoteResult := executeRemoteCmd(details, remoteConnectionConfiguration(pi4HostKey, "pi"))
+	details := RemoteCmd{Host: raspi3, Cmd: cmd}
+	remoteResult := executeRemoteCmd(details, remoteConnectionConfiguration(raspi3HostKey, "pi"))
 
 	if remoteResult.stdout == "" && remoteResult.stderr != "" {
 		response += remoteResult.stderr
