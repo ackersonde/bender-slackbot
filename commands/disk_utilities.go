@@ -11,7 +11,7 @@ import (
 	"github.com/nlopes/slack"
 )
 
-var raspberryPIIP = "192.168.178.59"
+var raspberryPIIP = "vpnpi.fritz.box"
 var pi4 = "pi4.fritz.box"
 
 var piTorrentsPath = "/home/pi/torrents"

@@ -49,6 +49,22 @@ func remoteConnectionConfiguration(unparsedHostKey string, username string) *ssh
 	}
 }
 
+func wireguardShow() string {
+	response := ":wireguard: "
+	cmd := fmt.Sprintf("sudo wg show")
+	log.Printf("cmd: %s", cmd)
+	details := RemoteCmd{Host: pi4, Cmd: cmd}
+	remoteResult := executeRemoteCmd(details)
+
+	if remoteResult.stdout == "" && remoteResult.stderr != "" {
+		response += remoteResult.stderr
+	} else {
+		response += remoteResult.stdout
+	}
+
+	return response
+}
+
 func executeRemoteCmd(details RemoteCmd) RemoteResult {
 	defer func() { //catch or finally
 		if err := recover(); err != nil { //catch
