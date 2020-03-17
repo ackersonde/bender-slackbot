@@ -67,7 +67,7 @@ func CheckMediaDiskSpace(path string) string {
 	}
 	log.Printf("cmd: %s", cmd)
 	details := RemoteCmd{Host: raspberryPIIP, Cmd: cmd}
-	remoteResult := executeRemoteCmd(details)
+	remoteResult := executeRemoteCmd(details, remoteConnectionConfiguration(vpnPIHostKey, "pi"))
 
 	if remoteResult.stdout == "" && remoteResult.stderr != "" {
 		response = remoteResult.stderr
@@ -80,7 +80,7 @@ func CheckMediaDiskSpace(path string) string {
 
 	cmd = fmt.Sprintf("/bin/df -h %s /", piPlexPath+path)
 	details = RemoteCmd{Host: raspberryPIIP, Cmd: cmd}
-	remoteResult = executeRemoteCmd(details)
+	remoteResult = executeRemoteCmd(details, remoteConnectionConfiguration(vpnPIHostKey, "pi"))
 
 	if remoteResult.stdout == "" && remoteResult.stderr != "" {
 		response = response + "\n" + remoteResult.stderr
@@ -104,7 +104,7 @@ func MoveTorrentFile(api *slack.Client, sourceFile string, destinationDir string
 
 	moveCmd := fmt.Sprintf("mv %s/%s %s/%s", piPlexPath, sourceFile, piPlexPath, destinationDir)
 	details := RemoteCmd{Host: raspberryPIIP, Cmd: moveCmd}
-	remoteResult := executeRemoteCmd(details)
+	remoteResult := executeRemoteCmd(details, remoteConnectionConfiguration(vpnPIHostKey, "pi"))
 
 	if remoteResult.stdout == "" && remoteResult.stderr != "" {
 		response = fmt.Sprintf(fmt.Sprint(remoteResult.stderr) + ": " + string(remoteResult.stdout))
@@ -156,7 +156,7 @@ func reportMoveProgress(api *slack.Client) {
 			progressCmd := "progress"
 			progressDetails := RemoteCmd{Host: raspberryPIIP, Cmd: progressCmd}
 
-			remoteResults <- executeRemoteCmd(progressDetails)
+			remoteResults <- executeRemoteCmd(progressDetails, remoteConnectionConfiguration(vpnPIHostKey, "pi"))
 		}()
 
 		// reset tunnel idle time as user may want to see progress of move

@@ -28,8 +28,6 @@ type RemoteResult struct {
 	stderr string
 }
 
-var connectConfig = remoteConnectionConfiguration(piHostKey, "pi")
-
 func remoteConnectionConfiguration(unparsedHostKey string, username string) *ssh.ClientConfig {
 	hostKey, _, _, _, err := ssh.ParseAuthorizedKey([]byte(unparsedHostKey))
 	if err != nil {
@@ -54,7 +52,7 @@ func wireguardShow() string {
 	cmd := fmt.Sprintf("sudo wg show")
 	log.Printf("cmd: %s", cmd)
 	details := RemoteCmd{Host: pi4, Cmd: cmd}
-	remoteResult := executeRemoteCmd(details)
+	remoteResult := executeRemoteCmd(details, remoteConnectionConfiguration(pi4HostKey, "pi"))
 
 	if remoteResult.stdout == "" && remoteResult.stderr != "" {
 		response += remoteResult.stderr
@@ -65,7 +63,7 @@ func wireguardShow() string {
 	return response
 }
 
-func executeRemoteCmd(details RemoteCmd) RemoteResult {
+func executeRemoteCmd(details RemoteCmd, config *ssh.ClientConfig) RemoteResult {
 	defer func() { //catch or finally
 		if err := recover(); err != nil { //catch
 			fmt.Fprintf(os.Stderr, "Exception: %v\n", err)
@@ -73,7 +71,7 @@ func executeRemoteCmd(details RemoteCmd) RemoteResult {
 	}()
 
 	connectionString := fmt.Sprintf("%s:%s", details.Host, "22")
-	conn, errConn := ssh.Dial("tcp", connectionString, connectConfig)
+	conn, errConn := ssh.Dial("tcp", connectionString, config)
 	if errConn != nil { //catch
 		return RemoteResult{nil, "", errConn.Error()}
 	}

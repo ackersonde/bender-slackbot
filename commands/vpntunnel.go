@@ -20,7 +20,8 @@ var maxVPNServerLoad = 80
 var tunnelOnTime time.Time
 var tunnelIdleSince time.Time
 var maxTunnelIdleTime = float64(5 * 60) // 5 mins in seconds
-var piHostKey = "ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBPUURSw9LFDq9q4eI1nTnfNgtK4XZXlA7nhmJfR+NDkJP6Lgv6DRGPL2zJ+drQP7SuZR1uPxsRH4xbZFsNdfhoM="
+var vpnPIHostKey = "ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBPUURSw9LFDq9q4eI1nTnfNgtK4XZXlA7nhmJfR+NDkJP6Lgv6DRGPL2zJ+drQP7SuZR1uPxsRH4xbZFsNdfhoM="
+var pi4HostKey = "ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBP5tVp8yQhmmUVOP8OMFaLzDXsQBBrZ67tO1Wwj06ohAUMgLXwPLmI9WBv8y//aLKhxXfBR6ux81ZNqkc0/syPQ="
 
 func homeAndInternetIPsDoNotMatch(tunnelIP string) bool {
 	results := make(chan string, 10)
@@ -30,7 +31,7 @@ func homeAndInternetIPsDoNotMatch(tunnelIP string) bool {
 		cmd := "curl https://ipleak.net/json/"
 		details := RemoteCmd{Host: raspberryPIIP, Cmd: cmd}
 
-		remoteResult := executeRemoteCmd(details)
+		remoteResult := executeRemoteCmd(details, remoteConnectionConfiguration(vpnPIHostKey, "pi"))
 
 		tunnelIdleSince = time.Now()
 		results <- remoteResult.stdout
@@ -63,7 +64,7 @@ func homeAndInternetIPsDoNotMatch(tunnelIP string) bool {
 					log.Printf("%s\n", cmd)
 					details := RemoteCmd{Host: raspberryPIIP, Cmd: cmd}
 
-					remoteResult := executeRemoteCmd(details)
+					remoteResult := executeRemoteCmd(details, remoteConnectionConfiguration(vpnPIHostKey, "pi"))
 
 					tunnelIdleSince = time.Now()
 					resultsDig <- remoteResult.stdout
@@ -95,7 +96,7 @@ func nftablesUseVPNTunnel(tunnelIP string, internalIP string) bool {
 		cmd := "sudo nft list ruleset"
 		details := RemoteCmd{Host: raspberryPIIP, Cmd: cmd}
 
-		remoteResult := executeRemoteCmd(details)
+		remoteResult := executeRemoteCmd(details, remoteConnectionConfiguration(vpnPIHostKey, "pi"))
 
 		tunnelIdleSince = time.Now()
 		resultsNFTables <- remoteResult.stdout
@@ -113,7 +114,7 @@ func nftablesUseVPNTunnel(tunnelIP string, internalIP string) bool {
 		cmd := "sudo nft -f /etc/nftables.conf && sudo ipsec restart && sudo service transmission-daemon restart"
 		details := RemoteCmd{Host: raspberryPIIP, Cmd: cmd}
 
-		remoteResult := executeRemoteCmd(details)
+		remoteResult := executeRemoteCmd(details, remoteConnectionConfiguration(vpnPIHostKey, "pi"))
 		fmt.Println("reset nftables, VPN & transmission: " + remoteResult.stdout)
 
 	case <-timeoutNFTables:
@@ -130,7 +131,7 @@ func inspectVPNConnection() map[string]string {
 		cmd := "sudo ipsec status | grep -A 2 ESTABLISHED"
 		details := RemoteCmd{Host: raspberryPIIP, Cmd: cmd}
 
-		remoteResult := executeRemoteCmd(details)
+		remoteResult := executeRemoteCmd(details, remoteConnectionConfiguration(vpnPIHostKey, "pi"))
 
 		tunnelIdleSince = time.Now()
 		results <- remoteResult.stdout
@@ -157,7 +158,7 @@ func inspectVPNConnection() map[string]string {
 				cmd := "sudo ipsec restart"
 				details := RemoteCmd{Host: raspberryPIIP, Cmd: cmd}
 
-				remoteResult := executeRemoteCmd(details)
+				remoteResult := executeRemoteCmd(details, remoteConnectionConfiguration(vpnPIHostKey, "pi"))
 				fmt.Println("restarting VPN" + remoteResult.stdout)
 			}
 
@@ -272,13 +273,13 @@ func updateVpnPiTunnel(vpnServerDomain string) string {
 	cmd := sedCmd + "/etc/ipsec.conf"
 	details := RemoteCmd{Host: raspberryPIIP, Cmd: cmd}
 
-	remoteResult := executeRemoteCmd(details)
+	remoteResult := executeRemoteCmd(details, remoteConnectionConfiguration(vpnPIHostKey, "pi"))
 	// TODO: stderr often doesn't have real errors :(
 	if remoteResult.err == nil {
 		cmd = sedCmd + "/etc/nftables.conf"
 		details = RemoteCmd{Host: raspberryPIIP, Cmd: cmd}
 
-		remoteResult = executeRemoteCmd(details)
+		remoteResult = executeRemoteCmd(details, remoteConnectionConfiguration(vpnPIHostKey, "pi"))
 		if remoteResult.err == nil {
 			// files updated - now restart everything
 			cmd = `sudo service transmission-daemon stop &&
@@ -286,7 +287,7 @@ func updateVpnPiTunnel(vpnServerDomain string) string {
 			sudo ipsec restart && sudo service transmission-daemon start`
 			details = RemoteCmd{Host: raspberryPIIP, Cmd: cmd}
 
-			remoteResult = executeRemoteCmd(details)
+			remoteResult = executeRemoteCmd(details, remoteConnectionConfiguration(vpnPIHostKey, "pi"))
 			if remoteResult.err == nil {
 				response = "Changed VPN server to " + vpnServerDomain
 			}
