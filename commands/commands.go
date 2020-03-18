@@ -107,6 +107,12 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 	} else if args[0] == "wgs" {
 		response := wireguardShow()
 		rtm.SendMessage(rtm.NewOutgoingMessage(response, slackMessage.Channel))
+	} else if args[0] == "wgu" {
+		response := wireguardAct("up")
+		rtm.SendMessage(rtm.NewOutgoingMessage(response, slackMessage.Channel))
+	} else if args[0] == "wgd" {
+		response := wireguardAct("down")
+		rtm.SendMessage(rtm.NewOutgoingMessage(response, slackMessage.Channel))
 	} else if args[0] == "mv" {
 		response := ""
 		if len(args) == 3 &&
@@ -193,7 +199,7 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 				":metro: `mvv`: Status | Trip In | Trip Home\n" +
 				":baseball: `bb <YYYY-MM-DD>`: show baseball games from given date (default yesterday)\n" +
 				//":do_droplet: `do|dd <id>`: show|delete DigitalOcean droplet(s)\n" +
-				":wireguard: `wgs`: show current wireguard peer status\n" +
+				":wireguard: `wg[s|u|d]`: [S]how status, [U]p or [D]own wireguard tunnel\n" +
 				":protonvpn: `vpn[s|c]`: [S]how status of VPN on :raspberry_pi:, [C]hange VPN to best in given country or DE\n" +
 				":pirate_bay: `torq <search term>`\n" +
 				":transmission: `tran[c|p|s|d]`: [C]reate <URL>, [P]aused <URL>, [S]tatus, [D]elete <ID> torrents on :raspberry_pi:\n" +

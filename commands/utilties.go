@@ -47,6 +47,22 @@ func remoteConnectionConfiguration(unparsedHostKey string, username string) *ssh
 	}
 }
 
+func wireguardAct(action string) string {
+	response := ":wireguard: "
+	cmd := fmt.Sprintf("sudo wg-quick %s wg0", action)
+	log.Printf("cmd: %s", cmd)
+	details := RemoteCmd{Host: raspi3, Cmd: cmd}
+	remoteResult := executeRemoteCmd(details, remoteConnectionConfiguration(raspi3HostKey, "pi"))
+
+	if remoteResult.stdout == "" && remoteResult.stderr != "" {
+		response += remoteResult.stderr
+	} else {
+		response += remoteResult.stdout
+	}
+
+	return response
+}
+
 func wireguardShow() string {
 	response := ":wireguard: "
 	cmd := fmt.Sprintf("sudo wg show")
