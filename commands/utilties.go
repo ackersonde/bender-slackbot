@@ -10,15 +10,29 @@ import (
 	"os"
 	"regexp"
 	"strings"
+	"time"
 
+	"github.com/bramvdbogaerde/go-scp"
+	"github.com/bramvdbogaerde/go-scp/auth"
 	"golang.org/x/crypto/ssh"
 )
 
 // RemoteCmd for execution over SSH connection
 type RemoteCmd struct {
-	Host          string
-	Cmd           string
-	ConnectConfig *ssh.ClientConfig
+	Host            string
+	Cmd             string
+	SourcePath      string
+	DestinationPath string
+	ConnectConfig   *ssh.ClientConfig
+}
+
+// RemoteConnectConfig for SSH activities
+type RemoteConnectConfig struct {
+	User           string
+	PrivateKeyPath string
+	HostEndpoints  []string
+	HostSSHKey     string
+	HostPath       string
 }
 
 // RemoteResult contains remote SSH execution
@@ -26,6 +40,51 @@ type RemoteResult struct {
 	err    error
 	stdout string
 	stderr string
+}
+
+var AndroidRCC = &RemoteConnectConfig{
+	User:           "ackersond",
+	PrivateKeyPath: "/root/.ssh/id_rsa_pix4x", // path must match K8S secret declaration in bender.yml
+	HostEndpoints:  []string{"192.168.178.37:2222", "192.168.178.61:2222", "192.168.178.62:2222"},
+	HostSSHKey:     "ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBHFhojNPu3wLn4NrLlyCQnLBCBkdGtYGYTl7IBfOefr05BKmq4WqBFt3U+hRmE9ti4xtjJw7Sz60qDkbuvpPt3c=",
+	HostPath:       "/storage/emulated/0/Download/",
+}
+
+var PiRCC = &RemoteConnectConfig{
+	User:           "pi",
+	PrivateKeyPath: "/Users/ackersond/.ssh/circleci_rsa",
+	HostEndpoints:  []string{"192.168.178.59:22"},
+	HostSSHKey:     "ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBPUURSw9LFDq9q4eI1nTnfNgtK4XZXlA7nhmJfR+NDkJP6Lgv6DRGPL2zJ+drQP7SuZR1uPxsRH4xbZFsNdfhoM=",
+	HostPath:       "/home/pi/",
+}
+
+func RemoteConnectionConfiguration(config *RemoteConnectConfig) scp.Client {
+	var client scp.Client
+
+	hostKey, _, _, _, err := ssh.ParseAuthorizedKey(
+		[]byte(config.HostSSHKey))
+	if err != nil {
+		fmt.Println("ERR: unable to parse HostKey -> ", err)
+		return client
+	}
+
+	clientConfig, _ := auth.PrivateKey(
+		config.User,
+		config.PrivateKeyPath,
+		ssh.FixedHostKey(hostKey))
+	clientConfig.Timeout = 10 * time.Second // time to find SSH endpoint
+
+	// loop thru hostEndpoints until successful SCP connection
+	for _, hostEndpoint := range config.HostEndpoints {
+		client = scp.NewClient(hostEndpoint, &clientConfig)
+
+		// Connect to the remote server
+		err = client.Connect()
+		if err != nil {
+			fmt.Printf("Couldn't establish a connection: %s\n", err)
+		}
+	}
+	return client
 }
 
 func remoteConnectionConfiguration(unparsedHostKey string, username string) *ssh.ClientConfig {

@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/url"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -35,7 +36,37 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 	callingUserProfile, _ := api.GetUserInfo(slackMessage.User)
 	params := slack.MsgOptionAsUser(true)
 
-	if args[0] == "yt" {
+	if args[0] == "scpxl" {
+		if len(args) > 1 {
+			// strip '<>' off url
+			downloadURL := strings.Trim(args[1], "<>")
+			uri, err := url.ParseRequestURI(downloadURL)
+			log.Printf("parsed %s from %s", uri.RequestURI(), downloadURL)
+			if err != nil {
+				api.PostMessage(slackMessage.Channel,
+					slack.MsgOptionText(
+						"Invalid URL for downloading! ("+err.Error()+
+							")", true), params)
+			} else {
+				remoteClient := RemoteConnectionConfiguration(AndroidRCC)
+				if ScpFileBetweenHosts(
+					remoteClient,
+					downloadURL,
+					AndroidRCC.HostPath) {
+					api.PostMessage(slackMessage.Channel,
+						slack.MsgOptionText(
+							"Requested URL...", true), params)
+				} else {
+					api.PostMessage(slackMessage.Channel,
+						slack.MsgOptionText(
+							"Unable to download URL...", true), params)
+				}
+			}
+		} else {
+			api.PostMessage(slackMessage.Channel,
+				slack.MsgOptionText("Please provide source file URL!", true), params)
+		}
+	} else if args[0] == "yt" {
 		if len(args) > 1 {
 			// strip '<>' off url
 			downloadURL := strings.Trim(args[1], "<>")
@@ -160,10 +191,23 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 	} else if args[0] == "vpnc" {
 		if len(args) > 1 {
 			vpnServerDomain := strings.ToLower(scrubParamOfHTTPMagicCrap(args[1]))
-			response := updateVpnPiTunnel(vpnServerDomain)
-			rtm.SendMessage(rtm.NewOutgoingMessage(response, slackMessage.Channel))
+			// ensure vpnServerDomain has format e.g. DE-19
+			var rxPat = regexp.MustCompile(`^[A-Za-z]{2}-[0-9]{2}`)
+			if !rxPat.MatchString(vpnServerDomain) {
+				rtm.SendMessage(
+					rtm.NewOutgoingMessage(
+						"Provide a validly formatted VPN server (hint: output from `vpns`)",
+						slackMessage.Channel))
+			} else {
+				response := updateVpnPiTunnel(vpnServerDomain)
+				rtm.SendMessage(
+					rtm.NewOutgoingMessage(response, slackMessage.Channel))
+			}
 		} else {
-			rtm.SendMessage(rtm.NewOutgoingMessage("Please provide a new VPN server (hint: output from `vpns`)", slackMessage.Channel))
+			rtm.SendMessage(
+				rtm.NewOutgoingMessage(
+					"Please provide a new VPN server (hint: output from `vpns`)",
+					slackMessage.Channel))
 		}
 	} else if args[0] == "version" {
 		response := ":circleci: <https://circleci.com/gh/danackerson/bender-slackbot/" +
@@ -206,7 +250,9 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 				":movie_camera: `mv " + piPlexPath + "/torrents/<filename> [movies|tv/(<path>)]`\n" +
 				":floppy_disk: `fsck`: show disk space on :raspberry_pi:\n" +
 				":youtube: `yt <video url>`: Download Youtube video to Papa's handy\n" +
-				":circleci: `version`: Which build number is this Bender?\n"
+				":circleci: `version`: Which build number is this Bender?\n" +
+				":earth_americas: `www`: Show various internal links\n" +
+				":copyright: `scpxl <URL>`: scp URL file to Pops4XL\n"
 		api.PostMessage(slackMessage.Channel, slack.MsgOptionText(response, true), params)
 	} else if callingUserProfile != nil {
 		rtm.SendMessage(rtm.NewOutgoingMessage("whaddya say <@"+callingUserProfile.Name+">? Try `help` instead...",

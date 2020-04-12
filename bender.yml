@@ -29,10 +29,17 @@ spec:
           - name: ssh-key-volume
             readOnly: true
             mountPath: "/root/.ssh"
+          - name: scp-pops4XL-key-volume
+            readOnly: true
+            mountPath: "/root/.ssh"
       volumes:
       - name: ssh-key-volume
         secret:
           secretName: server-deploy-key-secret
+          defaultMode: 256
+      - name: scp-pops4XL-key-volume
+        secret:
+          secretName: scp-pops4XL-key-secret
           defaultMode: 256
 
 ---
@@ -59,3 +66,12 @@ metadata:
   name: server-deploy-key-secret
 data:
   id_rsa: {{CTX_SERVER_DEPLOY_SECRET}}
+
+---
+# https://superuser.com/questions/120796/how-to-encode-base64-via-command-line#comment280484_120815
+apiVersion: v1
+kind: Secret
+metadata:
+  name: scp-pops4XL-key-secret
+data:
+  id_rsa_pix4x: {{POPS4XL_SCP_KEY_SECRET}}

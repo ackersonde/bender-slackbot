@@ -1,14 +1,15 @@
 package commands
 
 import (
+	"context"
 	"errors"
 	"io"
+	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
-
-	"github.com/rs/zerolog/log"
 
 	"github.com/dropbox/dropbox-sdk-go-unofficial/dropbox"
 	"github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/files"
@@ -98,13 +99,12 @@ func downloadYoutubeVideo(origURL string) bool {
 		LogLevel: dropbox.LogInfo, // if needed, set the desired logging level. Default is off
 	}
 
-	vid, err := ytdl.GetVideoInfo(origURL)
+	vid, err := ytdl.GetVideoInfo(context.Background(), origURL)
 	if err == nil {
 		client := ytdl.Client{
 			HTTPClient: http.DefaultClient,
-			Logger:     log.Logger,
 		}
-		URI, err := client.GetDownloadURL(vid, vid.Formats[0])
+		URI, err := client.GetDownloadURL(context.Background(), vid, vid.Formats[0])
 		if err == nil {
 			log.Printf("preparing to download: %s\n", URI.String())
 
@@ -129,4 +129,26 @@ func downloadYoutubeVideo(origURL string) bool {
 	}
 
 	return downloaded
+}
+
+func findVideoOnYoutube(fetchURL *url.URL) (*url.URL, string) {
+	vid, err := ytdl.GetVideoInfo(context.Background(), fetchURL)
+	if err != nil {
+		log.Printf("ERR: ytdl GetVideoInfo: %s", err.Error())
+	}
+	youtubeClient := ytdl.Client{
+		HTTPClient: http.DefaultClient,
+	}
+	foundURL, errB := youtubeClient.GetDownloadURL(context.Background(), vid, vid.Formats[0])
+	if errB != nil {
+		log.Printf("ERR: ytdl GetDownloadURL %s", errB.Error())
+	}
+
+	destination := strings.ReplaceAll(vid.Title+"."+vid.Formats[0].Extension, " ", "_")
+	destination = strings.Replace(destination, "(", "", -1)
+	destination = strings.Replace(destination, ")", "", -1)
+	destination = strings.Replace(destination, ",", "", -1)
+	destination = strings.Replace(destination, "..", ".", -1)
+
+	return foundURL, destination
 }

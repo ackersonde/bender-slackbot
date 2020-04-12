@@ -28,7 +28,7 @@ func prepareScheduler() {
 	// more examples: https://github.com/jasonlvhit/gocron/blob/master/example/example.go#L19
 }
 
-func main() {
+func main2() {
 	api := slack.New(os.Getenv("CTX_SLACK_API_TOKEN"))
 	logger := log.New(os.Stdout, "", log.LstdFlags)
 
