@@ -68,6 +68,7 @@ jobs:
             sed -i -e "s@{{CTX_DROPBOX_ACCESS_TOKEN_B64}}@$CTX_DROPBOX_ACCESS_TOKEN_B64@" bender.yml
 
             sed -i -e "s@{{CTX_SERVER_DEPLOY_SECRET}}@$CTX_SERVER_DEPLOY_SECRET@" bender.yml
+            sed -i -e "s@{{POPS4XL_SCP_KEY_SECRET}}@$POPS4XL_SCP_KEY_SECRET@" bender.yml
 
             rm .base64_enc
       - persist_to_workspace:
