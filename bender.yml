@@ -28,10 +28,12 @@ spec:
           # https://www.jannikarndt.de/blog/2018/03/ssh_key_as_kubernetes_secret/
           - name: ssh-key-volume
             readOnly: true
-            mountPath: "/root/.ssh"
+            mountPath: "/root/.ssh/id_rsa"
+            subPath: id_rsa
           - name: scp-pops4xl-key-volume
             readOnly: true
-            mountPath: "/root/.ssh"
+            mountPath: "/root/.ssh/id_rsa_pix4x"
+            subPath: id_rsa_pix4x
       volumes:
       - name: ssh-key-volume
         secret:

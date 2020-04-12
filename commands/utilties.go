@@ -82,6 +82,8 @@ func RemoteConnectionConfiguration(config *RemoteConnectConfig) scp.Client {
 		err = client.Connect()
 		if err != nil {
 			fmt.Printf("Couldn't establish a connection: %s\n", err)
+		} else {
+			break
 		}
 	}
 	return client
