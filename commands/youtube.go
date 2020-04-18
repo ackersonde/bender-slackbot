@@ -104,7 +104,7 @@ func downloadYoutubeVideo(origURL string) bool {
 		client := ytdl.Client{
 			HTTPClient: http.DefaultClient,
 		}
-		URI, err := client.GetDownloadURL(context.Background(), vid, &vid.Formats[0])
+		URI, err := client.GetDownloadURL(context.Background(), vid, vid.Formats[0])
 		if err == nil {
 			log.Printf("preparing to download: %s\n", URI.String())
 
@@ -139,7 +139,7 @@ func findVideoOnYoutube(fetchURL *url.URL) (*url.URL, string) {
 	youtubeClient := ytdl.Client{
 		HTTPClient: http.DefaultClient,
 	}
-	foundURL, errB := youtubeClient.GetDownloadURL(context.Background(), vid, &vid.Formats[0])
+	foundURL, errB := youtubeClient.GetDownloadURL(context.Background(), vid, vid.Formats[0])
 	if errB != nil {
 		log.Printf("ERR: ytdl GetDownloadURL %s", errB.Error())
 	}
