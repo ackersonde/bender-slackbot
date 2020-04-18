@@ -34,7 +34,7 @@ const (
 
 var proxies = []string{"tpb.cool", "piratebay.tech", "thepiratebay.fail", "piratebay.icu", "thepirate.host"}
 
-func searchProxy(url string) []structures.Torrent {
+func searchProxy(url string) *structures.Torrents {
 	for i, proxy := range proxies {
 		uri := "https://" + proxy + url
 		log.Printf("torq try #%d: %s ...\n", i, uri)
@@ -74,14 +74,14 @@ func searchProxy(url string) []structures.Torrent {
 }
 
 // SearchFor is now commented
-func SearchFor(term string, cat Category) ([]structures.Torrent, string) {
+func SearchFor(term string, cat Category) (*structures.Torrents, string) {
 	response := ""
 
-	var torrents []structures.Torrent
+	var torrents *structures.Torrents
 	torrents, err := search(term, cat)
 	found := 0
 	if err == nil {
-		for i, t := range torrents {
+		for i, t := range *torrents {
 			seeders, _ := strconv.Atoi(t.Seeders)
 			if seeders > 10 {
 				found++
@@ -109,8 +109,8 @@ func SearchFor(term string, cat Category) ([]structures.Torrent, string) {
 }
 
 // search returns the torrents found with the given search string and categories.
-func search(query string, cats ...Category) ([]structures.Torrent, error) {
-	var torrents []structures.Torrent
+func search(query string, cats ...Category) (*structures.Torrents, error) {
+	var torrents *structures.Torrents
 
 	if query != "" {
 		if len(cats) == 0 {
@@ -141,14 +141,12 @@ func search(query string, cats ...Category) ([]structures.Torrent, error) {
 	return torrents, nil
 }
 
-func getTorrentsFromJSON(jsonObject []byte) []structures.Torrent {
-	var torrentResp structures.TorrentAPIResponse
-
-	var s = new(structures.TorrentAPIResponse)
+func getTorrentsFromJSON(jsonObject []byte) *structures.Torrents {
+	var s = new(structures.Torrents)
 	err := json.Unmarshal(jsonObject, &s)
 	if err != nil {
 		fmt.Println("whoops:", err)
 	}
 
-	return torrentResp.TorrentList
+	return s
 }

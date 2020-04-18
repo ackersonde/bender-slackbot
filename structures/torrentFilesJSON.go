@@ -1,12 +1,7 @@
 package structures
 
-// TorrentAPIResponse object from pb
-type TorrentAPIResponse struct {
-	TorrentList []Torrent
-}
-
 // Torrent response object from pb
-type Torrent struct {
+type Torrents []struct {
 	ID       string `json:"id"`
 	Name     string `json:"name"`
 	InfoHash string `json:"info_hash"`
