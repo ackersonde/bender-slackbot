@@ -42,7 +42,7 @@ type RemoteResult struct {
 	stderr string
 }
 
-var AndroidRCC = &RemoteConnectConfig{
+var androidRCC = &RemoteConnectConfig{
 	User:           "ackersond",
 	PrivateKeyPath: "/root/.ssh/id_rsa_pix4x", // path must match K8S secret declaration in bender.yml
 	HostEndpoints:  []string{"192.168.178.37:2222", "192.168.178.61:2222", "192.168.178.62:2222"},
@@ -50,7 +50,7 @@ var AndroidRCC = &RemoteConnectConfig{
 	HostPath:       "/storage/emulated/0/Download/",
 }
 
-var PiRCC = &RemoteConnectConfig{
+var piRCC = &RemoteConnectConfig{
 	User:           "pi",
 	PrivateKeyPath: "/Users/ackersond/.ssh/circleci_rsa",
 	HostEndpoints:  []string{"192.168.178.59:22"},

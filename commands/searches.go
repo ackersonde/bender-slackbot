@@ -136,10 +136,10 @@ func search(query string, cats ...Category) ([]Torrent, error) {
 			catStr = "0"
 		}
 
-		searchStringURL := "/search/" + url.QueryEscape(query) + "/0/99/" + catStr
+		searchStringURL := "/search.php?q=" + url.QueryEscape(query) + "&cat=" + catStr
 		torrents = searchProxy(searchStringURL)
 	} else {
-		torrents = searchProxy("/browse/207/0/7/0")
+		torrents = searchProxy("/search.php?q=category:207")
 	}
 
 	if torrents == nil {

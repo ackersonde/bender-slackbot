@@ -140,7 +140,7 @@ func MoveTorrentFile(api *slack.Client, sourceFile string, destinationDir string
 	//reportMoveProgress(api)
 }
 
-func ScpFileBetweenHosts(remoteClient scp.Client, sourceURI string, hostPath string) bool {
+func scpFileBetweenHosts(remoteClient scp.Client, sourceURI string, hostPath string) bool {
 	fetchURL, err := url.Parse(sourceURI)
 	destination := ""
 	success := false
