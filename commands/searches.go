@@ -34,8 +34,9 @@ const (
 var proxies = []string{"tpb.cool", "piratebay.tech", "thepiratebay.fail", "piratebay.icu", "thepirate.host"}
 
 func searchProxy(url string) []Torrent {
-	for _, proxy := range proxies {
+	for i, proxy := range proxies {
 		uri := "https://" + proxy + url
+		log.Printf("torq try #%d: %s ...\n", i, uri)
 		req, err := http.NewRequest("GET", uri, nil)
 		if err != nil {
 			log.Printf("http.NewRequest() failed with '%s'\n", err)
