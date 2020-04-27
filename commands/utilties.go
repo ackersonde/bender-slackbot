@@ -58,6 +58,7 @@ var piRCC = &RemoteConnectConfig{
 	HostPath:       "/home/pi/",
 }
 
+// RemoteConnectionConfiguration uses a finer config than non-exported version
 func RemoteConnectionConfiguration(config *RemoteConnectConfig) scp.Client {
 	var client scp.Client
 
@@ -113,7 +114,7 @@ func wireguardAct(action string) string {
 	cmd := fmt.Sprintf("sudo wg-quick %s wg0", action)
 	log.Printf("cmd: %s", cmd)
 	details := RemoteCmd{Host: raspi3, Cmd: cmd}
-	remoteResult := executeRemoteCmd(details, remoteConnectionConfiguration(raspi3HostKey, "pi"))
+	remoteResult := executeRemoteCmd(details, remoteConnectionConfiguration(raspi3HostKey, "ubuntu"))
 
 	if remoteResult.stdout == "" && remoteResult.stderr != "" {
 		response += remoteResult.stderr
@@ -129,7 +130,7 @@ func wireguardShow() string {
 	cmd := fmt.Sprintf("sudo wg show")
 	log.Printf("cmd: %s", cmd)
 	details := RemoteCmd{Host: raspi3, Cmd: cmd}
-	remoteResult := executeRemoteCmd(details, remoteConnectionConfiguration(raspi3HostKey, "pi"))
+	remoteResult := executeRemoteCmd(details, remoteConnectionConfiguration(raspi3HostKey, "ubuntu"))
 
 	if remoteResult.stdout == "" && remoteResult.stderr != "" {
 		response += remoteResult.stderr
