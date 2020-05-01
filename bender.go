@@ -12,12 +12,15 @@ import (
 	"github.com/nlopes/slack"
 )
 
-var botID = "N/A"     // U2NQSPHHD bender bot userID
-var vpnCountry = "NL" // DE started flapping and is DOWN since April 2020
+var botID = "N/A" // U2NQSPHHD bender bot userID
 
 func prepareScheduler() {
-	gocron.Every(1).Day().At("08:04").Do(commands.ChangeToFastestVPNServer, vpnCountry, false)
-	gocron.Every(1).Friday().At("09:04").Do(commands.VpnPiTunnelChecks, vpnCountry, false)
+	gocron.Every(1).Day().At("08:04").Do(
+		commands.ChangeToFastestVPNServer,
+		commands.VPNCountry, false)
+	gocron.Every(1).Friday().At("09:04").Do(
+		commands.VpnPiTunnelChecks,
+		commands.VPNCountry, false)
 	gocron.Every(1).Friday().At("09:05").Do(commands.CheckMediaDiskSpace, "---")
 	gocron.Every(1).Friday().At("09:05").Do(commands.CheckServerDiskSpace, "---")
 	//gocron.Every(1).Day().At("05:30").Do(common.UpdateFirewall)

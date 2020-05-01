@@ -22,6 +22,9 @@ var circleCIBuildNum = os.Getenv("CIRCLE_BUILD_NUM")
 var circleCIDoAlgoURL = "https://circleci.com/api/v1.1/project/github/danackerson/do-algo"
 var circleCITokenParam = "?circle-token=" + os.Getenv("CTX_CIRCLECI_API_TOKEN")
 
+// VPNCountry as default connection
+var VPNCountry = "NL"
+
 // SlackReportChannel default reporting channel for bot crons
 var SlackReportChannel = os.Getenv("slackReportChannel") // C33QYV3PW is #remote_network_report
 
@@ -182,11 +185,10 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 		}
 		api.PostMessage(slackMessage.Channel, slack.MsgOptionText(response, false), params)
 	} else if args[0] == "vpns" {
-		vpnCountry := "DE"
 		if len(args) > 1 {
-			vpnCountry = strings.ToUpper(args[1])
+			VPNCountry = strings.ToUpper(args[1])
 		}
-		response := VpnPiTunnelChecks(vpnCountry, true)
+		response := VpnPiTunnelChecks(VPNCountry, true)
 		rtm.SendMessage(rtm.NewOutgoingMessage(response, slackMessage.Channel))
 	} else if args[0] == "vpnc" {
 		if len(args) > 1 {
@@ -244,7 +246,7 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 				":baseball: `bb <YYYY-MM-DD>`: show baseball games from given date (default yesterday)\n" +
 				//":do_droplet: `do|dd <id>`: show|delete DigitalOcean droplet(s)\n" +
 				":wireguard: `wg[s|u|d]`: [S]how status, [U]p or [D]own wireguard tunnel\n" +
-				":protonvpn: `vpn[s|c]`: [S]how status of VPN on :raspberry_pi:, [C]hange VPN to best in given country or DE\n" +
+				":protonvpn: `vpn[s|c]`: [S]how status of VPN on :raspberry_pi:, [C]hange VPN to best in given country or " + VPNCountry + "\n" +
 				":pirate_bay: `torq <search term>`\n" +
 				":transmission: `tran[c|p|s|d]`: [C]reate <URL>, [P]aused <URL>, [S]tatus, [D]elete <ID> torrents on :raspberry_pi:\n" +
 				":movie_camera: `mv " + piPlexPath + "/torrents/<filename> [movies|tv/(<path>)]`\n" +
