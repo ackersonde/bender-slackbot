@@ -8,7 +8,6 @@ import (
 	"os"
 	"os/exec"
 	"strings"
-	"time"
 
 	"github.com/bramvdbogaerde/go-scp"
 	"github.com/nlopes/slack"
@@ -71,7 +70,7 @@ func CheckMediaDiskSpace(path string) string {
 	}
 	log.Printf("cmd: %s", cmd)
 	details := RemoteCmd{Host: raspberryPIIP, Cmd: cmd}
-	remoteResult := executeRemoteCmd(details, remoteConnectionConfiguration(vpnPIHostKey, "pi"))
+	remoteResult := executeRemoteCmd(details, retrieveClientConfig(vpnPIRemoteConnectConfig))
 
 	if remoteResult.stdout == "" && remoteResult.stderr != "" {
 		response = remoteResult.stderr
@@ -84,7 +83,7 @@ func CheckMediaDiskSpace(path string) string {
 
 	cmd = fmt.Sprintf("/bin/df -h %s /", piPlexPath+path)
 	details = RemoteCmd{Host: raspberryPIIP, Cmd: cmd}
-	remoteResult = executeRemoteCmd(details, remoteConnectionConfiguration(vpnPIHostKey, "pi"))
+	remoteResult = executeRemoteCmd(details, retrieveClientConfig(vpnPIRemoteConnectConfig))
 
 	if remoteResult.stdout == "" && remoteResult.stderr != "" {
 		response = response + "\n" + remoteResult.stderr
@@ -108,7 +107,7 @@ func MoveTorrentFile(api *slack.Client, sourceFile string, destinationDir string
 
 	moveCmd := fmt.Sprintf("mv %s/%s %s/%s", piPlexPath, sourceFile, piPlexPath, destinationDir)
 	details := RemoteCmd{Host: raspberryPIIP, Cmd: moveCmd}
-	remoteResult := executeRemoteCmd(details, remoteConnectionConfiguration(vpnPIHostKey, "pi"))
+	remoteResult := executeRemoteCmd(details, retrieveClientConfig(vpnPIRemoteConnectConfig))
 
 	if remoteResult.stdout == "" && remoteResult.stderr != "" {
 		response = fmt.Sprintf(fmt.Sprint(remoteResult.stderr) + ": " + string(remoteResult.stdout))
@@ -177,46 +176,4 @@ func scpFileBetweenHosts(remoteClient scp.Client, sourceURI string, hostPath str
 	}
 
 	return success
-}
-
-func reportMoveProgress(api *slack.Client) {
-	historyParams := new(slack.HistoryParameters)
-	historyParams.Latest = ""
-	historyParams.Count = 1
-	historyParams.Inclusive = true
-	lastMsgID := ""
-	msgHistory, _ := api.GetChannelHistory(SlackReportChannel, *historyParams)
-	for _, msg := range msgHistory.Messages {
-		lastMsgID = msg.Timestamp
-	}
-
-	remoteResults := make(chan RemoteResult, 1)
-	timeout := time.After(10 * time.Second)
-	notDone := true
-
-	for notDone {
-		go func() {
-			progressCmd := "progress"
-			progressDetails := RemoteCmd{Host: raspberryPIIP, Cmd: progressCmd}
-
-			remoteResults <- executeRemoteCmd(progressDetails, remoteConnectionConfiguration(vpnPIHostKey, "pi"))
-		}()
-
-		// reset tunnel idle time as user may want to see progress of move
-		tunnelIdleSince = time.Now()
-
-		select {
-		case res := <-remoteResults:
-			// update msg with progress: https://api.slack.com/methods/chat.update
-			// so there aren't 385 msgs with 2% 2% 3% ...
-			api.UpdateMessage(SlackReportChannel, lastMsgID, slack.MsgOptionText(res.stdout, true))
-			if strings.Contains(res.stderr, "No command currently running") {
-				notDone = false
-			} else {
-				time.Sleep(time.Second * 5)
-			}
-		case <-timeout:
-			fmt.Println("Timed out!")
-		}
-	}
 }

@@ -20,8 +20,8 @@ var maxVPNServerLoad = 80
 var tunnelOnTime time.Time
 var tunnelIdleSince time.Time
 var maxTunnelIdleTime = float64(5 * 60) // 5 mins in seconds
-var vpnPIHostKey = "ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBPUURSw9LFDq9q4eI1nTnfNgtK4XZXlA7nhmJfR+NDkJP6Lgv6DRGPL2zJ+drQP7SuZR1uPxsRH4xbZFsNdfhoM="
-var pi4HostKey = "ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBP5tVp8yQhmmUVOP8OMFaLzDXsQBBrZ67tO1Wwj06ohAUMgLXwPLmI9WBv8y//aLKhxXfBR6ux81ZNqkc0/syPQ="
+var vpnPIHostKey = "ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBCfXJ+mvHXs+t0+nF8JATxgMEwNngy6JCOVn1bEjsjsMylZsMejouArUrNKcnyPZ+vTvljlR7CaC6X9fbUtdxs0="
+var pi4HostKey = "ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBC9wGQXT5zifmoWRaLeDrf/j98ShzZ29CilfVUVtSeKJp1k2uh8pMM/NTiG9FQQmitEIZXdwlcl2+Uj8YD21sAI="
 var raspi3HostKey = "ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBD7p4FZyTPgywRBJ2ADL/i2igJ/N+3G8odFL3or3Ck77CVBnri8ZxO8+34/Rl/eGgt9qhp0vm7eTB4nE0C2m/Ro="
 
 func homeAndInternetIPsDoNotMatch(tunnelIP string) bool {
@@ -32,7 +32,7 @@ func homeAndInternetIPsDoNotMatch(tunnelIP string) bool {
 		cmd := "curl https://ipleak.net/json/"
 		details := RemoteCmd{Host: raspberryPIIP, Cmd: cmd}
 
-		remoteResult := executeRemoteCmd(details, remoteConnectionConfiguration(vpnPIHostKey, "pi"))
+		remoteResult := executeRemoteCmd(details, retrieveClientConfig(vpnPIRemoteConnectConfig))
 
 		tunnelIdleSince = time.Now()
 		results <- remoteResult.stdout
@@ -65,7 +65,7 @@ func homeAndInternetIPsDoNotMatch(tunnelIP string) bool {
 					log.Printf("%s\n", cmd)
 					details := RemoteCmd{Host: raspberryPIIP, Cmd: cmd}
 
-					remoteResult := executeRemoteCmd(details, remoteConnectionConfiguration(vpnPIHostKey, "pi"))
+					remoteResult := executeRemoteCmd(details, retrieveClientConfig(vpnPIRemoteConnectConfig))
 
 					tunnelIdleSince = time.Now()
 					resultsDig <- remoteResult.stdout
@@ -90,41 +90,6 @@ func homeAndInternetIPsDoNotMatch(tunnelIP string) bool {
 	return false
 }
 
-func nftablesUseVPNTunnel(tunnelIP string, internalIP string) bool {
-	resultsNFTables := make(chan string, 10)
-	timeoutNFTables := time.After(5 * time.Second)
-	go func() {
-		cmd := "sudo nft list ruleset"
-		details := RemoteCmd{Host: raspberryPIIP, Cmd: cmd}
-
-		remoteResult := executeRemoteCmd(details, remoteConnectionConfiguration(vpnPIHostKey, "pi"))
-
-		tunnelIdleSince = time.Now()
-		resultsNFTables <- remoteResult.stdout
-	}()
-
-	select {
-	case resNFTables := <-resultsNFTables:
-		if strings.Contains(resNFTables, "ip daddr "+tunnelIP) &&
-			strings.Contains(resNFTables, "ip saddr "+tunnelIP) &&
-			strings.Contains(resNFTables, "oifname \"eth0\" ip saddr "+internalIP) &&
-			strings.Contains(resNFTables, "iifname \"eth0\" ip daddr "+internalIP) {
-			return true
-		}
-
-		cmd := "sudo nft -f /etc/nftables.conf && sudo ipsec restart && sudo service transmission-daemon restart"
-		details := RemoteCmd{Host: raspberryPIIP, Cmd: cmd}
-
-		remoteResult := executeRemoteCmd(details, remoteConnectionConfiguration(vpnPIHostKey, "pi"))
-		fmt.Println("reset nftables, VPN & transmission: " + remoteResult.stdout)
-
-	case <-timeoutNFTables:
-		fmt.Println("Timed out on `sudo nft list ruleset`!")
-	}
-
-	return false
-}
-
 func inspectVPNConnection() map[string]string {
 	results := make(chan string, 10)
 	timeout := time.After(10 * time.Second)
@@ -132,7 +97,7 @@ func inspectVPNConnection() map[string]string {
 		cmd := "sudo ipsec status | grep -A 2 ESTABLISHED"
 		details := RemoteCmd{Host: raspberryPIIP, Cmd: cmd}
 
-		remoteResult := executeRemoteCmd(details, remoteConnectionConfiguration(vpnPIHostKey, "pi"))
+		remoteResult := executeRemoteCmd(details, retrieveClientConfig(vpnPIRemoteConnectConfig))
 
 		tunnelIdleSince = time.Now()
 		results <- remoteResult.stdout
@@ -159,7 +124,7 @@ func inspectVPNConnection() map[string]string {
 				cmd := "sudo ipsec restart"
 				details := RemoteCmd{Host: raspberryPIIP, Cmd: cmd}
 
-				remoteResult := executeRemoteCmd(details, remoteConnectionConfiguration(vpnPIHostKey, "pi"))
+				remoteResult := executeRemoteCmd(details, retrieveClientConfig(vpnPIRemoteConnectConfig))
 				fmt.Println("restarting VPN" + remoteResult.stdout)
 			}
 
@@ -241,8 +206,8 @@ func VpnPiTunnelChecks(vpnCountry string, userCall bool) string {
 		tunnelIP = vpnTunnelSpecs["endpointIP"]
 	}
 
-	if homeAndInternetIPsDoNotMatch(tunnelIP) &&
-		nftablesUseVPNTunnel(tunnelIP, vpnTunnelSpecs["internalIP"]) {
+	if homeAndInternetIPsDoNotMatch(tunnelIP) {
+		// TODO && transmission-daemon:bind-address != internal VPN IP (10.6.*.*)
 		response = ":protonvpn: VPN: UP @ " + tunnelIP +
 			" for " + vpnTunnelSpecs["time"] + " (using " +
 			vpnTunnelSpecs["endpointDNS"] + ")"
@@ -274,21 +239,26 @@ func updateVpnPiTunnel(vpnServerDomain string) string {
 	cmd := sedCmd + "/etc/ipsec.conf"
 	details := RemoteCmd{Host: raspberryPIIP, Cmd: cmd}
 
-	remoteResult := executeRemoteCmd(details, remoteConnectionConfiguration(vpnPIHostKey, "pi"))
+	remoteResult := executeRemoteCmd(details, retrieveClientConfig(vpnPIRemoteConnectConfig))
 	// TODO: stderr often doesn't have real errors :(
 	if remoteResult.err == nil {
-		cmd = sedCmd + "/etc/nftables.conf"
+		cmd = "ip address | grep \"10\\.\"" // search for internal VPN ip
 		details = RemoteCmd{Host: raspberryPIIP, Cmd: cmd}
 
-		remoteResult = executeRemoteCmd(details, remoteConnectionConfiguration(vpnPIHostKey, "pi"))
+		remoteResult = executeRemoteCmd(details, retrieveClientConfig(vpnPIRemoteConnectConfig)
+		log.Printf("internal VPN IP: %s", remoteResult.stdout)
 		if remoteResult.err == nil {
 			// files updated - now restart everything
 			cmd = `sudo service transmission-daemon stop &&
-			sudo nft -f /etc/nftables.conf && sudo ipsec update &&
+			sudo ipsec update &&
 			sudo ipsec restart && sudo service transmission-daemon start`
 			details = RemoteCmd{Host: raspberryPIIP, Cmd: cmd}
 
-			remoteResult = executeRemoteCmd(details, remoteConnectionConfiguration(vpnPIHostKey, "pi"))
+			// TODO: need to change Transmission-Daemon bind-address-ipv4
+			// ip address | grep "10\." -> inet "10.6.4.235/32" scope global eth0
+			// sudo vi ~/.config/transmission-daemon/settings.json -> "bind-address-ipv4": "10.6.4.235",
+
+			remoteResult = executeRemoteCmd(details, retrieveClientConfig(vpnPIRemoteConnectConfig))
 			if remoteResult.err == nil {
 				response = "Changed VPN server to " + vpnServerDomain
 			}

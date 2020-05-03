@@ -51,7 +51,7 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 						"Invalid URL for downloading! ("+err.Error()+
 							")", true), params)
 			} else {
-				remoteClient := RemoteConnectionConfiguration(androidRCC)
+				remoteClient := SCPRemoteConnectionConfiguration(androidRCC)
 				if scpFileBetweenHosts(
 					remoteClient,
 					downloadURL,

@@ -50,44 +50,51 @@ var androidRCC = &RemoteConnectConfig{
 	HostPath:       "/storage/emulated/0/Download/",
 }
 
-var piRCC = &RemoteConnectConfig{
-	User:           "pi",
+var vpnPIRemoteConnectConfig = &RemoteConnectConfig{
+	User:           "ubuntu",
 	PrivateKeyPath: "/Users/ackersond/.ssh/circleci_rsa",
 	HostEndpoints:  []string{"192.168.178.59:22"},
-	HostSSHKey:     "ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBPUURSw9LFDq9q4eI1nTnfNgtK4XZXlA7nhmJfR+NDkJP6Lgv6DRGPL2zJ+drQP7SuZR1uPxsRH4xbZFsNdfhoM=",
-	HostPath:       "/home/pi/",
+	HostSSHKey:     vpnPIHostKey,
+	HostPath:       "/home/ubuntu/",
 }
 
-// RemoteConnectionConfiguration uses a finer config than non-exported version
-func RemoteConnectionConfiguration(config *RemoteConnectConfig) scp.Client {
+// SCPRemoteConnectionConfiguration returns scp client connection
+func SCPRemoteConnectionConfiguration(config *RemoteConnectConfig) scp.Client {
 	var client scp.Client
 
+	clientConfig := retrieveClientConfig(config)
+	if clientConfig != nil {
+		// loop thru hostEndpoints until successful SCP connection
+		for _, hostEndpoint := range config.HostEndpoints {
+			client = scp.NewClient(hostEndpoint, clientConfig)
+			// Connect to the remote server
+			err := client.Connect()
+			if err != nil {
+				fmt.Printf("Couldn't establish a connection: %s\n", err)
+			} else {
+				break
+			}
+		}
+	}
+	return client
+}
+
+func retrieveClientConfig(config *RemoteConnectConfig) *ssh.ClientConfig {
+	var clientConfig ssh.ClientConfig
 	hostKey, _, _, _, err := ssh.ParseAuthorizedKey(
 		[]byte(config.HostSSHKey))
 	if err != nil {
 		fmt.Println("ERR: unable to parse HostKey -> ", err)
-		return client
+		return &clientConfig
 	}
 
-	clientConfig, _ := auth.PrivateKey(
+	clientConfig, _ = auth.PrivateKey(
 		config.User,
 		config.PrivateKeyPath,
 		ssh.FixedHostKey(hostKey))
 	clientConfig.Timeout = 10 * time.Second // time to find SSH endpoint
 
-	// loop thru hostEndpoints until successful SCP connection
-	for _, hostEndpoint := range config.HostEndpoints {
-		client = scp.NewClient(hostEndpoint, &clientConfig)
-
-		// Connect to the remote server
-		err = client.Connect()
-		if err != nil {
-			fmt.Printf("Couldn't establish a connection: %s\n", err)
-		} else {
-			break
-		}
-	}
-	return client
+	return &clientConfig
 }
 
 func remoteConnectionConfiguration(unparsedHostKey string, username string) *ssh.ClientConfig {
