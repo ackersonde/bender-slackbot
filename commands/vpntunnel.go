@@ -245,7 +245,7 @@ func updateVpnPiTunnel(vpnServerDomain string) string {
 		cmd = "ip address | grep \"10\\.\"" // search for internal VPN ip
 		details = RemoteCmd{Host: raspberryPIIP, Cmd: cmd}
 
-		remoteResult = executeRemoteCmd(details, retrieveClientConfig(vpnPIRemoteConnectConfig)
+		remoteResult = executeRemoteCmd(details, retrieveClientConfig(vpnPIRemoteConnectConfig))
 		log.Printf("internal VPN IP: %s", remoteResult.stdout)
 		if remoteResult.err == nil {
 			// files updated - now restart everything
