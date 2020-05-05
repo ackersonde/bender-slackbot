@@ -14,7 +14,10 @@ func getTorrents(t *transmission.Client) (result string) {
 	// Get all torrents
 	torrents, err := t.GetTorrents()
 	if err == nil {
-		result = ":transmission: <http://" + raspberryPIIP + ":9091/transmission/web/|Running RaspberryPI Torrent(s)>\n"
+		result = ":transmission: <http://" +
+			vpnPIRemoteConnectConfig.HostName +
+			":9091/transmission/web/|Running RaspberryPI Torrent(s)>\n"
+
 		for _, listTorrent := range torrents {
 			status := ":arrows_counterclockwise:"
 			info := "[S: " + strconv.Itoa(listTorrent.PeersSendingToUs) + "]\n"
@@ -27,7 +30,8 @@ func getTorrents(t *transmission.Client) (result string) {
 			case transmission.StatusSeeding:
 				status = ":cinema:"
 				seedRatio := fmt.Sprintf("%.1f", listTorrent.UploadRatio)
-				info = "[L: " + strconv.Itoa(listTorrent.PeersGettingFromUs) + "] (Ratio: " + seedRatio + ")\n"
+				info = "[L: " + strconv.Itoa(listTorrent.PeersGettingFromUs) +
+					"] (Ratio: " + seedRatio + ")\n"
 			}
 
 			percentComplete := strconv.FormatFloat(listTorrent.PercentDone*100, 'f', 0, 64)
@@ -41,7 +45,7 @@ func getTorrents(t *transmission.Client) (result string) {
 	return result
 }
 
-func addTorrents(t *transmission.Client, torrentLink string, paused bool) (result string) {
+func addTorrents(t *transmission.Client, torrentLink string, paused bool) string {
 	// slack 'markdown's URLs with '<link|text>' so clip these off
 	if strings.HasPrefix(torrentLink, "<") {
 		torrentLink = strings.TrimLeft(torrentLink, "<http://")
@@ -54,7 +58,7 @@ func addTorrents(t *transmission.Client, torrentLink string, paused bool) (resul
 	}
 
 	torrentLink = strings.Replace(torrentLink, "magnet/", "magnet:", -1)
-	result = fmt.Sprintf(":star2: adding %s\n", torrentLink)
+	result := fmt.Sprintf(":star2: adding %s\n", torrentLink)
 
 	// Add a torrent
 
@@ -92,7 +96,7 @@ func torrentCommand(cmd []string) (result string) {
 
 	// Connect to Transmission RPC daemon
 	conf := transmission.Config{
-		Address: "http://" + raspberryPIIP + ":9091/transmission/rpc",
+		Address: "http://" + vpnPIRemoteConnectConfig.HostName + ":9091/transmission/rpc",
 	}
 	t, err := transmission.New(conf)
 	if err != nil {

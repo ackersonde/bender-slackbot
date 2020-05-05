@@ -33,6 +33,7 @@ type RemoteConnectConfig struct {
 	HostEndpoints  []string
 	HostSSHKey     string
 	HostPath       string
+	HostName       string
 }
 
 // RemoteResult contains remote SSH execution
@@ -54,8 +55,18 @@ var vpnPIRemoteConnectConfig = &RemoteConnectConfig{
 	User:           "ubuntu",
 	PrivateKeyPath: "/Users/ackersond/.ssh/circleci_rsa",
 	HostEndpoints:  []string{"192.168.178.59:22"},
-	HostSSHKey:     vpnPIHostKey,
+	HostSSHKey:     "ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBCfXJ+mvHXs+t0+nF8JATxgMEwNngy6JCOVn1bEjsjsMylZsMejouArUrNKcnyPZ+vTvljlR7CaC6X9fbUtdxs0=",
 	HostPath:       "/home/ubuntu/",
+	HostName:       "vpnpi.fritz.box",
+}
+
+var blackPearlRemoteConnectConfig = &RemoteConnectConfig{
+	User:           "ubuntu",
+	PrivateKeyPath: "/Users/ackersond/.ssh/circleci_rsa",
+	HostEndpoints:  []string{"192.168.178.59:22"},
+	HostSSHKey:     "ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBD7p4FZyTPgywRBJ2ADL/i2igJ/N+3G8odFL3or3Ck77CVBnri8ZxO8+34/Rl/eGgt9qhp0vm7eTB4nE0C2m/Ro=",
+	HostPath:       "/home/ubuntu/",
+	HostName:       "blackpearl.fritz.box",
 }
 
 // SCPRemoteConnectionConfiguration returns scp client connection
@@ -120,8 +131,7 @@ func wireguardAct(action string) string {
 	response := ":wireguard: "
 	cmd := fmt.Sprintf("sudo wg-quick %s wg0", action)
 	log.Printf("cmd: %s", cmd)
-	details := RemoteCmd{Host: raspi3, Cmd: cmd}
-	remoteResult := executeRemoteCmd(details, remoteConnectionConfiguration(raspi3HostKey, "ubuntu"))
+	remoteResult := executeRemoteCmd(cmd, blackPearlRemoteConnectConfig)
 
 	if remoteResult.stdout == "" && remoteResult.stderr != "" {
 		response += remoteResult.stderr
@@ -136,8 +146,7 @@ func wireguardShow() string {
 	response := ":wireguard: "
 	cmd := fmt.Sprintf("sudo wg show")
 	log.Printf("cmd: %s", cmd)
-	details := RemoteCmd{Host: raspi3, Cmd: cmd}
-	remoteResult := executeRemoteCmd(details, remoteConnectionConfiguration(raspi3HostKey, "ubuntu"))
+	remoteResult := executeRemoteCmd(cmd, blackPearlRemoteConnectConfig)
 
 	if remoteResult.stdout == "" && remoteResult.stderr != "" {
 		response += remoteResult.stderr
@@ -148,33 +157,45 @@ func wireguardShow() string {
 	return response
 }
 
-func executeRemoteCmd(details RemoteCmd, config *ssh.ClientConfig) RemoteResult {
+func executeRemoteCmd(cmd string, config *RemoteConnectConfig) RemoteResult {
 	defer func() { //catch or finally
 		if err := recover(); err != nil { //catch
 			fmt.Fprintf(os.Stderr, "Exception: %v\n", err)
 		}
 	}()
 
-	connectionString := fmt.Sprintf("%s:%s", details.Host, "22")
-	conn, errConn := ssh.Dial("tcp", connectionString, config)
+	remoteConfig := remoteConnectionConfiguration(config.HostSSHKey, config.User)
+	if config.HostName != "" {
+		sshClient := initialDialOut(config.HostName, remoteConfig)
+
+		session, _ := sshClient.NewSession()
+		defer session.Close()
+
+		var stdoutBuf bytes.Buffer
+		session.Stdout = &stdoutBuf
+		var stderrBuf bytes.Buffer
+		session.Stderr = &stderrBuf
+		err := session.Run(cmd)
+
+		errStr := ""
+		if stderrBuf.String() != "" {
+			errStr = strings.TrimSpace(stderrBuf.String())
+		}
+
+		return RemoteResult{err, stdoutBuf.String(), errStr}
+	}
+
+	return RemoteResult{}
+}
+
+func initialDialOut(hostname string, remoteConfig *ssh.ClientConfig) *ssh.Client {
+	connectionString := fmt.Sprintf("%s:%s", hostname, "22")
+	sshClient, errConn := ssh.Dial("tcp", connectionString, remoteConfig)
 	if errConn != nil { //catch
-		return RemoteResult{nil, "", errConn.Error()}
-	}
-	session, _ := conn.NewSession()
-	defer session.Close()
-
-	var stdoutBuf bytes.Buffer
-	session.Stdout = &stdoutBuf
-	var stderrBuf bytes.Buffer
-	session.Stderr = &stderrBuf
-	err := session.Run(details.Cmd)
-
-	errStr := ""
-	if stderrBuf.String() != "" {
-		errStr = strings.TrimSpace(stderrBuf.String())
+		log.Printf(errConn.Error())
 	}
 
-	return RemoteResult{err, stdoutBuf.String(), errStr}
+	return sshClient
 }
 
 func sendPayloadToJoinAPI(fileURL string, humanFilename string, icon string, smallIcon string) string {
