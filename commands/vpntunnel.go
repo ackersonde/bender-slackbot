@@ -25,12 +25,11 @@ func homeAndInternetIPsDoNotMatch(tunnelIP string) bool {
 	results := make(chan string, 10)
 	timeout := time.After(10 * time.Second)
 	go func() {
-		// get both ipv4+ipv6 internet addresses
 		cmd := "curl ipv4.icanhazip.com"
 		remoteResult := executeRemoteCmd(cmd, vpnPIRemoteConnectConfig)
 
 		tunnelIdleSince = time.Now()
-		results <- remoteResult.stdout
+		results <- strings.TrimSuffix(remoteResult.stdout, "\n")
 	}()
 
 	// type IPInfoResponse struct {
@@ -74,6 +73,8 @@ func homeAndInternetIPsDoNotMatch(tunnelIP string) bool {
 				case <-timeoutDig:
 					fmt.Println("Timed out on dig " + vpnGateway + "!")
 				}
+			} else {
+				log.Printf("VPN addy's no match: %s != %s", res, tunnelIP)
 			}
 		}
 	case <-timeout:
@@ -184,7 +185,7 @@ func ChangeToFastestVPNServer(vpnCountry string, userCall bool) string {
 	return response
 }
 
-// VpnPiTunnelChecks ensures good VPN connection
+// VpnPiTunnelChecks ensures correct VPN connection
 func VpnPiTunnelChecks(vpnCountry string, userCall bool) string {
 	tunnelIP := ""
 	response := ":protonvpn: VPN: DOWN :rotating_light:"
@@ -193,6 +194,8 @@ func VpnPiTunnelChecks(vpnCountry string, userCall bool) string {
 	log.Printf("Using VPN server: %s\n", vpnTunnelSpecs["endpointDNS"])
 	if len(vpnTunnelSpecs) > 0 {
 		tunnelIP = vpnTunnelSpecs["endpointIP"]
+		response += " with " + vpnTunnelSpecs["time"] + " (using " +
+			vpnTunnelSpecs["endpointDNS"] + ")"
 	}
 
 	if homeAndInternetIPsDoNotMatch(tunnelIP) {
@@ -219,10 +222,6 @@ func VpnPiTunnelChecks(vpnCountry string, userCall bool) string {
 }
 
 func updateVpnPiTunnel(vpnServerDomain string) string {
-	return UpdateVpnPiTunnel(vpnServerDomain)
-}
-
-func UpdateVpnPiTunnel(vpnServerDomain string) string {
 	if !strings.HasSuffix(vpnServerDomain, ".protonvpn.com") {
 		vpnServerDomain = vpnServerDomain + ".protonvpn.com"
 	}
