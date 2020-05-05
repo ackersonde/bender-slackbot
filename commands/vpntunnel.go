@@ -199,8 +199,7 @@ func VpnPiTunnelChecks(vpnCountry string, userCall bool) string {
 	}
 
 	if homeAndInternetIPsDoNotMatch(tunnelIP) {
-		// TODO && transmission-daemon:bind-address != internal VPN IP (10.6.*.*)
-		response = ":protonvpn: VPN: UP @ " + tunnelIP +
+		response = ":protonvpn: VPN: UP @ " + vpnTunnelSpecs["endpointDNS"] +
 			" for " + vpnTunnelSpecs["time"] + " (using " +
 			vpnTunnelSpecs["endpointDNS"] + ")"
 	}
@@ -233,20 +232,22 @@ func updateVpnPiTunnel(vpnServerDomain string) string {
 	remoteResult := executeRemoteCmd(cmd, vpnPIRemoteConnectConfig)
 	// TODO: stderr often doesn't have real errors :(
 	if remoteResult.err == nil {
-		cmd = "ip address | grep \"10\\.\"" // search for internal VPN ip
+		cmd = "ip address | grep '10\\.' | awk '{print $2}'" // search for internal VPN ip
 
 		remoteResult = executeRemoteCmd(cmd, vpnPIRemoteConnectConfig)
-		log.Printf("internal VPN IP: %s", remoteResult.stdout)
-		if remoteResult.err == nil {
+		if remoteResult.err == nil && remoteResult.stdout != "" {
+			internalIP := strings.TrimSuffix(remoteResult.stdout, "/32\n")
+			log.Printf("internal VPN IP: %s", internalIP)
+
+			sedCmd = `sed -rie 's/"bind-address-ipv4": "(.*)"/"bind-address-ipv4": "` + internalIP + `"/' `
+
 			// files updated - now restart everything
 			cmd = `sudo service transmission-daemon stop &&
-			sudo ipsec update &&
-			sudo ipsec restart && sudo service transmission-daemon start`
+			sudo ipsec update && sudo ipsec restart && ` + sedCmd +
+				`/home/ubuntu/.config/transmission-daemon/settings.json &&
+			sudo service transmission-daemon start`
 
-			// TODO: need to change Transmission-Daemon bind-address-ipv4
-			// ip address | grep "10\." -> inet "10.6.4.235/32" scope global eth0
-			// sudo vi ~/.config/transmission-daemon/settings.json -> "bind-address-ipv4": "10.6.4.235",
-
+			log.Printf("exec VPN PI update: %s", cmd)
 			remoteResult = executeRemoteCmd(cmd, vpnPIRemoteConnectConfig)
 			if remoteResult.err == nil {
 				response = "Changed VPN server to " + vpnServerDomain
