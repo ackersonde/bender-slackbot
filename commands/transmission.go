@@ -144,12 +144,16 @@ func ensureTransmissionBind() string {
 	// ^-- returns e.g. "bind-address-ipv4": "10.1.8.75", if found
 	// else 10.1.8.75 if *not* found
 
-	Logger.Printf("VPN_IP grep remoteResult.err: %s , .stdout: %s",
-		remoteResult.stderr, remoteResult.stdout)
+	internalIP := strings.TrimSuffix(remoteResult.stdout, "\n")
+	// TODO: while?
+	if internalIP == "" {
+		time.Sleep(5 * time.Second)
+		remoteResult = executeRemoteCmd(cmd, vpnPIRemoteConnectConfig)
+		internalIP = strings.TrimSuffix(remoteResult.stdout, "\n")
+	}
 
-	if remoteResult.err == nil && remoteResult.stdout != "" &&
-		!strings.Contains(remoteResult.stdout, "bind-address-ipv4") {
-		internalIP := strings.TrimSuffix(remoteResult.stdout, "\n")
+	if remoteResult.err == nil && internalIP != "" &&
+		!strings.Contains(internalIP, "bind-address-ipv4") {
 		Logger.Printf("internal VPN IP: %s", internalIP)
 
 		sedCmd := `sed -rie 's/"bind-address-ipv4": "(.*)"/"bind-address-ipv4": "` +
