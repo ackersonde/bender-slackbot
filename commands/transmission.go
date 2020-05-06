@@ -167,8 +167,10 @@ func ensureTransmissionBind() string {
 		if remoteResult.err == nil {
 			response = "Changed :transmission: ipv4 bind: " + internalIP
 		}
-	} else {
+	} else if remoteResult.err != nil {
 		response += "\n with " + remoteResult.err.Error()
+	} else if strings.Contains(internalIP, "bind-address-ipv4") {
+		response = ":transmission: ipv4 bind already correctly set: " + internalIP
 	}
 
 	return response
