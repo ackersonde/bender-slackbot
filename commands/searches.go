@@ -145,7 +145,7 @@ func getTorrentsFromJSON(jsonObject []byte) *structures.Torrents {
 	var s = new(structures.Torrents)
 	err := json.Unmarshal(jsonObject, &s)
 	if err != nil {
-		fmt.Println("whoops:", err)
+		log.Printf("ERR: %s", err)
 	}
 
 	return s

@@ -24,8 +24,10 @@ var maxTunnelIdleTime = float64(5 * 60) // 5 mins in seconds
 func homeAndInternetIPsDoNotMatch(tunnelIP string) bool {
 	results := make(chan string, 10)
 	timeout := time.After(10 * time.Second)
+	ipCheckHost := "https://ipv4.icanhazip.com"
+
 	go func() {
-		cmd := "curl https://ipv4.icanhazip.com"
+		cmd := "curl " + ipCheckHost
 		remoteResult := executeRemoteCmd(cmd, vpnPIRemoteConnectConfig)
 
 		tunnelIdleSince = time.Now()
@@ -56,7 +58,6 @@ func homeAndInternetIPsDoNotMatch(tunnelIP string) bool {
 				// ensure home.ackerson.de is DIFFERENT than PI IP address!
 				go func() {
 					cmd := "dig " + vpnGateway + " A +short"
-					log.Printf("%s\n", cmd)
 					remoteResult := executeRemoteCmd(cmd, vpnPIRemoteConnectConfig)
 
 					tunnelIdleSince = time.Now()
@@ -64,21 +65,21 @@ func homeAndInternetIPsDoNotMatch(tunnelIP string) bool {
 				}()
 				select {
 				case resComp := <-resultsDig:
-					fmt.Println("dig results: " + resComp)
+					log.Printf("dig %s : %s", vpnGateway, resComp)
 					lines := strings.Split(resComp, "\n")
 					// IPv4 address of home.ackerson.de doesn't match Pi's
 					if lines[1] != res {
 						return true
 					}
 				case <-timeoutDig:
-					fmt.Println("Timed out on dig " + vpnGateway + "!")
+					log.Printf("Time out on dig %s", vpnGateway)
 				}
 			} else {
 				log.Printf("VPN addy's no match: %s != %s", res, tunnelIP)
 			}
 		}
 	case <-timeout:
-		fmt.Println("Timed out on curl ipleak.net!")
+		log.Printf("Timeout on curl %s", ipCheckHost)
 	}
 
 	return false
@@ -115,13 +116,13 @@ func inspectVPNConnection() map[string]string {
 			if len(m) < 1 {
 				cmd := "sudo ipsec restart"
 				remoteResult := executeRemoteCmd(cmd, vpnPIRemoteConnectConfig)
-				fmt.Println("restarting VPN" + remoteResult.stdout)
+				log.Printf("restarting VPN %s", remoteResult.stdout)
 			}
 
 			return m
 		}
 	case <-timeout:
-		fmt.Println("Timed out on ipsec status")
+		log.Printf("Timed out on ipsec status")
 	}
 	return map[string]string{}
 }
@@ -199,6 +200,7 @@ func VpnPiTunnelChecks(vpnCountry string, userCall bool) string {
 	}
 
 	if homeAndInternetIPsDoNotMatch(tunnelIP) {
+		//TODO: && transmissionSettingsAreSane() e.g. bind-address-ipv6: "fe80::" {
 		response = ":protonvpn: VPN: UP @ " + vpnTunnelSpecs["internalIP"] +
 			" for " + vpnTunnelSpecs["time"] + " (using " +
 			vpnTunnelSpecs["endpointDNS"] + ")"

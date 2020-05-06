@@ -168,7 +168,7 @@ func scpFileBetweenHosts(remoteClient scp.Client, sourceURI string, hostPath str
 
 	response, err := http.Get(fetchURL.String())
 	if err != nil {
-		fmt.Println(err)
+		log.Printf(err.Error())
 		return success
 	}
 
@@ -181,7 +181,7 @@ func scpFileBetweenHosts(remoteClient scp.Client, sourceURI string, hostPath str
 
 	err = remoteClient.CopyFile(response.Body, hostPath+destination, "0644")
 	if err != nil {
-		fmt.Println("Error while copying file ", err)
+		log.Printf("Error while copying file %s", err)
 	} else {
 		success = true
 	}

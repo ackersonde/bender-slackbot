@@ -81,7 +81,7 @@ func SCPRemoteConnectionConfiguration(config *RemoteConnectConfig) scp.Client {
 			// Connect to the remote server
 			err := client.Connect()
 			if err != nil {
-				fmt.Printf("Couldn't establish a connection: %s\n", err)
+				log.Printf("Couldn't establish a connection: %s", err)
 			} else {
 				break
 			}
@@ -95,7 +95,7 @@ func retrieveClientConfig(config *RemoteConnectConfig) *ssh.ClientConfig {
 	hostKey, _, _, _, err := ssh.ParseAuthorizedKey(
 		[]byte(config.HostSSHKey))
 	if err != nil {
-		fmt.Println("ERR: unable to parse HostKey -> ", err)
+		log.Printf("ERR: unable to parse HostKey -> %s", err)
 		return &clientConfig
 	}
 

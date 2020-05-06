@@ -145,7 +145,7 @@ func ensureTransmissionBind() string {
 	// else 10.1.8.75 if *not* found
 
 	log.Printf("VPN_IP grep remoteResult.err: %s , .stdout: %s",
-		remoteResult.err.Error(), remoteResult.stdout)
+		remoteResult.err, remoteResult.stdout)
 
 	if remoteResult.err == nil && !strings.Contains(remoteResult.stdout, "bind-address-ipv4") {
 		internalIP := strings.TrimSuffix(remoteResult.stdout, "\n")
