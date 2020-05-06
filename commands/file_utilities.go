@@ -101,7 +101,7 @@ type basePlexRefreshCmdString struct {
 }
 
 func (i basePlexRefreshCmdString) String() string {
-	return fmt.Sprintf("http://%s:32400/library/sections/%s/refresh?X-Plex-Product=Plex%%20Web&X-Plex-Version=4.22.3&X-Plex-Client-Identifier=%s&X-Plex-Platform=Chrome&X-Plex-Platform-Version=80.0&X-Plex-Sync-Version=2&X-Plex-Features=external-media%%2Cindirect-media&X-Plex-Model=bundled&X-Plex-Device=OSX&X-Plex-Device-Name=Chrome&X-Plex-Device-Screen-Resolution=1152x1926%%2C1440x2560&X-Plex-Language=en",
+	return fmt.Sprintf("http://%s:32400/library/sections/%s/refresh?X-Plex-Token=%s",
 		i.HostName, i.Section, i.Token)
 }
 

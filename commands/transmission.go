@@ -135,19 +135,27 @@ func torrentCommand(cmd []string) (result string) {
 
 func ensureTransmissionBind() string {
 	response := "Unable to update :transmission: ipv4 bind"
+	transmissionSettingsPath := "/home/ubuntu/.config/transmission-daemon/settings.json"
 
-	cmd := "sudo service transmission-daemon stop && " +
-		"ip address | grep '10\\.' | awk '{print $2}'" // search for internal VPN ip
-
+	cmd := "VPN_IP=`ip address | grep '10\\.' | awk '{print $2}' | cut -f1 -d/` " +
+		`grep "\"bind-address-ipv4\": \"$VPN_IP\""` + transmissionSettingsPath +
+		" || echo $VPN_IP"
 	remoteResult := executeRemoteCmd(cmd, vpnPIRemoteConnectConfig)
-	if remoteResult.err == nil && remoteResult.stdout != "" {
-		internalIP := strings.TrimSuffix(remoteResult.stdout, "/32\n")
+	// ^-- returns e.g. "bind-address-ipv4": "10.1.8.75", if found
+	// else 10.1.8.75 if *not* found
+
+	log.Printf("VPN_IP grep remoteResult.err: %s , .stdout: %s",
+		remoteResult.err.Error(), remoteResult.stdout)
+
+	if remoteResult.err == nil && !strings.Contains(remoteResult.stdout, "bind-address-ipv4") {
+		internalIP := strings.TrimSuffix(remoteResult.stdout, "\n")
 		log.Printf("internal VPN IP: %s", internalIP)
 
-		sedCmd := `sed -rie 's/"bind-address-ipv4": "(.*)"/"bind-address-ipv4": "` + internalIP + `"/' `
-		cmd = sedCmd +
-			`/home/ubuntu/.config/transmission-daemon/settings.json &&
-			sudo service transmission-daemon start`
+		sedCmd := `sed -rie 's/"bind-address-ipv4": "(.*)"/"bind-address-ipv4": "` +
+			internalIP + `"/' `
+		cmd = `sudo service transmission-daemon stop && ` +
+			sedCmd + transmissionSettingsPath +
+			` && sudo service transmission-daemon start`
 
 		log.Printf("exec VPN PI update: %s", cmd)
 		remoteResult = executeRemoteCmd(cmd, vpnPIRemoteConnectConfig)

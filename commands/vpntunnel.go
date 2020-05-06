@@ -233,16 +233,11 @@ func updateVpnPiTunnel(vpnServerDomain string) string {
 	remoteResult := executeRemoteCmd(cmd, vpnPIRemoteConnectConfig)
 	// TODO: stderr often doesn't have real errors :(
 	if remoteResult.err == nil {
-		// Second, wait for the new connection, then rebind/start transmission
-		time.Sleep(10 * time.Second)
-
-		response += "\n" + ensureTransmissionBind()
-		response += "\nUpdated :protonvpn: to " + vpnServerDomain
+		response = "Updated :protonvpn: to " + vpnServerDomain
+		return "\n" + ensureTransmissionBind()
 	}
 
-	if remoteResult.err != nil {
-		response += "(" + remoteResult.err.Error() + ")"
-	}
+	response += "(" + remoteResult.err.Error() + ")"
 
 	return response
 }
