@@ -147,7 +147,7 @@ func ensureTransmissionBind() string {
 	internalIP := strings.TrimSuffix(remoteResult.stdout, "\n")
 	// TODO: while?
 	if internalIP == "" {
-		time.Sleep(5 * time.Second)
+		time.Sleep(10 * time.Second)
 		remoteResult = executeRemoteCmd(cmd, vpnPIRemoteConnectConfig)
 		internalIP = strings.TrimSuffix(remoteResult.stdout, "\n")
 	}
