@@ -137,7 +137,7 @@ func ensureTransmissionBind() string {
 	response := "Unable to update :transmission: ipv4 bind"
 	transmissionSettingsPath := "/home/ubuntu/.config/transmission-daemon/settings.json"
 
-	cmd := "VPN_IP=`ip address | grep '10\\.' | awk '{print $2}' | cut -f1 -d/` " +
+	cmd := "VPN_IP=`ip address | grep '10\\.' | awk '{print $2}' | cut -f1 -d/`; " +
 		`grep "\"bind-address-ipv4\": \"$VPN_IP\"" ` + transmissionSettingsPath +
 		" || echo $VPN_IP"
 	log.Printf("VPN_IP running %s", cmd)
