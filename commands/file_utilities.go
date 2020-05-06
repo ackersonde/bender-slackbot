@@ -2,7 +2,6 @@ package commands
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -64,7 +63,7 @@ func CheckMediaDiskSpace(path string) string {
 	if !strings.HasSuffix(path, "/*") {
 		cmd += " | sed '1d'"
 	}
-	log.Printf("cmd: %s", cmd)
+	Logger.Printf("cmd: %s", cmd)
 	remoteResult := executeRemoteCmd(cmd, vpnPIRemoteConnectConfig)
 
 	if remoteResult.stdout == "" && remoteResult.stderr != "" {
@@ -168,7 +167,7 @@ func scpFileBetweenHosts(remoteClient scp.Client, sourceURI string, hostPath str
 
 	response, err := http.Get(fetchURL.String())
 	if err != nil {
-		log.Printf(err.Error())
+		Logger.Printf(err.Error())
 		return success
 	}
 
@@ -177,11 +176,11 @@ func scpFileBetweenHosts(remoteClient scp.Client, sourceURI string, hostPath str
 	defer remoteClient.Close()
 
 	destination = strings.TrimLeft(destination, "-.") // remove leading '.'s & '-'s
-	log.Printf("scp %s %s@%s\n", sourceURI, remoteClient.Host, hostPath+destination)
+	Logger.Printf("scp %s %s@%s\n", sourceURI, remoteClient.Host, hostPath+destination)
 
 	err = remoteClient.CopyFile(response.Body, hostPath+destination, "0644")
 	if err != nil {
-		log.Printf("Error while copying file %s", err)
+		Logger.Printf("Error while copying file %s", err)
 	} else {
 		success = true
 	}

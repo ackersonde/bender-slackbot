@@ -4,10 +4,8 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"net/url"
-	"os"
 	"regexp"
 	"strings"
 	"time"
@@ -81,7 +79,7 @@ func SCPRemoteConnectionConfiguration(config *RemoteConnectConfig) scp.Client {
 			// Connect to the remote server
 			err := client.Connect()
 			if err != nil {
-				log.Printf("Couldn't establish a connection: %s", err)
+				Logger.Printf("Couldn't establish a connection: %s", err)
 			} else {
 				break
 			}
@@ -95,7 +93,7 @@ func retrieveClientConfig(config *RemoteConnectConfig) *ssh.ClientConfig {
 	hostKey, _, _, _, err := ssh.ParseAuthorizedKey(
 		[]byte(config.HostSSHKey))
 	if err != nil {
-		log.Printf("ERR: unable to parse HostKey -> %s", err)
+		Logger.Printf("ERR: unable to parse HostKey -> %s", err)
 		return &clientConfig
 	}
 
@@ -111,13 +109,13 @@ func retrieveClientConfig(config *RemoteConnectConfig) *ssh.ClientConfig {
 func remoteConnectionConfiguration(unparsedHostKey string, username string) *ssh.ClientConfig {
 	hostKey, _, _, _, err := ssh.ParseAuthorizedKey([]byte(unparsedHostKey))
 	if err != nil {
-		log.Printf("error parsing: %v", err)
+		Logger.Printf("error parsing: %v", err)
 	}
 
 	key, err := ioutil.ReadFile("/root/.ssh/id_rsa")
 	signer, err := ssh.ParsePrivateKey(key)
 	if err != nil {
-		log.Printf("Unable to parse private key: %v", err)
+		Logger.Printf("Unable to parse private key: %v", err)
 	}
 
 	return &ssh.ClientConfig{
@@ -130,7 +128,7 @@ func remoteConnectionConfiguration(unparsedHostKey string, username string) *ssh
 func wireguardAct(action string) string {
 	response := ":wireguard: "
 	cmd := fmt.Sprintf("sudo wg-quick %s wg0", action)
-	log.Printf("cmd: %s", cmd)
+	Logger.Printf("cmd: %s", cmd)
 	remoteResult := executeRemoteCmd(cmd, blackPearlRemoteConnectConfig)
 
 	if remoteResult.stdout == "" && remoteResult.stderr != "" {
@@ -145,7 +143,7 @@ func wireguardAct(action string) string {
 func wireguardShow() string {
 	response := ":wireguard: "
 	cmd := fmt.Sprintf("sudo wg show")
-	log.Printf("cmd: %s", cmd)
+	Logger.Printf("cmd: %s", cmd)
 	remoteResult := executeRemoteCmd(cmd, blackPearlRemoteConnectConfig)
 
 	if remoteResult.stdout == "" && remoteResult.stderr != "" {
@@ -160,7 +158,7 @@ func wireguardShow() string {
 func executeRemoteCmd(cmd string, config *RemoteConnectConfig) RemoteResult {
 	defer func() { //catch or finally
 		if err := recover(); err != nil { //catch
-			fmt.Fprintf(os.Stderr, "Exception: %v\n", err)
+			Logger.Printf("Exception: %v\n", err)
 		}
 	}()
 
@@ -192,7 +190,7 @@ func initialDialOut(hostname string, remoteConfig *ssh.ClientConfig) *ssh.Client
 	connectionString := fmt.Sprintf("%s:%s", hostname, "22")
 	sshClient, errConn := ssh.Dial("tcp", connectionString, remoteConfig)
 	if errConn != nil { //catch
-		log.Printf(errConn.Error())
+		Logger.Printf(errConn.Error())
 	}
 
 	return sshClient
@@ -210,14 +208,14 @@ func sendPayloadToJoinAPI(fileURL string, humanFilename string, icon string, sma
 
 	completeURL := pushURL + defaultParams + apiKey + fileOnPhone + "&file=" + fileURL
 	// Get the data
-	log.Printf("joinPushURL: %s\n", completeURL)
+	Logger.Printf("joinPushURL: %s\n", completeURL)
 	resp, err := http.Get(completeURL)
 	if err != nil {
-		log.Printf("ERR: unable to call Join Push\n")
+		Logger.Printf("ERR: unable to call Join Push\n")
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode == 200 {
-		log.Printf("successfully sent payload to Join!\n")
+		Logger.Printf("successfully sent payload to Join!\n")
 		response = "Success!"
 	}
 

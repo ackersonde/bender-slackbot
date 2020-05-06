@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"os"
 	"strings"
 	"unicode"
@@ -33,9 +32,8 @@ func prepareScheduler() {
 
 func main() {
 	api := slack.New(os.Getenv("CTX_SLACK_API_TOKEN"))
-	logger := log.New(os.Stdout, "", log.LstdFlags)
 
-	slack.OptionLog(logger)
+	slack.OptionLog(commands.Logger)
 	slack.OptionDebug(false)
 
 	go prepareScheduler() // spawn cron scheduler jobs
@@ -58,7 +56,7 @@ func main() {
 					userInfo, err2 := rtm.GetUserInfo(ev.Msg.User)
 
 					if err2 != nil {
-						logger.Printf("ERR: %s", err2.Error())
+						commands.Logger.Printf("ERR: %s", err2.Error())
 					}
 
 					if userInfo != nil {
@@ -72,7 +70,7 @@ func main() {
 							r, n := utf8.DecodeRuneInString(parsedMessage)
 							parsedMessage = string(unicode.ToLower(r)) + parsedMessage[n:]
 
-							logger.Printf("%s(%s) asks '%v'\n", userInfo.Name, userInfo.ID, parsedMessage)
+							commands.Logger.Printf("%s(%s) asks '%v'\n", userInfo.Name, userInfo.ID, parsedMessage)
 
 							commands.CheckCommand(api, ev.Msg, parsedMessage)
 						}
@@ -80,10 +78,10 @@ func main() {
 				}
 
 			case *slack.RTMError:
-				logger.Printf("Error: %s\n", ev.Error())
+				commands.Logger.Printf("Error: %s\n", ev.Error())
 
 			case *slack.InvalidAuthEvent:
-				logger.Println("Invalid credentials")
+				commands.Logger.Println("Invalid credentials")
 				break
 
 			default:
@@ -103,7 +101,7 @@ func main() {
 					}
 				} else {
 					// Ignore other events..
-					// log.Printf("Unexpected %s: %+v\n", msg.Type, msg.Data)
+					// logger.Printf("Unexpected %s: %+v\n", msg.Type, msg.Data)
 				}
 			}
 		}

@@ -2,7 +2,6 @@ package commands
 
 import (
 	"fmt"
-	"log"
 	"strconv"
 	"strings"
 	"time"
@@ -39,7 +38,7 @@ func getTorrents(t *transmission.Client) (result string) {
 				listTorrent.Name + " *" + percentComplete + "%* " + info
 		}
 	} else {
-		log.Printf("\nGetTorrents err: %v", err)
+		Logger.Printf("\nGetTorrents err: %v", err)
 	}
 
 	return result
@@ -65,7 +64,7 @@ func addTorrents(t *transmission.Client, torrentLink string, paused bool) string
 	args := transmission.AddTorrentArg{Filename: torrentLink, Paused: paused}
 	_, err := t.AddTorrent(args)
 	if err != nil {
-		log.Printf("\nAdd err: %v", err)
+		Logger.Printf("\nAdd err: %v", err)
 	}
 
 	result += getTorrents(t)
@@ -76,7 +75,7 @@ func addTorrents(t *transmission.Client, torrentLink string, paused bool) string
 func deleteTorrents(t *transmission.Client, torrentIDStr string) (result string) {
 	torrentID, err := strconv.Atoi(torrentIDStr)
 	if err != nil {
-		log.Printf("\nRemove err: %v", err)
+		Logger.Printf("\nRemove err: %v", err)
 		return fmt.Sprintf("Unable to remove torrent ID #%s. Is it a valid ID?", torrentIDStr)
 	}
 
@@ -84,7 +83,7 @@ func deleteTorrents(t *transmission.Client, torrentIDStr string) (result string)
 	torrentToDelete := &transmission.Torrent{ID: torrentID}
 	removeErr := t.RemoveTorrents([]*transmission.Torrent{torrentToDelete}, false)
 	if removeErr != nil {
-		log.Printf("\nRemove err: %v", removeErr)
+		Logger.Printf("\nRemove err: %v", removeErr)
 	}
 
 	result += getTorrents(t)
@@ -100,7 +99,7 @@ func torrentCommand(cmd []string) (result string) {
 	}
 	t, err := transmission.New(conf)
 	if err != nil {
-		log.Printf("\nNew err: %v", err)
+		Logger.Printf("\nNew err: %v", err)
 	}
 
 	if cmd[0] == "trans" {
@@ -140,17 +139,18 @@ func ensureTransmissionBind() string {
 	cmd := "VPN_IP=`ip address | grep '10\\.' | awk '{print $2}' | cut -f1 -d/`; " +
 		`grep "\"bind-address-ipv4\": \"$VPN_IP\"" ` + transmissionSettingsPath +
 		" || echo $VPN_IP"
-	log.Printf("VPN_IP running %s", cmd)
+	Logger.Printf("VPN_IP running %s", cmd)
 	remoteResult := executeRemoteCmd(cmd, vpnPIRemoteConnectConfig)
 	// ^-- returns e.g. "bind-address-ipv4": "10.1.8.75", if found
 	// else 10.1.8.75 if *not* found
 
-	log.Printf("VPN_IP grep remoteResult.err: %s , .stdout: %s",
-		remoteResult.err, remoteResult.stdout)
+	Logger.Printf("VPN_IP grep remoteResult.err: %s , .stdout: %s",
+		remoteResult.stderr, remoteResult.stdout)
 
-	if remoteResult.err == nil && !strings.Contains(remoteResult.stdout, "bind-address-ipv4") {
+	if remoteResult.err == nil && remoteResult.stdout != "" &&
+		!strings.Contains(remoteResult.stdout, "bind-address-ipv4") {
 		internalIP := strings.TrimSuffix(remoteResult.stdout, "\n")
-		log.Printf("internal VPN IP: %s", internalIP)
+		Logger.Printf("internal VPN IP: %s", internalIP)
 
 		sedCmd := `sed -rie 's/"bind-address-ipv4": "(.*)"/"bind-address-ipv4": "` +
 			internalIP + `"/' `
@@ -158,7 +158,7 @@ func ensureTransmissionBind() string {
 			sedCmd + transmissionSettingsPath +
 			` && sudo service transmission-daemon start`
 
-		log.Printf("exec VPN PI update: %s", cmd)
+		Logger.Printf("exec VPN PI update: %s", cmd)
 		remoteResult = executeRemoteCmd(cmd, vpnPIRemoteConnectConfig)
 		if remoteResult.err == nil {
 			response = "Changed :transmission: ipv4 bind: " + internalIP

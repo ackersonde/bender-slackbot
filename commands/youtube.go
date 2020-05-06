@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"io"
-	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -33,11 +32,11 @@ func uploadInternetFileToDropbox(downloadFromURL string, uploadToPath string,
 		return downloadFromURL, errors.New("<= cowardly refusing to transfer empty file")
 	}
 
-	log.Printf("File size: %s bytes\n", strconv.FormatInt(res.ContentLength, 10))
+	Logger.Printf("File size: %s bytes\n", strconv.FormatInt(res.ContentLength, 10))
 
 	resp, err := http.Get(downloadFromURL)
 	if err != nil {
-		log.Printf("ERR: %s\n", err.Error())
+		Logger.Printf("ERR: %s\n", err.Error())
 	}
 	defer resp.Body.Close()
 
@@ -106,14 +105,14 @@ func downloadYoutubeVideo(origURL string) bool {
 		}
 		URI, err := client.GetDownloadURL(context.Background(), vid, vid.Formats[0])
 		if err == nil {
-			log.Printf("preparing to download: %s\n", URI.String())
+			Logger.Printf("preparing to download: %s\n", URI.String())
 
 			uploadToPath := "/youtube/" + vid.Title + "." + vid.Formats[0].Extension
 			tempPublicURL, err := uploadInternetFileToDropbox(URI.String(), uploadToPath, config)
 			if err != nil {
-				log.Printf("%s %s\n", tempPublicURL, err.Error())
+				Logger.Printf("%s %s\n", tempPublicURL, err.Error())
 			} else {
-				log.Printf("Uploaded %s\n", tempPublicURL)
+				Logger.Printf("Uploaded %s\n", tempPublicURL)
 				tempPublicURL = strings.Replace(tempPublicURL, "dl=0", "dl=1", 1)
 				icon := "https://emoji.slack-edge.com/T092UA8PR/youtube/a9a89483b7536f8a.png"
 				smallIcon := "http://icons.iconarchive.com/icons/iconsmind/outline/16/Youtube-icon.png"
@@ -122,10 +121,10 @@ func downloadYoutubeVideo(origURL string) bool {
 				downloaded = true
 			}
 		} else {
-			log.Printf("ERR: %s\n", err.Error())
+			Logger.Printf("ERR: %s\n", err.Error())
 		}
 	} else {
-		log.Printf("ERR: %s\n", err.Error())
+		Logger.Printf("ERR: %s\n", err.Error())
 	}
 
 	return downloaded
@@ -134,14 +133,14 @@ func downloadYoutubeVideo(origURL string) bool {
 func findVideoOnYoutube(fetchURL *url.URL) (*url.URL, string) {
 	vid, err := ytdl.GetVideoInfo(context.Background(), fetchURL)
 	if err != nil {
-		log.Printf("ERR: ytdl GetVideoInfo: %s", err.Error())
+		Logger.Printf("ERR: ytdl GetVideoInfo: %s", err.Error())
 	}
 	youtubeClient := ytdl.Client{
 		HTTPClient: http.DefaultClient,
 	}
 	foundURL, errB := youtubeClient.GetDownloadURL(context.Background(), vid, vid.Formats[0])
 	if errB != nil {
-		log.Printf("ERR: ytdl GetDownloadURL %s", errB.Error())
+		Logger.Printf("ERR: ytdl GetDownloadURL %s", errB.Error())
 	}
 
 	destination := strings.ReplaceAll(vid.Title+"."+vid.Formats[0].Extension, " ", "_")

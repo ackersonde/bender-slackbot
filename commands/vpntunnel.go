@@ -12,7 +12,6 @@ import (
 
 	"github.com/danackerson/bender-slackbot/structures"
 	"github.com/nlopes/slack"
-	"github.com/rs/zerolog/log"
 )
 
 var vpnLogicalsURI = "https://api.protonmail.ch/vpn/logicals"
@@ -46,9 +45,9 @@ func homeAndInternetIPsDoNotMatch(tunnelIP string) bool {
 		if res != "" {
 			// err := json.Unmarshal([]byte(res), &jsonRes)
 			// if err != nil {
-			// 	log.Printf("unable to parse JSON string (%v)\n%s\n", err, res)
+			// 	logger.Printf("unable to parse JSON string (%v)\n%s\n", err, res)
 			// } else {
-			// 	log.Printf("ipleak.net: %v\n", jsonRes)
+			// 	logger.Printf("ipleak.net: %v\n", jsonRes)
 			// }
 
 			// We're not in Kansas anymore + using tunnel IP for Internet
@@ -65,21 +64,21 @@ func homeAndInternetIPsDoNotMatch(tunnelIP string) bool {
 				}()
 				select {
 				case resComp := <-resultsDig:
-					log.Printf("dig %s : %s", vpnGateway, resComp)
+					Logger.Printf("dig %s : %s", vpnGateway, resComp)
 					lines := strings.Split(resComp, "\n")
 					// IPv4 address of home.ackerson.de doesn't match Pi's
 					if lines[1] != res {
 						return true
 					}
 				case <-timeoutDig:
-					log.Printf("Time out on dig %s", vpnGateway)
+					Logger.Printf("Time out on dig %s", vpnGateway)
 				}
 			} else {
-				log.Printf("VPN addy's no match: %s != %s", res, tunnelIP)
+				Logger.Printf("VPN addy's no match: %s != %s", res, tunnelIP)
 			}
 		}
 	case <-timeout:
-		log.Printf("Timeout on curl %s", ipCheckHost)
+		Logger.Printf("Timeout on curl %s", ipCheckHost)
 	}
 
 	return false
@@ -116,13 +115,13 @@ func inspectVPNConnection() map[string]string {
 			if len(m) < 1 {
 				cmd := "sudo ipsec restart"
 				remoteResult := executeRemoteCmd(cmd, vpnPIRemoteConnectConfig)
-				log.Printf("restarting VPN %s", remoteResult.stdout)
+				Logger.Printf("restarting VPN %s", remoteResult.stdout)
 			}
 
 			return m
 		}
 	case <-timeout:
-		log.Printf("Timed out on ipsec status")
+		Logger.Printf("Timed out on ipsec status")
 	}
 	return map[string]string{}
 }
@@ -131,12 +130,12 @@ func findBestVPNServer(vpnCountry string) structures.LogicalServer {
 	protonVPNServers := new(structures.ProtonVPNServers)
 	protonVPNServersResp, err := http.Get(vpnLogicalsURI)
 	if err != nil {
-		log.Printf("protonVPN API ERR: %s\n", err)
+		Logger.Printf("protonVPN API ERR: %s\n", err)
 	} else {
 		defer protonVPNServersResp.Body.Close()
 		protonVPNServersJSON, err2 := ioutil.ReadAll(protonVPNServersResp.Body)
 		if err2 != nil {
-			log.Printf("protonVPN ERR2: %s\n", err2)
+			Logger.Printf("protonVPN ERR2: %s\n", err2)
 		}
 		json.Unmarshal([]byte(protonVPNServersJSON), &protonVPNServers)
 	}
@@ -192,7 +191,7 @@ func VpnPiTunnelChecks(vpnCountry string, userCall bool) string {
 	response := ":protonvpn: VPN: DOWN :rotating_light:"
 
 	vpnTunnelSpecs := inspectVPNConnection()
-	log.Printf("Using VPN server: %s\n", vpnTunnelSpecs["endpointDNS"])
+	Logger.Printf("Using VPN server: %s\n", vpnTunnelSpecs["endpointDNS"])
 	if len(vpnTunnelSpecs) > 0 {
 		tunnelIP = vpnTunnelSpecs["endpointIP"]
 		response += " with " + vpnTunnelSpecs["time"] + " (using " +

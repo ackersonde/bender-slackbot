@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -37,10 +36,10 @@ var proxies = []string{"tpb.cool", "piratebay.tech", "thepiratebay.fail", "pirat
 func searchProxy(url string) *structures.Torrents {
 	for i, proxy := range proxies {
 		uri := "https://" + proxy + url
-		log.Printf("torq try #%d: %s ...\n", i, uri)
+		Logger.Printf("torq try #%d: %s ...\n", i, uri)
 		req, err := http.NewRequest("GET", uri, nil)
 		if err != nil {
-			log.Printf("http.NewRequest() failed with '%s'\n", err)
+			Logger.Printf("http.NewRequest() failed with '%s'\n", err)
 			continue
 		}
 
@@ -50,20 +49,20 @@ func searchProxy(url string) *structures.Torrents {
 		req = req.WithContext(ctx)
 		resp, err := http.DefaultClient.Do(req)
 		if err != nil {
-			log.Printf("%s failed with:\n'%s'\n", proxy, err)
+			Logger.Printf("%s failed with:\n'%s'\n", proxy, err)
 			continue
 		}
 		if resp != nil {
 			body, err := ioutil.ReadAll(resp.Body)
 			if err != nil {
-				log.Printf("failed to parse JSON: %s", err.Error())
+				Logger.Printf("failed to parse JSON: %s", err.Error())
 				continue
 			}
 
 			if err == nil && body != nil {
 				torrents := getTorrentsFromJSON([]byte(body))
 				if torrents != nil {
-					log.Printf("%s%s succeeded!", proxy, url)
+					Logger.Printf("%s%s succeeded!", proxy, url)
 					return torrents
 				}
 			}
@@ -145,7 +144,7 @@ func getTorrentsFromJSON(jsonObject []byte) *structures.Torrents {
 	var s = new(structures.Torrents)
 	err := json.Unmarshal(jsonObject, &s)
 	if err != nil {
-		log.Printf("ERR: %s", err)
+		Logger.Printf("ERR: %s", err)
 	}
 
 	return s

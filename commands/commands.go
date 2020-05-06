@@ -22,6 +22,9 @@ var circleCIBuildNum = os.Getenv("CIRCLE_BUILD_NUM")
 var circleCIDoAlgoURL = "https://circleci.com/api/v1.1/project/github/danackerson/do-algo"
 var circleCITokenParam = "?circle-token=" + os.Getenv("CTX_CIRCLECI_API_TOKEN")
 
+// Logger to give senseful settings
+var Logger = log.New(os.Stdout, "", log.LstdFlags)
+
 // VPNCountry as default connection
 var VPNCountry = "NL"
 
@@ -44,7 +47,7 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 			// strip '<>' off url
 			downloadURL := strings.Trim(args[1], "<>")
 			uri, err := url.ParseRequestURI(downloadURL)
-			log.Printf("parsed %s from %s", uri.RequestURI(), downloadURL)
+			Logger.Printf("parsed %s from %s", uri.RequestURI(), downloadURL)
 			if err != nil {
 				api.PostMessage(slackMessage.Channel,
 					slack.MsgOptionText(
@@ -74,7 +77,7 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 			// strip '<>' off url
 			downloadURL := strings.Trim(args[1], "<>")
 			uri, err := url.ParseRequestURI(downloadURL)
-			log.Printf("parsed %s from %s", uri.RequestURI(), downloadURL)
+			Logger.Printf("parsed %s from %s", uri.RequestURI(), downloadURL)
 			if err != nil {
 				api.PostMessage(slackMessage.Channel,
 					slack.MsgOptionText(
@@ -260,7 +263,7 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 		rtm.SendMessage(rtm.NewOutgoingMessage("whaddya say <@"+callingUserProfile.Name+">? Try `help` instead...",
 			slackMessage.Channel))
 	} else {
-		log.Printf("No Command found: %s", slackMessage.Text)
+		Logger.Printf("No Command found: %s", slackMessage.Text)
 	}
 }
 
