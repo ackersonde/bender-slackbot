@@ -109,6 +109,7 @@ func torrentCommand(cmd []string) (result string) {
 		if len(cmd) == 1 {
 			result = "Usage: `tranc <Torrent link>`"
 		} else {
+			ensureTransmissionBind()
 			paused := false
 			result = addTorrents(t, cmd[1], paused)
 		}
@@ -130,4 +131,32 @@ func torrentCommand(cmd []string) (result string) {
 	tunnelIdleSince = time.Now()
 
 	return result
+}
+
+func ensureTransmissionBind() string {
+	response := "Unable to update :transmission: ipv4 bind"
+
+	cmd := "sudo service transmission-daemon stop && " +
+		"ip address | grep '10\\.' | awk '{print $2}'" // search for internal VPN ip
+
+	remoteResult := executeRemoteCmd(cmd, vpnPIRemoteConnectConfig)
+	if remoteResult.err == nil && remoteResult.stdout != "" {
+		internalIP := strings.TrimSuffix(remoteResult.stdout, "/32\n")
+		log.Printf("internal VPN IP: %s", internalIP)
+
+		sedCmd := `sed -rie 's/"bind-address-ipv4": "(.*)"/"bind-address-ipv4": "` + internalIP + `"/' `
+		cmd = sedCmd +
+			`/home/ubuntu/.config/transmission-daemon/settings.json &&
+			sudo service transmission-daemon start`
+
+		log.Printf("exec VPN PI update: %s", cmd)
+		remoteResult = executeRemoteCmd(cmd, vpnPIRemoteConnectConfig)
+		if remoteResult.err == nil {
+			response = "Changed :transmission: ipv4 bind: " + internalIP
+		}
+	} else {
+		response += "\n with " + remoteResult.err.Error()
+	}
+
+	return response
 }

@@ -25,7 +25,7 @@ func homeAndInternetIPsDoNotMatch(tunnelIP string) bool {
 	results := make(chan string, 10)
 	timeout := time.After(10 * time.Second)
 	go func() {
-		cmd := "curl ipv4.icanhazip.com"
+		cmd := "curl https://ipv4.icanhazip.com"
 		remoteResult := executeRemoteCmd(cmd, vpnPIRemoteConnectConfig)
 
 		tunnelIdleSince = time.Now()
@@ -199,7 +199,7 @@ func VpnPiTunnelChecks(vpnCountry string, userCall bool) string {
 	}
 
 	if homeAndInternetIPsDoNotMatch(tunnelIP) {
-		response = ":protonvpn: VPN: UP @ " + vpnTunnelSpecs["endpointDNS"] +
+		response = ":protonvpn: VPN: UP @ " + vpnTunnelSpecs["internalIP"] +
 			" for " + vpnTunnelSpecs["time"] + " (using " +
 			vpnTunnelSpecs["endpointDNS"] + ")"
 	}
@@ -224,13 +224,11 @@ func updateVpnPiTunnel(vpnServerDomain string) string {
 	if !strings.HasSuffix(vpnServerDomain, ".protonvpn.com") {
 		vpnServerDomain = vpnServerDomain + ".protonvpn.com"
 	}
-	response := "Failed to change VPN server to " + vpnServerDomain
+	response := "Failed changing :protonvpn: to " + vpnServerDomain
 
 	// First, update ipsec.conf with desired server & restart ipsec
 	sedCmd := `sudo sed -rie 's@[A-Za-z]{2}-[0-9]{2}\.protonvpn\.com@` + vpnServerDomain + `@g' `
-	cmd := sedCmd +
-		`/etc/ipsec.conf && sudo service transmission-daemon stop &&
-		sudo ipsec update && sudo ipsec restart`
+	cmd := sedCmd + `/etc/ipsec.conf && sudo ipsec update && sudo ipsec restart`
 
 	remoteResult := executeRemoteCmd(cmd, vpnPIRemoteConnectConfig)
 	// TODO: stderr often doesn't have real errors :(
@@ -238,24 +236,8 @@ func updateVpnPiTunnel(vpnServerDomain string) string {
 		// Second, wait for the new connection, then rebind/start transmission
 		time.Sleep(10 * time.Second)
 
-		cmd = "ip address | grep '10\\.' | awk '{print $2}'" // search for internal VPN ip
-
-		remoteResult = executeRemoteCmd(cmd, vpnPIRemoteConnectConfig)
-		if remoteResult.err == nil && remoteResult.stdout != "" {
-			internalIP := strings.TrimSuffix(remoteResult.stdout, "/32\n")
-			log.Printf("internal VPN IP: %s", internalIP)
-
-			sedCmd = `sed -rie 's/"bind-address-ipv4": "(.*)"/"bind-address-ipv4": "` + internalIP + `"/' `
-			cmd = sedCmd +
-				`/home/ubuntu/.config/transmission-daemon/settings.json &&
-				sudo service transmission-daemon start`
-
-			log.Printf("exec VPN PI update: %s", cmd)
-			remoteResult = executeRemoteCmd(cmd, vpnPIRemoteConnectConfig)
-			if remoteResult.err == nil {
-				response = "Changed VPN server to " + vpnServerDomain
-			}
-		}
+		response += "\n" + ensureTransmissionBind()
+		response += "\nUpdated :protonvpn: to " + vpnServerDomain
 	}
 
 	if remoteResult.err != nil {
