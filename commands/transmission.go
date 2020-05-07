@@ -191,9 +191,10 @@ func transmissionSettingsAreSane(internalIP string) bool {
 			result = true
 		} else { // fix it!
 			sedCmd := `sed -rie 's/"bind-address-ipv4": "(.*)"/"bind-address-ipv4": "` +
-				internalIP + `"/' && sed -rie 's/"bind-address-ipv6": "(.*)"/"bind-address-ipv6": "fe80::"/' `
-			cmd = `sudo service transmission-daemon stop && ` +
-				sedCmd + transmissionSettingsPath +
+				internalIP + `"/' ` + transmissionSettingsPath +
+				` && sed -rie 's/"bind-address-ipv6": "(.*)"/"bind-address-ipv6": "fe80::"/' ` +
+				transmissionSettingsPath
+			cmd = `sudo service transmission-daemon stop && ` + sedCmd +
 				` && sudo service transmission-daemon start`
 
 			Logger.Printf("FIX Transmission settings update: %s", cmd)
