@@ -185,6 +185,7 @@ func transmissionSettingsAreSane(internalIP string) bool {
 		`-e '"bind-address-ipv6": "fe80::",' ` +
 		transmissionSettingsPath
 	remoteResult := executeRemoteCmd(cmd, vpnPIRemoteConnectConfig)
+	Logger.Printf("transmission settings: %s", remoteResult.stdout)
 	if remoteResult.err == nil {
 		if len(strings.Split(remoteResult.stdout, "\n")) == 2 {
 			result = true
