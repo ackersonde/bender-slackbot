@@ -187,7 +187,7 @@ func transmissionSettingsAreSane(internalIP string) bool {
 	remoteResult := executeRemoteCmd(cmd, vpnPIRemoteConnectConfig)
 	Logger.Printf("transmission settings: %s", remoteResult.stdout)
 	if remoteResult.err == nil {
-		if len(strings.Split(remoteResult.stdout, "\n")) == 2 {
+		if len(strings.Split(remoteResult.stdout, "\n")) == 3 { // incl trailing \n
 			result = true
 		} else { // fix it!
 			sedCmd := `sed -rie 's/"bind-address-ipv4": "(.*)"/"bind-address-ipv4": "` +
