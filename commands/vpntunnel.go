@@ -198,8 +198,8 @@ func VpnPiTunnelChecks(vpnCountry string, userCall bool) string {
 			vpnTunnelSpecs["endpointDNS"] + ")"
 	}
 
-	if homeAndInternetIPsDoNotMatch(tunnelIP) {
-		//TODO: && transmissionSettingsAreSane() e.g. bind-address-ipv6: "fe80::" {
+	if homeAndInternetIPsDoNotMatch(tunnelIP) &&
+		transmissionSettingsAreSane(vpnTunnelSpecs["internalIP"]) {
 		response = ":protonvpn: VPN: UP @ " + vpnTunnelSpecs["internalIP"] +
 			" for " + vpnTunnelSpecs["time"] + " (using " +
 			vpnTunnelSpecs["endpointDNS"] + ")"

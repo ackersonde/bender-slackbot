@@ -9,6 +9,8 @@ import (
 	"github.com/odwrtw/transmission"
 )
 
+var transmissionSettingsPath = "/home/ubuntu/.config/transmission-daemon/settings.json"
+
 func getTorrents(t *transmission.Client) (result string) {
 	// Get all torrents
 	torrents, err := t.GetTorrents()
@@ -134,7 +136,6 @@ func torrentCommand(cmd []string) (result string) {
 
 func ensureTransmissionBind() string {
 	response := "Unable to update :transmission: ipv4 bind"
-	transmissionSettingsPath := "/home/ubuntu/.config/transmission-daemon/settings.json"
 
 	cmd := "VPN_IP=`ip address | grep '10\\.' | awk '{print $2}' | cut -f1 -d/`; " +
 		`grep "\"bind-address-ipv4\": \"$VPN_IP\"" ` + transmissionSettingsPath +
@@ -145,7 +146,7 @@ func ensureTransmissionBind() string {
 	// else 10.1.8.75 if *not* found
 
 	internalIP := strings.TrimSuffix(remoteResult.stdout, "\n")
-	// TODO: while?
+	// TODO: while - do this in 5sec increments for up to 60secs!
 	if internalIP == "" {
 		time.Sleep(10 * time.Second)
 		remoteResult = executeRemoteCmd(cmd, vpnPIRemoteConnectConfig)
@@ -170,8 +171,38 @@ func ensureTransmissionBind() string {
 	} else if remoteResult.err != nil {
 		response += "\n with " + remoteResult.err.Error()
 	} else if strings.Contains(internalIP, "bind-address-ipv4") {
-		response = ":transmission: ipv4 bind already correctly set: " + internalIP
+		response = ":transmission: ipv4 bind already correct: " + internalIP
 	}
 
 	return response
+}
+
+func transmissionSettingsAreSane(internalIP string) bool {
+	result := false
+
+	// match for correct ipv4 IP bind & broken ipv6 bind
+	cmd := `grep -e '"bind-address-ipv4": "` + internalIP + `",' ` +
+		`-e '"bind-address-ipv6": "fe80::",' ` +
+		transmissionSettingsPath
+	remoteResult := executeRemoteCmd(cmd, vpnPIRemoteConnectConfig)
+	if remoteResult.err == nil {
+		if len(strings.Split(remoteResult.stdout, "\n")) == 2 {
+			result = true
+		} else { // fix it!
+			sedCmd := `sed -rie 's/"bind-address-ipv4": "(.*)"/"bind-address-ipv4": "` +
+				internalIP + `"/' && sed -rie 's/"bind-address-ipv6": "(.*)"/"bind-address-ipv6": "fe80::"/' `
+			cmd = `sudo service transmission-daemon stop && ` +
+				sedCmd + transmissionSettingsPath +
+				` && sudo service transmission-daemon start`
+
+			Logger.Printf("FIX Transmission settings update: %s", cmd)
+			remoteResult = executeRemoteCmd(cmd, vpnPIRemoteConnectConfig)
+			if remoteResult.err == nil {
+				// may cause infinite loop here...
+				return transmissionSettingsAreSane(internalIP)
+			}
+		}
+	}
+
+	return result
 }
