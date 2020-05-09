@@ -202,7 +202,7 @@ func getAppVersions(apps []string, hosts *[]remoteConnectConfig) string {
 		if remoteResult.stdout == "" && remoteResult.stderr != "" {
 			result += host.HostName + ": " + remoteResult.stderr
 		} else {
-			result += host.HostName + ": " + remoteResult.stdout + "\n"
+			result += "_" + host.HostName + "_: " + remoteResult.stdout + "\n"
 		}
 	}
 	return result
@@ -216,7 +216,7 @@ func measureCPUTemp(hosts *[]remoteConnectConfig) string {
 		if remoteResult.stdout == "" && remoteResult.stderr != "" {
 			result += host.HostName + ": " + remoteResult.stderr
 		} else {
-			result += host.HostName + ": *" + strings.TrimSuffix(remoteResult.stdout, "\n") + "*\n"
+			result += "_" + host.HostName + "_: *" + strings.TrimSuffix(remoteResult.stdout, "\n") + "*\n"
 		}
 	}
 
