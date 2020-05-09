@@ -190,19 +190,19 @@ func raspberryPIChecks() string {
 
 	response = measureCPUTemp(&hosts)
 	apps := []string{"wg", "ipsec", "k3s"} // app order MUST match host above --^
-	response += "\nApp version info:\n" + getAppVersions(apps, &hosts)
+	response += getAppVersions(apps, &hosts)
 
 	return response
 }
 
 func getAppVersions(apps []string, hosts *[]remoteConnectConfig) string {
-	result := ""
+	result := "\n*APPs* :martial_arts_uniform:\n"
 	for i, host := range *hosts {
 		remoteResult := executeRemoteCmd(apps[i]+" --version", &host)
 		if remoteResult.stdout == "" && remoteResult.stderr != "" {
 			result += host.HostName + ": " + remoteResult.stderr
 		} else {
-			result += host.HostName + ": " + remoteResult.stdout
+			result += host.HostName + ": " + remoteResult.stdout + "\n"
 		}
 	}
 	return result
@@ -210,13 +210,13 @@ func getAppVersions(apps []string, hosts *[]remoteConnectConfig) string {
 func measureCPUTemp(hosts *[]remoteConnectConfig) string {
 	measureCPUTempCmd := "((TEMP=`cat /sys/class/thermal/thermal_zone0/temp`/1000)); echo \"$TEMP\"C"
 
-	result := "CPU :thermometer:\n"
+	result := "*CPUs* :thermometer:\n"
 	for _, host := range *hosts {
 		remoteResult := executeRemoteCmd(measureCPUTempCmd, &host)
 		if remoteResult.stdout == "" && remoteResult.stderr != "" {
 			result += host.HostName + ": " + remoteResult.stderr
 		} else {
-			result += host.HostName + ": " + remoteResult.stdout
+			result += host.HostName + ": *" + remoteResult.stdout + "*"
 		}
 	}
 
