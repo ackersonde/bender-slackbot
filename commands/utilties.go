@@ -186,23 +186,37 @@ func scrubParamOfHTTPMagicCrap(sourceString string) string {
 
 func raspberryPIChecks() string {
 	response := ""
-	computes := []remoteConnectConfig{*blackPearlRemoteConnectConfig, *vpnPIRemoteConnectConfig, *pi4RemoteConnectConfig}
+	hosts := []remoteConnectConfig{*blackPearlRemoteConnectConfig, *vpnPIRemoteConnectConfig, *pi4RemoteConnectConfig}
 
-	response = measureCPUTemp(&computes)
+	response = measureCPUTemp(&hosts)
+	apps := []string{"wg", "ipsec", "k3s"} // app order MUST match host above --^
+	response += "\nApp version info:\n" + getAppVersions(apps, &hosts)
 
 	return response
 }
 
-func measureCPUTemp(computes *[]remoteConnectConfig) string {
-	measureCPUTempCmd := "((TEMP=`cat /sys/class/thermal/thermal_zone0/temp`/1000)); echo $TEMP"
-
-	result := "CPU :thermometer::\n"
-	for _, connectConfig := range *computes {
-		remoteResult := executeRemoteCmd(measureCPUTempCmd, &connectConfig)
+func getAppVersions(apps []string, hosts *[]remoteConnectConfig) string {
+	result := ""
+	for i, host := range *hosts {
+		remoteResult := executeRemoteCmd(apps[i]+" --version", &host)
 		if remoteResult.stdout == "" && remoteResult.stderr != "" {
-			result += connectConfig.HostName + remoteResult.stderr
+			result += host.HostName + ": " + remoteResult.stderr
 		} else {
-			result += connectConfig.HostName + remoteResult.stdout
+			result += host.HostName + ": " + remoteResult.stdout
+		}
+	}
+	return result
+}
+func measureCPUTemp(hosts *[]remoteConnectConfig) string {
+	measureCPUTempCmd := "((TEMP=`cat /sys/class/thermal/thermal_zone0/temp`/1000)); echo \"$TEMP\"C"
+
+	result := "CPU :thermometer:\n"
+	for _, host := range *hosts {
+		remoteResult := executeRemoteCmd(measureCPUTempCmd, &host)
+		if remoteResult.stdout == "" && remoteResult.stderr != "" {
+			result += host.HostName + ": " + remoteResult.stderr
+		} else {
+			result += host.HostName + ": " + remoteResult.stdout
 		}
 	}
 

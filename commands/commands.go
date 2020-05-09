@@ -256,10 +256,10 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 				":pirate_bay: `torq <search term>`\n" +
 				":transmission: `tran[c|p|s|d]`: [C]reate <URL>, [P]aused <URL>, [S]tatus, [D]elete <ID> torrents on :raspberry_pi:\n" +
 				":movie_camera: `mv " + piPlexPath + "/torrents/<filename> [movies|tv/(<path>)]`\n" +
-				":floppy_disk: `fsck`: show disk space on :raspberry_pi:\n" +
 				":youtube: `yt <video url>`: Download Youtube video to Papa's handy\n" +
-				":circleci: `version`: Which build number is this Bender?\n" +
+				":floppy_disk: `fsck`: show disk space on :raspberry_pi:\n" +
 				":bar_chart: `pi`: Stats of various :raspberrypi:s\n" +
+				":circleci: `version`: Which build number is this Bender?\n" +
 				":earth_americas: `www`: Show various internal links\n" +
 				":copyright: `scpxl <URL>`: scp URL file to Pops4XL\n"
 		api.PostMessage(slackMessage.Channel, slack.MsgOptionText(response, true), params)
