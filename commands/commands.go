@@ -72,6 +72,9 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 			api.PostMessage(slackMessage.Channel,
 				slack.MsgOptionText("Please provide source file URL!", true), params)
 		}
+	} else if args[0] == "pi" {
+		api.PostMessage(slackMessage.Channel,
+			slack.MsgOptionText(raspberryPIChecks(), false), params)
 	} else if args[0] == "yt" {
 		if len(args) > 1 {
 			// strip '<>' off url
@@ -256,6 +259,7 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 				":floppy_disk: `fsck`: show disk space on :raspberry_pi:\n" +
 				":youtube: `yt <video url>`: Download Youtube video to Papa's handy\n" +
 				":circleci: `version`: Which build number is this Bender?\n" +
+				":bar_chart: `pi`: Stats of various :raspberrypi:s\n" +
 				":earth_americas: `www`: Show various internal links\n" +
 				":copyright: `scpxl <URL>`: scp URL file to Pops4XL\n"
 		api.PostMessage(slackMessage.Channel, slack.MsgOptionText(response, true), params)
