@@ -54,7 +54,7 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 						"Invalid URL for downloading! ("+err.Error()+
 							")", true), params)
 			} else {
-				remoteClient := SCPRemoteConnectionConfiguration(androidRCC)
+				remoteClient := scpRemoteConnectionConfiguration(androidRCC)
 				if scpFileBetweenHosts(
 					remoteClient,
 					downloadURL,
@@ -145,10 +145,10 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 		response := wireguardShow()
 		rtm.SendMessage(rtm.NewOutgoingMessage(response, slackMessage.Channel))
 	} else if args[0] == "wgu" {
-		response := wireguardAct("up")
+		response := wireguardAction("up")
 		rtm.SendMessage(rtm.NewOutgoingMessage(response, slackMessage.Channel))
 	} else if args[0] == "wgd" {
-		response := wireguardAct("down")
+		response := wireguardAction("down")
 		rtm.SendMessage(rtm.NewOutgoingMessage(response, slackMessage.Channel))
 	} else if args[0] == "mv" {
 		response := ""

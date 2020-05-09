@@ -15,60 +15,7 @@ import (
 	"golang.org/x/crypto/ssh"
 )
 
-// RemoteCmd for execution over SSH connection
-type RemoteCmd struct {
-	Host            string
-	Cmd             string
-	SourcePath      string
-	DestinationPath string
-	ConnectConfig   *ssh.ClientConfig
-}
-
-// RemoteConnectConfig for SSH activities
-type RemoteConnectConfig struct {
-	User           string
-	PrivateKeyPath string
-	HostEndpoints  []string
-	HostSSHKey     string
-	HostPath       string
-	HostName       string
-}
-
-// RemoteResult contains remote SSH execution
-type RemoteResult struct {
-	err    error
-	stdout string
-	stderr string
-}
-
-var androidRCC = &RemoteConnectConfig{
-	User:           "ackersond",
-	PrivateKeyPath: "/root/.ssh/id_rsa_pix4x", // path must match K8S secret declaration in bender.yml
-	HostEndpoints:  []string{"192.168.178.37:2222", "192.168.178.61:2222", "192.168.178.62:2222"},
-	HostSSHKey:     "ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBHFhojNPu3wLn4NrLlyCQnLBCBkdGtYGYTl7IBfOefr05BKmq4WqBFt3U+hRmE9ti4xtjJw7Sz60qDkbuvpPt3c=",
-	HostPath:       "/storage/emulated/0/Download/",
-}
-
-var vpnPIRemoteConnectConfig = &RemoteConnectConfig{
-	User:           "ubuntu",
-	PrivateKeyPath: "/Users/ackersond/.ssh/circleci_rsa",
-	HostEndpoints:  []string{"192.168.178.59:22"},
-	HostSSHKey:     "ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBCfXJ+mvHXs+t0+nF8JATxgMEwNngy6JCOVn1bEjsjsMylZsMejouArUrNKcnyPZ+vTvljlR7CaC6X9fbUtdxs0=",
-	HostPath:       "/home/ubuntu/",
-	HostName:       "vpnpi.fritz.box",
-}
-
-var blackPearlRemoteConnectConfig = &RemoteConnectConfig{
-	User:           "ubuntu",
-	PrivateKeyPath: "/Users/ackersond/.ssh/circleci_rsa",
-	HostEndpoints:  []string{"192.168.178.59:22"},
-	HostSSHKey:     "ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBD7p4FZyTPgywRBJ2ADL/i2igJ/N+3G8odFL3or3Ck77CVBnri8ZxO8+34/Rl/eGgt9qhp0vm7eTB4nE0C2m/Ro=",
-	HostPath:       "/home/ubuntu/",
-	HostName:       "blackpearl.fritz.box",
-}
-
-// SCPRemoteConnectionConfiguration returns scp client connection
-func SCPRemoteConnectionConfiguration(config *RemoteConnectConfig) scp.Client {
+func scpRemoteConnectionConfiguration(config *remoteConnectConfig) scp.Client {
 	var client scp.Client
 
 	clientConfig := retrieveClientConfig(config)
@@ -88,7 +35,7 @@ func SCPRemoteConnectionConfiguration(config *RemoteConnectConfig) scp.Client {
 	return client
 }
 
-func retrieveClientConfig(config *RemoteConnectConfig) *ssh.ClientConfig {
+func retrieveClientConfig(config *remoteConnectConfig) *ssh.ClientConfig {
 	var clientConfig ssh.ClientConfig
 	hostKey, _, _, _, err := ssh.ParseAuthorizedKey(
 		[]byte(config.HostSSHKey))
@@ -125,7 +72,7 @@ func remoteConnectionConfiguration(unparsedHostKey string, username string) *ssh
 	}
 }
 
-func wireguardAct(action string) string {
+func wireguardAction(action string) string {
 	response := ":wireguard: "
 	cmd := fmt.Sprintf("sudo wg-quick %s wg0", action)
 	Logger.Printf("cmd: %s", cmd)
@@ -155,7 +102,7 @@ func wireguardShow() string {
 	return response
 }
 
-func executeRemoteCmd(cmd string, config *RemoteConnectConfig) RemoteResult {
+func executeRemoteCmd(cmd string, config *remoteConnectConfig) remoteResult {
 	defer func() { //catch or finally
 		if err := recover(); err != nil { //catch
 			Logger.Printf("Exception: %v\n", err)
@@ -180,10 +127,10 @@ func executeRemoteCmd(cmd string, config *RemoteConnectConfig) RemoteResult {
 			errStr = strings.TrimSpace(stderrBuf.String())
 		}
 
-		return RemoteResult{err, stdoutBuf.String(), errStr}
+		return remoteResult{err, stdoutBuf.String(), errStr}
 	}
 
-	return RemoteResult{}
+	return remoteResult{}
 }
 
 func initialDialOut(hostname string, remoteConfig *ssh.ClientConfig) *ssh.Client {
@@ -235,4 +182,29 @@ func scrubParamOfHTTPMagicCrap(sourceString string) string {
 	}
 
 	return sourceString
+}
+
+func raspberryPIChecks() string {
+	response := ""
+	computes := []remoteConnectConfig{*blackPearlRemoteConnectConfig, *vpnPIRemoteConnectConfig, *pi4RemoteConnectConfig}
+
+	response = measureCPUTemp(&computes)
+
+	return response
+}
+
+func measureCPUTemp(computes *[]remoteConnectConfig) string {
+	measureCPUTempCmd := "((TEMP=`cat /sys/class/thermal/thermal_zone0/temp`/1000)); echo $TEMP"
+
+	result := "CPU :thermometer::\n"
+	for _, connectConfig := range *computes {
+		remoteResult := executeRemoteCmd(measureCPUTempCmd, &connectConfig)
+		if remoteResult.stdout == "" && remoteResult.stderr != "" {
+			result += connectConfig.HostName + remoteResult.stderr
+		} else {
+			result += connectConfig.HostName + remoteResult.stdout
+		}
+	}
+
+	return result
 }
