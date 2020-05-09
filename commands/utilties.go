@@ -216,7 +216,7 @@ func measureCPUTemp(hosts *[]remoteConnectConfig) string {
 		if remoteResult.stdout == "" && remoteResult.stderr != "" {
 			result += host.HostName + ": " + remoteResult.stderr
 		} else {
-			result += host.HostName + ": *" + remoteResult.stdout + "*"
+			result += host.HostName + ": *" + strings.TrimSuffix(remoteResult.stdout, "\n") + "*\n"
 		}
 	}
 
