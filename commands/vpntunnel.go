@@ -235,7 +235,7 @@ func updateVpnPiTunnel(vpnServerDomain string) string {
 	// TODO: stderr often doesn't have real errors :(
 	if remoteResult.err == nil {
 		response = "Updated :protonvpn: to " + vpnServerDomain
-		return "\n" + ensureTransmissionBind()
+		return response + " & " + ensureTransmissionBind()
 	}
 
 	response += "(" + remoteResult.err.Error() + ")"
