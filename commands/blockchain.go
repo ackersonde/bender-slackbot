@@ -19,7 +19,7 @@ func checkEthereumValue() string {
 	Logger.Println(etherscanAccountBalanceURL)
 	accountBalanceWeiResp, err := http.Get(etherscanAccountBalanceURL)
 	if err != nil {
-		response = "etherscan AcctBal http.Get ERR: %s" + err
+		response = fmt.Sprintf("etherscan AcctBal http.Get ERR: %s", err)
 	} else {
 		defer accountBalanceWeiResp.Body.Close()
 		accountBalanceWeiJSON, err2 := ioutil.ReadAll(accountBalanceWeiResp.Body)
@@ -34,10 +34,11 @@ func checkEthereumValue() string {
 				accountBalance := accountBalanceWei / 1000000000000000000
 				response = fmt.Sprintf("%f", accountBalance) + " ETH :ethereum:"
 			} else {
-				response = "etherscan AcctBal ParseFloat ERR: " + err3
+				response = fmt.Sprintf("etherscan AcctBal ParseFloat ERR: %s", err3)
 			}
 		} else {
-			response = "etherscan AcctBal ioutil.ReadAll ERR: " + err2
+			response = fmt.Sprintf("etherscan AcctBal ioutil.ReadAll ERR: %s", err2)
+		}
 	}
 
 	// TODO: now get the price so we can calc our NetWorth
