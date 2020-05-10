@@ -16,6 +16,7 @@ func checkEthereumValue() string {
 	credentials := fmt.Sprintf("&address=%s&tag=latest&apikey=%s", ethAddrMetaMask, etherscanAPIKey)
 
 	etherscanAccountBalanceURL := fmt.Sprintf("https://api.etherscan.io/api?module=account&action=balance%s", credentials)
+	Logger.Println(etherscanAccountBalanceURL)
 	accountBalanceWeiResp, err := http.Get(etherscanAccountBalanceURL)
 	if err != nil {
 		response = "etherscan AcctBal http.Get ERR: %s" + err.Error()
@@ -26,12 +27,9 @@ func checkEthereumValue() string {
 		if err2 != nil {
 			var result map[string]string
 			json.Unmarshal([]byte(accountBalanceWeiJSON), &result)
-			fmt.Println(result)
-			for key, value := range result {
-				fmt.Println(key, value)
-			}
-			accountBalanceWeiStr := result["result"]
-			accountBalanceWei, err3 := strconv.ParseFloat(accountBalanceWeiStr, 64)
+			Logger.Println(result)
+
+			accountBalanceWei, err3 := strconv.ParseFloat(result["result"], 64)
 			if err3 == nil {
 				accountBalance := accountBalanceWei / 1000000000000000000
 				response = fmt.Sprintf("%f", accountBalance) + " ETH :ethereum:"
