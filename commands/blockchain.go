@@ -24,7 +24,7 @@ func checkEthereumValue() string {
 		defer accountBalanceWeiResp.Body.Close()
 		accountBalanceWeiJSON, err2 := ioutil.ReadAll(accountBalanceWeiResp.Body)
 
-		if err2 != nil {
+		if err2 == nil {
 			var result map[string]string
 			json.Unmarshal([]byte(accountBalanceWeiJSON), &result)
 			Logger.Println(result)
