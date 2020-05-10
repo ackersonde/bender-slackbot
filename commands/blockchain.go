@@ -13,13 +13,13 @@ func checkEthereumValue() string {
 	response := ""
 	ethAddrMetaMask := os.Getenv("CTX_ETHEREUM_ADDRESS_METAMASK")
 	etherscanAPIKey := os.Getenv("CTX_ETHERSCAN_API_KEY")
-	credentials := fmt.Sprintf("&address=%s&tag=latest&apikey=%s", ethAddrMetaMask, etherscanAPIKey)
+	credentials := fmt.Sprintf("&address=%s&apikey=%s", ethAddrMetaMask, etherscanAPIKey)
 
-	etherscanAccountBalanceURL := fmt.Sprintf("https://api.etherscan.io/api?module=account&action=balance%s", credentials)
+	etherscanAccountBalanceURL := fmt.Sprintf("https://api.etherscan.io/api?module=account&tag=latest&action=balance%s", credentials)
 	Logger.Println(etherscanAccountBalanceURL)
 	accountBalanceWeiResp, err := http.Get(etherscanAccountBalanceURL)
 	if err != nil {
-		response = "etherscan AcctBal http.Get ERR: %s" + err.Error()
+		response = "etherscan AcctBal http.Get ERR: %s" + err
 	} else {
 		defer accountBalanceWeiResp.Body.Close()
 		accountBalanceWeiJSON, err2 := ioutil.ReadAll(accountBalanceWeiResp.Body)
@@ -34,11 +34,10 @@ func checkEthereumValue() string {
 				accountBalance := accountBalanceWei / 1000000000000000000
 				response = fmt.Sprintf("%f", accountBalance) + " ETH :ethereum:"
 			} else {
-				response = "etherscan AcctBal ParseFloat ERR: " + err3.Error()
+				response = "etherscan AcctBal ParseFloat ERR: " + err3
 			}
 		} else {
-			response = "etherscan AcctBal ioutil.ReadAll ERR: " + err2.Error()
-		}
+			response = "etherscan AcctBal ioutil.ReadAll ERR: " + err2
 	}
 
 	// TODO: now get the price so we can calc our NetWorth
