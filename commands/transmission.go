@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/danackerson/bender-slackbot/structures"
 	"github.com/odwrtw/transmission"
 )
 
@@ -16,7 +17,7 @@ func getTorrents(t *transmission.Client) (result string) {
 	torrents, err := t.GetTorrents()
 	if err == nil {
 		result = ":transmission: <http://" +
-			vpnPIRemoteConnectConfig.HostName +
+			structures.VPNPIRemoteConnectConfig.HostName +
 			":9091/transmission/web/|Running RaspberryPI Torrent(s)>\n"
 
 		for _, listTorrent := range torrents {
@@ -97,7 +98,7 @@ func torrentCommand(cmd []string) (result string) {
 
 	// Connect to Transmission RPC daemon
 	conf := transmission.Config{
-		Address: "http://" + vpnPIRemoteConnectConfig.HostName + ":9091/transmission/rpc",
+		Address: "http://" + structures.VPNPIRemoteConnectConfig.HostName + ":9091/transmission/rpc",
 	}
 	t, err := transmission.New(conf)
 	if err != nil {
@@ -141,19 +142,19 @@ func ensureTransmissionBind() string {
 		`grep "\"bind-address-ipv4\": \"$VPN_IP\"" ` + transmissionSettingsPath +
 		" || echo $VPN_IP"
 	Logger.Printf("VPN_IP running %s", cmd)
-	remoteResult := executeRemoteCmd(cmd, vpnPIRemoteConnectConfig)
+	remoteResult := executeRemoteCmd(cmd, structures.VPNPIRemoteConnectConfig)
 	// ^-- returns e.g. "bind-address-ipv4": "10.1.8.75", if found
 	// else 10.1.8.75 if *not* found
 
-	internalIP := strings.TrimSuffix(remoteResult.stdout, "\n")
+	internalIP := strings.TrimSuffix(remoteResult.Stdout, "\n")
 	// TODO: while - do this in 5sec increments for up to 60secs!
 	if internalIP == "" {
 		time.Sleep(10 * time.Second)
-		remoteResult = executeRemoteCmd(cmd, vpnPIRemoteConnectConfig)
-		internalIP = strings.TrimSuffix(remoteResult.stdout, "\n")
+		remoteResult = executeRemoteCmd(cmd, structures.VPNPIRemoteConnectConfig)
+		internalIP = strings.TrimSuffix(remoteResult.Stdout, "\n")
 	}
 
-	if remoteResult.err == nil && internalIP != "" &&
+	if remoteResult.Err == nil && internalIP != "" &&
 		!strings.Contains(internalIP, "bind-address-ipv4") {
 		Logger.Printf("internal VPN IP: %s", internalIP)
 
@@ -164,12 +165,12 @@ func ensureTransmissionBind() string {
 			` && sudo service transmission-daemon start`
 
 		Logger.Printf("exec VPN PI update: %s", cmd)
-		remoteResult = executeRemoteCmd(cmd, vpnPIRemoteConnectConfig)
-		if remoteResult.err == nil {
+		remoteResult = executeRemoteCmd(cmd, structures.VPNPIRemoteConnectConfig)
+		if remoteResult.Err == nil {
 			response = "Changed :transmission: ipv4 bind: " + internalIP
 		}
-	} else if remoteResult.err != nil {
-		response += "\n with " + remoteResult.err.Error()
+	} else if remoteResult.Err != nil {
+		response += "\n with " + remoteResult.Err.Error()
 	} else if strings.Contains(internalIP, "bind-address-ipv4") {
 		response = ":transmission: ipv4 bind already correct: " + internalIP
 	}
@@ -184,10 +185,10 @@ func transmissionSettingsAreSane(internalIP string) bool {
 	cmd := `grep -e '"bind-address-ipv4": "` + internalIP + `",' ` +
 		`-e '"bind-address-ipv6": "fe80::",' ` +
 		transmissionSettingsPath
-	remoteResult := executeRemoteCmd(cmd, vpnPIRemoteConnectConfig)
-	Logger.Printf("transmission settings: %s", remoteResult.stdout)
-	if remoteResult.err == nil {
-		if len(strings.Split(remoteResult.stdout, "\n")) == 3 { // incl trailing \n
+	remoteResult := executeRemoteCmd(cmd, structures.VPNPIRemoteConnectConfig)
+	Logger.Printf("transmission settings: %s", remoteResult.Stdout)
+	if remoteResult.Err == nil {
+		if len(strings.Split(remoteResult.Stdout, "\n")) == 3 { // incl trailing \n
 			result = true
 		} else { // fix it!
 			sedCmd := `sed -rie 's/"bind-address-ipv4": "(.*)"/"bind-address-ipv4": "` +
@@ -198,8 +199,8 @@ func transmissionSettingsAreSane(internalIP string) bool {
 				` && sudo service transmission-daemon start`
 
 			Logger.Printf("FIX Transmission settings update: %s", cmd)
-			remoteResult = executeRemoteCmd(cmd, vpnPIRemoteConnectConfig)
-			if remoteResult.err == nil {
+			remoteResult = executeRemoteCmd(cmd, structures.VPNPIRemoteConnectConfig)
+			if remoteResult.Err == nil {
 				// may cause infinite loop here...
 				return transmissionSettingsAreSane(internalIP)
 			}

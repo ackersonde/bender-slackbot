@@ -27,10 +27,10 @@ func homeAndInternetIPsDoNotMatch(tunnelIP string) bool {
 
 	go func() {
 		cmd := "curl " + ipCheckHost
-		remoteResult := executeRemoteCmd(cmd, vpnPIRemoteConnectConfig)
+		remoteResult := executeRemoteCmd(cmd, structures.VPNPIRemoteConnectConfig)
 
 		tunnelIdleSince = time.Now()
-		results <- strings.TrimSuffix(remoteResult.stdout, "\n")
+		results <- strings.TrimSuffix(remoteResult.Stdout, "\n")
 	}()
 
 	// type IPInfoResponse struct {
@@ -57,10 +57,10 @@ func homeAndInternetIPsDoNotMatch(tunnelIP string) bool {
 				// ensure home.ackerson.de is DIFFERENT than PI IP address!
 				go func() {
 					cmd := "dig " + vpnGateway + " A +short"
-					remoteResult := executeRemoteCmd(cmd, vpnPIRemoteConnectConfig)
+					remoteResult := executeRemoteCmd(cmd, structures.VPNPIRemoteConnectConfig)
 
 					tunnelIdleSince = time.Now()
-					resultsDig <- remoteResult.stdout
+					resultsDig <- remoteResult.Stdout
 				}()
 				select {
 				case resComp := <-resultsDig:
@@ -89,10 +89,10 @@ func inspectVPNConnection() map[string]string {
 	timeout := time.After(10 * time.Second)
 	go func() {
 		cmd := "sudo ipsec status | grep -A 2 ESTABLISHED"
-		remoteResult := executeRemoteCmd(cmd, vpnPIRemoteConnectConfig)
+		remoteResult := executeRemoteCmd(cmd, structures.VPNPIRemoteConnectConfig)
 
 		tunnelIdleSince = time.Now()
-		results <- remoteResult.stdout
+		results <- remoteResult.Stdout
 	}()
 
 	select {
@@ -114,8 +114,8 @@ func inspectVPNConnection() map[string]string {
 
 			if len(m) < 1 {
 				cmd := "sudo ipsec restart"
-				remoteResult := executeRemoteCmd(cmd, vpnPIRemoteConnectConfig)
-				Logger.Printf("restarting VPN %s", remoteResult.stdout)
+				remoteResult := executeRemoteCmd(cmd, structures.VPNPIRemoteConnectConfig)
+				Logger.Printf("restarting VPN %s", remoteResult.Stdout)
 			}
 
 			return m
@@ -231,14 +231,14 @@ func updateVpnPiTunnel(vpnServerDomain string) string {
 	sedCmd := `sudo sed -rie 's@[A-Za-z]{2}-[0-9]{2}\.protonvpn\.com@` + vpnServerDomain + `@g' `
 	cmd := sedCmd + `/etc/ipsec.conf && sudo ipsec update && sudo ipsec restart`
 
-	remoteResult := executeRemoteCmd(cmd, vpnPIRemoteConnectConfig)
+	remoteResult := executeRemoteCmd(cmd, structures.VPNPIRemoteConnectConfig)
 	// TODO: stderr often doesn't have real errors :(
-	if remoteResult.err == nil {
+	if remoteResult.Err == nil {
 		response = "Updated :protonvpn: to " + vpnServerDomain
 		return response + " & " + ensureTransmissionBind()
 	}
 
-	response += "(" + remoteResult.err.Error() + ")"
+	response += "(" + remoteResult.Err.Error() + ")"
 
 	return response
 }

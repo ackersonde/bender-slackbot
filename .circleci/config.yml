@@ -52,6 +52,14 @@ jobs:
             export CTX_DIGITALOCEAN_TOKEN_B64=`cat .base64_enc`
             sed -i -e "s@{{CTX_DIGITALOCEAN_TOKEN_B64}}@$CTX_DIGITALOCEAN_TOKEN_B64@" bender.yml
 
+            echo -n "$CTX_ETHEREUM_ADDRESS_METAMASK" | base64 | tr -d \\n > .base64_enc
+            export CTX_ETHEREUM_ADDRESS_METAMASK_B64=`cat .base64_enc`
+            sed -i -e "s@{{CTX_ETHEREUM_ADDRESS_METAMASK_B64}}@$CTX_ETHEREUM_ADDRESS_METAMASK_B64@" bender.yml
+
+            echo -n "$CTX_ETHERSCAN_API_KEY" | base64 | tr -d \\n > .base64_enc
+            export CTX_ETHERSCAN_API_KEY_B64=`cat .base64_enc`
+            sed -i -e "s@{{CTX_ETHERSCAN_API_KEY_B64}}@$CTX_ETHERSCAN_API_KEY_B64@" bender.yml
+
             echo -n "$CTX_SLACK_API_TOKEN" | base64 | tr -d \\n > .base64_enc
             export CTX_SLACK_API_TOKEN_B64=`cat .base64_enc`
             sed -i -e "s@{{CTX_SLACK_API_TOKEN_B64}}@$CTX_SLACK_API_TOKEN_B64@" bender.yml

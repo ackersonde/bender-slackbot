@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/danackerson/bender-slackbot/structures"
 	"github.com/danackerson/digitalocean/common"
 	"github.com/nlopes/slack"
 )
@@ -18,9 +19,6 @@ var rtm *slack.RTM
 var joinAPIKey = os.Getenv("CTX_JOIN_API_KEY")
 var vpnGateway = os.Getenv("CTX_VPNC_GATEWAY")
 var circleCIBuildNum = os.Getenv("CIRCLE_BUILD_NUM")
-
-var circleCIDoAlgoURL = "https://circleci.com/api/v1.1/project/github/danackerson/do-algo"
-var circleCITokenParam = "?circle-token=" + os.Getenv("CTX_CIRCLECI_API_TOKEN")
 
 // Logger to give senseful settings
 var Logger = log.New(os.Stdout, "", log.LstdFlags)
@@ -54,11 +52,11 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 						"Invalid URL for downloading! ("+err.Error()+
 							")", true), params)
 			} else {
-				remoteClient := scpRemoteConnectionConfiguration(androidRCC)
+				remoteClient := scpRemoteConnectionConfiguration(structures.AndroidRCC)
 				if scpFileBetweenHosts(
 					remoteClient,
 					downloadURL,
-					androidRCC.HostPath) {
+					structures.AndroidRCC.HostPath) {
 					api.PostMessage(slackMessage.Channel,
 						slack.MsgOptionText(
 							"Requested URL...", true), params)
@@ -72,6 +70,9 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 			api.PostMessage(slackMessage.Channel,
 				slack.MsgOptionText("Please provide source file URL!", true), params)
 		}
+	} else if args[0] == "eth" {
+		api.PostMessage(slackMessage.Channel,
+			slack.MsgOptionText(checkEthereumValue(), false), params)
 	} else if args[0] == "pi" {
 		api.PostMessage(slackMessage.Channel,
 			slack.MsgOptionText(raspberryPIChecks(), false), params)
@@ -247,7 +248,8 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 		api.PostMessage(slackMessage.Channel, slack.MsgOptionText(response, false), params)
 	} else if args[0] == "help" {
 		response :=
-			":sun_behind_rain_cloud: `sw`: Schwabhausen weather\n" +
+			":ethereum: `eth`: Current ethereum stats\n" +
+				":sun_behind_rain_cloud: `sw`: Schwabhausen weather\n" +
 				":metro: `mvv`: Status | Trip In | Trip Home\n" +
 				":baseball: `bb <YYYY-MM-DD>`: show baseball games from given date (default yesterday)\n" +
 				//":do_droplet: `do|dd <id>`: show|delete DigitalOcean droplet(s)\n" +

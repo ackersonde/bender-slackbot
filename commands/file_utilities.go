@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/bramvdbogaerde/go-scp"
+	"github.com/danackerson/bender-slackbot/structures"
 	"github.com/nlopes/slack"
 )
 
@@ -64,24 +65,24 @@ func CheckMediaDiskSpace(path string) string {
 		cmd += " | sed '1d'"
 	}
 	Logger.Printf("cmd: %s", cmd)
-	remoteResult := executeRemoteCmd(cmd, vpnPIRemoteConnectConfig)
+	remoteResult := executeRemoteCmd(cmd, structures.VPNPIRemoteConnectConfig)
 
-	if remoteResult.stdout == "" && remoteResult.stderr != "" {
-		response = remoteResult.stderr
+	if remoteResult.Stdout == "" && remoteResult.Stderr != "" {
+		response = remoteResult.Stderr
 	} else {
-		response = remoteResult.stdout
+		response = remoteResult.Stdout
 	}
 
 	response = ":plex: USB *Disk Usage* `vpnpi@" + piPlexPath + path +
 		"`\n" + response + "\n"
 
 	cmd = fmt.Sprintf("/bin/df -h %s /", piPlexPath+path)
-	remoteResult = executeRemoteCmd(cmd, vpnPIRemoteConnectConfig)
+	remoteResult = executeRemoteCmd(cmd, structures.VPNPIRemoteConnectConfig)
 
-	if remoteResult.stdout == "" && remoteResult.stderr != "" {
-		response = response + "\n" + remoteResult.stderr
+	if remoteResult.Stdout == "" && remoteResult.Stderr != "" {
+		response = response + "\n" + remoteResult.Stderr
 	} else {
-		response = response + "\n" + remoteResult.stdout
+		response = response + "\n" + remoteResult.Stdout
 	}
 	response += "\n=============================\n"
 
@@ -110,10 +111,10 @@ func MoveTorrentFile(api *slack.Client, sourceFile string, destinationDir string
 	response := ""
 
 	cmd := fmt.Sprintf("mv %s/%s %s/%s", piPlexPath, sourceFile, piPlexPath, destinationDir)
-	remoteResult := executeRemoteCmd(cmd, vpnPIRemoteConnectConfig)
+	remoteResult := executeRemoteCmd(cmd, structures.VPNPIRemoteConnectConfig)
 
-	if remoteResult.stdout == "" && remoteResult.stderr != "" {
-		response = fmt.Sprintf(fmt.Sprint(remoteResult.stderr) + ": " + string(remoteResult.stdout))
+	if remoteResult.Stdout == "" && remoteResult.Stderr != "" {
+		response = fmt.Sprintf(fmt.Sprint(remoteResult.Stderr) + ": " + string(remoteResult.Stdout))
 		response = ":x: ERR: `" + cmd + "` => " + response
 	} else {
 		response += fmt.Sprintf("moved: %s to %s\n", sourceFile, destinationDir)
@@ -126,12 +127,12 @@ func MoveTorrentFile(api *slack.Client, sourceFile string, destinationDir string
 		refreshPlexTorrents := fmt.Sprintf(
 			"curl %s",
 			basePlexRefreshCmdString{
-				HostName: vpnPIRemoteConnectConfig.HostName,
+				HostName: structures.VPNPIRemoteConnectConfig.HostName,
 				Section:  "1", Token: plexToken})
 		refreshPlexSection := fmt.Sprintf(
 			"curl %s",
 			basePlexRefreshCmdString{
-				HostName: vpnPIRemoteConnectConfig.HostName,
+				HostName: structures.VPNPIRemoteConnectConfig.HostName,
 				Section:  librarySection, Token: plexToken})
 		refreshCmd := fmt.Sprintf("%s && %s", refreshPlexTorrents, refreshPlexSection)
 
@@ -142,7 +143,7 @@ func MoveTorrentFile(api *slack.Client, sourceFile string, destinationDir string
 		} else {
 			response += fmt.Sprintf(
 				"refreshed <http://%s:32400/web/index.html|Plex library %s>\n",
-				vpnPIRemoteConnectConfig.HostName, librarySection)
+				structures.VPNPIRemoteConnectConfig.HostName, librarySection)
 		}
 	}
 

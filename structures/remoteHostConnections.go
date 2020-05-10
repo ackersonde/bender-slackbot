@@ -1,6 +1,7 @@
-package commands
+package structures
 
-type remoteConnectConfig struct {
+// RemoteConnectConfig provides structure for remote connections
+type RemoteConnectConfig struct {
 	User           string
 	PrivateKeyPath string
 	HostEndpoints  []string
@@ -9,13 +10,15 @@ type remoteConnectConfig struct {
 	HostName       string
 }
 
-type remoteResult struct {
-	err    error
-	stdout string
-	stderr string
+// RemoteResult provides structure for stdout/err feedback
+type RemoteResult struct {
+	Err    error
+	Stdout string
+	Stderr string
 }
 
-var androidRCC = &remoteConnectConfig{
+// AndroidRCC connects to phone
+var AndroidRCC = &RemoteConnectConfig{
 	User:           "ackersond",
 	PrivateKeyPath: "/root/.ssh/id_rsa_pix4x", // path must match K8S secret declaration in bender.yml
 	HostEndpoints:  []string{"192.168.178.37:2222", "192.168.178.61:2222", "192.168.178.62:2222"},
@@ -23,7 +26,8 @@ var androidRCC = &remoteConnectConfig{
 	HostPath:       "/storage/emulated/0/Download/",
 }
 
-var vpnPIRemoteConnectConfig = &remoteConnectConfig{
+// VPNPIRemoteConnectConfig connects to vpnpi
+var VPNPIRemoteConnectConfig = &RemoteConnectConfig{
 	User:           "ubuntu",
 	PrivateKeyPath: "/Users/ackersond/.ssh/circleci_rsa",
 	HostEndpoints:  []string{"192.168.178.59:22"},
@@ -32,7 +36,8 @@ var vpnPIRemoteConnectConfig = &remoteConnectConfig{
 	HostName:       "vpnpi.fritz.box",
 }
 
-var blackPearlRemoteConnectConfig = &remoteConnectConfig{
+// BlackPearlRemoteConnectConfig connects to blackpearl
+var BlackPearlRemoteConnectConfig = &RemoteConnectConfig{
 	User:           "ubuntu",
 	PrivateKeyPath: "/Users/ackersond/.ssh/circleci_rsa",
 	HostEndpoints:  []string{"192.168.178.59:22"},
@@ -41,7 +46,8 @@ var blackPearlRemoteConnectConfig = &remoteConnectConfig{
 	HostName:       "blackpearl.fritz.box",
 }
 
-var pi4RemoteConnectConfig = &remoteConnectConfig{
+// PI4RemoteConnectConfig connects to pi4
+var PI4RemoteConnectConfig = &RemoteConnectConfig{
 	User:           "ubuntu",
 	PrivateKeyPath: "/root/.ssh/id_rsa",
 	HostEndpoints:  []string{"192.168.178.29:22"},

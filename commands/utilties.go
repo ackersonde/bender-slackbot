@@ -12,10 +12,11 @@ import (
 
 	"github.com/bramvdbogaerde/go-scp"
 	"github.com/bramvdbogaerde/go-scp/auth"
+	"github.com/danackerson/bender-slackbot/structures"
 	"golang.org/x/crypto/ssh"
 )
 
-func scpRemoteConnectionConfiguration(config *remoteConnectConfig) scp.Client {
+func scpRemoteConnectionConfiguration(config *structures.RemoteConnectConfig) scp.Client {
 	var client scp.Client
 
 	clientConfig := retrieveClientConfig(config)
@@ -35,7 +36,7 @@ func scpRemoteConnectionConfiguration(config *remoteConnectConfig) scp.Client {
 	return client
 }
 
-func retrieveClientConfig(config *remoteConnectConfig) *ssh.ClientConfig {
+func retrieveClientConfig(config *structures.RemoteConnectConfig) *ssh.ClientConfig {
 	var clientConfig ssh.ClientConfig
 	hostKey, _, _, _, err := ssh.ParseAuthorizedKey(
 		[]byte(config.HostSSHKey))
@@ -76,12 +77,12 @@ func wireguardAction(action string) string {
 	response := ":wireguard: "
 	cmd := fmt.Sprintf("sudo wg-quick %s wg0", action)
 	Logger.Printf("cmd: %s", cmd)
-	remoteResult := executeRemoteCmd(cmd, blackPearlRemoteConnectConfig)
+	remoteResult := executeRemoteCmd(cmd, structures.BlackPearlRemoteConnectConfig)
 
-	if remoteResult.stdout == "" && remoteResult.stderr != "" {
-		response += remoteResult.stderr
+	if remoteResult.Stdout == "" && remoteResult.Stderr != "" {
+		response += remoteResult.Stderr
 	} else {
-		response += remoteResult.stdout
+		response += remoteResult.Stdout
 	}
 
 	return response
@@ -91,18 +92,18 @@ func wireguardShow() string {
 	response := ":wireguard: "
 	cmd := fmt.Sprintf("sudo wg show")
 	Logger.Printf("cmd: %s", cmd)
-	remoteResult := executeRemoteCmd(cmd, blackPearlRemoteConnectConfig)
+	remoteResult := executeRemoteCmd(cmd, structures.BlackPearlRemoteConnectConfig)
 
-	if remoteResult.stdout == "" && remoteResult.stderr != "" {
-		response += remoteResult.stderr
+	if remoteResult.Stdout == "" && remoteResult.Stderr != "" {
+		response += remoteResult.Stderr
 	} else {
-		response += remoteResult.stdout
+		response += remoteResult.Stdout
 	}
 
 	return response
 }
 
-func executeRemoteCmd(cmd string, config *remoteConnectConfig) remoteResult {
+func executeRemoteCmd(cmd string, config *structures.RemoteConnectConfig) structures.RemoteResult {
 	defer func() { //catch or finally
 		if err := recover(); err != nil { //catch
 			Logger.Printf("Exception: %v\n", err)
@@ -127,10 +128,10 @@ func executeRemoteCmd(cmd string, config *remoteConnectConfig) remoteResult {
 			errStr = strings.TrimSpace(stderrBuf.String())
 		}
 
-		return remoteResult{err, stdoutBuf.String(), errStr}
+		return structures.RemoteResult{Err: err, Stdout: stdoutBuf.String(), Stderr: errStr}
 	}
 
-	return remoteResult{}
+	return structures.RemoteResult{}
 }
 
 func initialDialOut(hostname string, remoteConfig *ssh.ClientConfig) *ssh.Client {
@@ -186,7 +187,10 @@ func scrubParamOfHTTPMagicCrap(sourceString string) string {
 
 func raspberryPIChecks() string {
 	response := ""
-	hosts := []remoteConnectConfig{*blackPearlRemoteConnectConfig, *vpnPIRemoteConnectConfig, *pi4RemoteConnectConfig}
+	hosts := []structures.RemoteConnectConfig{
+		*structures.BlackPearlRemoteConnectConfig,
+		*structures.VPNPIRemoteConnectConfig,
+		*structures.PI4RemoteConnectConfig}
 
 	response = measureCPUTemp(&hosts)
 	apps := []string{"wg", "ipsec", "k3s"} // app order MUST match host above --^
@@ -195,28 +199,28 @@ func raspberryPIChecks() string {
 	return response
 }
 
-func getAppVersions(apps []string, hosts *[]remoteConnectConfig) string {
+func getAppVersions(apps []string, hosts *[]structures.RemoteConnectConfig) string {
 	result := "\n*APPs* :martial_arts_uniform:\n"
 	for i, host := range *hosts {
 		remoteResult := executeRemoteCmd(apps[i]+" --version", &host)
-		if remoteResult.stdout == "" && remoteResult.stderr != "" {
-			result += host.HostName + ": " + remoteResult.stderr
+		if remoteResult.Stdout == "" && remoteResult.Stderr != "" {
+			result += host.HostName + ": " + remoteResult.Stderr
 		} else {
-			result += "_" + host.HostName + "_: " + remoteResult.stdout + "\n"
+			result += "_" + host.HostName + "_: " + remoteResult.Stdout + "\n"
 		}
 	}
 	return result
 }
-func measureCPUTemp(hosts *[]remoteConnectConfig) string {
+func measureCPUTemp(hosts *[]structures.RemoteConnectConfig) string {
 	measureCPUTempCmd := "((TEMP=`cat /sys/class/thermal/thermal_zone0/temp`/1000)); echo \"$TEMP\"C"
 
 	result := "*CPUs* :thermometer:\n"
 	for _, host := range *hosts {
 		remoteResult := executeRemoteCmd(measureCPUTempCmd, &host)
-		if remoteResult.stdout == "" && remoteResult.stderr != "" {
-			result += host.HostName + ": " + remoteResult.stderr
+		if remoteResult.Stdout == "" && remoteResult.Stderr != "" {
+			result += host.HostName + ": " + remoteResult.Stderr
 		} else {
-			result += "_" + host.HostName + "_: *" + strings.TrimSuffix(remoteResult.stdout, "\n") + "*\n"
+			result += "_" + host.HostName + "_: *" + strings.TrimSuffix(remoteResult.Stdout, "\n") + "*\n"
 		}
 	}
 
