@@ -1,7 +1,7 @@
 version: 2.1
 
 orbs:
-  ipsec: danackerson/ipsec@2.0.6
+  ipsec: danackerson/ipsec@2.1.0
 
 jobs:
   build:
