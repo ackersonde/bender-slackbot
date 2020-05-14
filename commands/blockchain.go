@@ -8,18 +8,74 @@ import (
 	"os"
 	"strconv"
 	"strings"
+
+	"github.com/danackerson/bender-slackbot/structures"
 )
 
 var ethAddrMetaMask = os.Getenv("CTX_ETHEREUM_ADDRESS_METAMASK")
 var etherscanAPIKey = os.Getenv("CTX_ETHERSCAN_API_KEY")
-var stellarAddress = os.Getenv("CTX_STELLAR_LUMENS_ADDRESS")
+var stellarAccount = os.Getenv("CTX_STELLAR_LUMENS_ADDRESS")
 var pgpKey = os.Getenv("CTX_CURRENT_PGP_FINGERPRINT")
 
 func checkStellarLumensValue() string {
-	// TODO
-	// https://github.com/stellar/go/blob/master/clients/horizonclient/README.md
+	response := ""
 
-	return "<https://stellarchain.io/address/" + stellarAddress + "|Stellar :lumens:>"
+	accountBalanceStr := getStellarLumens()
+	if !strings.HasPrefix(accountBalanceStr, "ERR") {
+		stellarPriceUSDStr := getStellarPrice()
+		if !strings.HasPrefix(stellarPriceUSDStr, "ERR") {
+			accountBalance, err := strconv.ParseFloat(accountBalanceStr, 64)
+			if err == nil {
+				stellarPriceUSD, err := strconv.ParseFloat(stellarPriceUSDStr, 64)
+				if err == nil {
+					response = fmt.Sprintf(
+						"Your %f :lumens: is worth $%f (<https://stellar.expert/explorer/public/account/%s|stellar.expert>)",
+						accountBalance, stellarPriceUSD*accountBalance, stellarAccount)
+				} else {
+					response = err.Error()
+				}
+			} else {
+				response = err.Error()
+			}
+		}
+	}
+
+	return response
+}
+
+func getStellarPrice() string {
+
+	return ""
+}
+
+func getStellarLumens() string {
+	response := ""
+
+	stellarLumensURL := fmt.Sprintf("https://horizon.stellar.org/accounts/%s", stellarAccount)
+	// {"status":"1","message":"OK","result":{"ethbtc":"0.0217","ethbtc_timestamp":"1589119180","ethusd":"190.57","ethusd_timestamp":"1589119172"}}
+	Logger.Println(stellarLumensURL)
+	stellarResp, err := http.Get(stellarLumensURL)
+	if err != nil {
+		response = fmt.Sprintf("ERR: stellar Lumens http.Get: %s", err)
+	} else {
+		defer stellarResp.Body.Close()
+		stellarLumensLedger := new(structures.StellarLumensLedger)
+		stellarLumensJSON, err2 := ioutil.ReadAll(stellarResp.Body)
+
+		if err2 == nil {
+			json.Unmarshal([]byte(stellarLumensJSON), &stellarLumensLedger)
+			stellarLumens, err3 := strconv.ParseFloat(stellarLumensLedger.Balances[1].Balance, 64)
+			if err3 == nil {
+				response = fmt.Sprintf("%f", stellarLumens)
+			} else {
+				response = fmt.Sprintf("ERR: stellar Lumens ParseFloat: %s", err3)
+			}
+		} else {
+			response = fmt.Sprintf("ERR: stellar Lumens ioutil.ReadAll: %s", err2)
+		}
+	}
+
+	return response
 }
 
 func checkEthereumValue() string {
@@ -34,8 +90,8 @@ func checkEthereumValue() string {
 				ethereumPriceUSD, err := strconv.ParseFloat(ethereumPriceUSDStr, 64)
 				if err == nil {
 					response = fmt.Sprintf(
-						"Your %f :ethereum: is worth $%f (<https://etherscan.io/address/%s|%s>)",
-						accountBalance, ethereumPriceUSD*accountBalance, ethAddrMetaMask, ethAddrMetaMask)
+						"Your %f :ethereum: is worth $%f (<https://etherscan.io/address/%s|etherscan.io>)",
+						accountBalance, ethereumPriceUSD*accountBalance, ethAddrMetaMask)
 				} else {
 					response = err.Error()
 				}
@@ -121,11 +177,14 @@ func getEthereumTokens() string {
 }
 
 func onlineIdentity() string {
-	currentPGPKey := "<https://keyserver.ubuntu.com/pks/lookup?search=0x" + pgpKey + "&fingerprint=on&op=index|PGP key>"
+	currentPGPKey := "<https://keyserver.ubuntu.com/pks/lookup?search=0x" +
+		pgpKey + "&fingerprint=on&op=index|" + string(pgpKey[len(pgpKey)-16:]) + ">"
 	pastPGPKeys := "<https://keyserver.ubuntu.com/pks/lookup?search=Dan+Ackerson&fingerprint=on&op=index|past keys>"
 	keybaseIdentify := "<https://keybase.io/danackerson|keybase>"
 	keybasePGP := "<https://keybase.io/danackerson/pgp_keys.asc?fingerprint=" + pgpKey + "|PGP key>"
 
-	return fmt.Sprintf("Papa's current %s, %s & :keybase: %s %s",
+	// TODO: check actual current PGP key value from keyserver.ubuntu.com against keybase PGP key value!
+
+	return fmt.Sprintf("Papa's current PGP %s & %s\n:keybase: %s using -> %s",
 		currentPGPKey, pastPGPKeys, keybaseIdentify, keybasePGP)
 }
