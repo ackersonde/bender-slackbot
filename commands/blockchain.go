@@ -64,6 +64,7 @@ func getStellarLumens() string {
 
 		if err2 == nil {
 			json.Unmarshal([]byte(stellarLumensJSON), &stellarLumensLedger)
+			Logger.Printf("%v", stellarLumensLedger.Balances)
 			stellarLumens, err3 := strconv.ParseFloat(stellarLumensLedger.Balances[1].Balance, 64)
 			if err3 == nil {
 				response = fmt.Sprintf("%f", stellarLumens)
