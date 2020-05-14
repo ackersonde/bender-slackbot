@@ -74,9 +74,9 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 		response := checkEthereumValue() + "\n" + checkStellarLumensValue()
 		api.PostMessage(slackMessage.Channel,
 			slack.MsgOptionText(response, false), params)
-	} else if args[0] == "id" {
+	} else if args[0] == "pgp" {
 		api.PostMessage(slackMessage.Channel,
-			slack.MsgOptionText(onlineIdentity(), false), params)
+			slack.MsgOptionText(pgpKeys(), false), params)
 	} else if args[0] == "pi" {
 		api.PostMessage(slackMessage.Channel,
 			slack.MsgOptionText(raspberryPIChecks(), false), params)
@@ -253,7 +253,7 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 	} else if args[0] == "help" {
 		response :=
 			":ethereum: `crypto`: Current cryptocurrency stats :lumens:\n" +
-				":sleuth_or_spy: `id`: Online identity proofs\n" +
+				":sleuth_or_spy: `pgp`: PGP keys\n" +
 				":sun_behind_rain_cloud: `sw`: Schwabhausen weather\n" +
 				":metro: `mvv`: Status | Trip In | Trip Home\n" +
 				":baseball: `bb <YYYY-MM-DD>`: show baseball games from given date (default yesterday)\n" +

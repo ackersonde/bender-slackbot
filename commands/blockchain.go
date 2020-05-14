@@ -64,7 +64,7 @@ func getStellarLumens() string {
 
 		if err2 == nil {
 			json.Unmarshal([]byte(stellarLumensJSON), &stellarLumensLedger)
-			Logger.Printf("%v", stellarLumensLedger.Balances)
+			Logger.Printf("%v", stellarLumensLedger.Balances[1])
 			stellarLumens, err3 := strconv.ParseFloat(stellarLumensLedger.Balances[1].Balance, 64)
 			if err3 == nil {
 				response = fmt.Sprintf("%f", stellarLumens)
@@ -177,15 +177,16 @@ func getEthereumTokens() string {
 	return response
 }
 
-func onlineIdentity() string {
+func pgpKeys() string {
 	currentPGPKey := "<https://keyserver.ubuntu.com/pks/lookup?search=0x" +
 		pgpKey + "&fingerprint=on&op=index|" + string(pgpKey[len(pgpKey)-16:]) + ">"
-	pastPGPKeys := "<https://keyserver.ubuntu.com/pks/lookup?search=Dan+Ackerson&fingerprint=on&op=index|past keys>"
-	keybaseIdentify := "<https://keybase.io/danackerson|keybase>"
-	keybasePGP := "<https://keybase.io/danackerson/pgp_keys.asc?fingerprint=" + pgpKey + "|PGP key>"
+	pastPGPKeys := "<https://keyserver.ubuntu.com/pks/lookup?search=Dan+Ackerson&fingerprint=on&op=index|'Dan Ackerson'>"
+	keybaseIdentify := "<https://keybase.io/danackerson|danackerson>"
+	keybasePGP := "<https://keybase.io/danackerson/pgp_keys.asc?fingerprint=" +
+		pgpKey + "|" + string(pgpKey[len(pgpKey)-16:]) + ">"
 
 	// TODO: check actual current PGP key value from keyserver.ubuntu.com against keybase PGP key value!
 
-	return fmt.Sprintf("Papa's current PGP %s & %s\n:keybase: %s using -> %s",
-		currentPGPKey, pastPGPKeys, keybaseIdentify, keybasePGP)
+	return fmt.Sprintf(":ubuntu: keyserver: %s & %s\n:keybase: %s & %s",
+		currentPGPKey, pastPGPKeys, keybasePGP, keybaseIdentify)
 }
