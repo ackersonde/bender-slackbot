@@ -12,6 +12,15 @@ import (
 
 var ethAddrMetaMask = os.Getenv("CTX_ETHEREUM_ADDRESS_METAMASK")
 var etherscanAPIKey = os.Getenv("CTX_ETHERSCAN_API_KEY")
+var stellarAddress = os.Getenv("CTX_STELLAR_LUMENS_ADDRESS")
+var pgpKey = os.Getenv("CTX_CURRENT_PGP_FINGERPRINT")
+
+func checkStellarLumensValue() string {
+	// TODO
+	// https://github.com/stellar/go/blob/master/clients/horizonclient/README.md
+
+	return "<https://stellarchain.io/address/" + stellarAddress + "|Stellar :lumens:>"
+}
 
 func checkEthereumValue() string {
 	response := ""
@@ -24,8 +33,9 @@ func checkEthereumValue() string {
 			if err == nil {
 				ethereumPriceUSD, err := strconv.ParseFloat(ethereumPriceUSDStr, 64)
 				if err == nil {
-					response = fmt.Sprintf("Your %f :ethereum: is worth $%f",
-						accountBalance, ethereumPriceUSD*accountBalance)
+					response = fmt.Sprintf(
+						"Your %f :ethereum: is worth $%f (<https://etherscan.io/address/%s|%s>)",
+						accountBalance, ethereumPriceUSD*accountBalance, ethAddrMetaMask, ethAddrMetaMask)
 				} else {
 					response = err.Error()
 				}
@@ -40,6 +50,8 @@ func checkEthereumValue() string {
 
 func getEthereumPrice() string {
 	response := ""
+
+	// https://min-api.cryptocompare.com/data/price?fsym=ETH&tsyms=EUR => {"EUR":187.32}
 
 	ethereumPriceURL := fmt.Sprintf("https://api.etherscan.io/api?module=stats&action=ethprice&apikey=%s", etherscanAPIKey)
 	// {"status":"1","message":"OK","result":{"ethbtc":"0.0217","ethbtc_timestamp":"1589119180","ethusd":"190.57","ethusd_timestamp":"1589119172"}}
@@ -106,4 +118,14 @@ func getEthereumTokens() string {
 	}
 
 	return response
+}
+
+func onlineIdentity() string {
+	currentPGPKey := "<https://keyserver.ubuntu.com/pks/lookup?search=0x" + pgpKey + "&fingerprint=on&op=index|PGP key>"
+	pastPGPKeys := "<https://keyserver.ubuntu.com/pks/lookup?search=Dan+Ackerson&fingerprint=on&op=index|past keys>"
+	keybaseIdentify := "<https://keybase.io/danackerson|keybase>"
+	keybasePGP := "<https://keybase.io/danackerson/pgp_keys.asc?fingerprint=" + pgpKey + "|PGP key>"
+
+	return fmt.Sprintf("Papa's current %s, %s & :keybase: %s %s",
+		currentPGPKey, pastPGPKeys, keybaseIdentify, keybasePGP)
 }

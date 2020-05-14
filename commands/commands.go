@@ -70,9 +70,13 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 			api.PostMessage(slackMessage.Channel,
 				slack.MsgOptionText("Please provide source file URL!", true), params)
 		}
-	} else if args[0] == "eth" {
+	} else if args[0] == "crypto" {
+		response := checkEthereumValue() + "\n" + checkStellarLumensValue()
 		api.PostMessage(slackMessage.Channel,
-			slack.MsgOptionText(checkEthereumValue(), false), params)
+			slack.MsgOptionText(response, false), params)
+	} else if args[0] == "id" {
+		api.PostMessage(slackMessage.Channel,
+			slack.MsgOptionText(onlineIdentity(), false), params)
 	} else if args[0] == "pi" {
 		api.PostMessage(slackMessage.Channel,
 			slack.MsgOptionText(raspberryPIChecks(), false), params)
@@ -248,7 +252,8 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 		api.PostMessage(slackMessage.Channel, slack.MsgOptionText(response, false), params)
 	} else if args[0] == "help" {
 		response :=
-			":ethereum: `eth`: Current ethereum stats\n" +
+			":ethereum: `crypto`: Current cryptocurrency stats :lumens:\n" +
+				":sleuth_or_spy: `id`: Online identity proofs\n" +
 				":sun_behind_rain_cloud: `sw`: Schwabhausen weather\n" +
 				":metro: `mvv`: Status | Trip In | Trip Home\n" +
 				":baseball: `bb <YYYY-MM-DD>`: show baseball games from given date (default yesterday)\n" +
