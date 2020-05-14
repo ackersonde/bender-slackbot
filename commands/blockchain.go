@@ -64,7 +64,7 @@ func getStellarLumens() string {
 
 		if err2 == nil {
 			json.Unmarshal([]byte(stellarLumensJSON), &stellarLumensLedger)
-			Logger.Printf("%v", stellarLumensLedger.Balances[1])
+			Logger.Printf("%v", stellarLumensLedger.Balances[1].Balance)
 			stellarLumens, err3 := strconv.ParseFloat(stellarLumensLedger.Balances[1].Balance, 64)
 			if err3 == nil {
 				response = fmt.Sprintf("%f", stellarLumens)
@@ -187,6 +187,6 @@ func pgpKeys() string {
 
 	// TODO: check actual current PGP key value from keyserver.ubuntu.com against keybase PGP key value!
 
-	return fmt.Sprintf(":ubuntu: keyserver: %s & %s\n:keybase: %s & %s",
+	return fmt.Sprintf(":ubuntu: %s & %s\n:keybase: %s & %s",
 		currentPGPKey, pastPGPKeys, keybasePGP, keybaseIdentify)
 }
