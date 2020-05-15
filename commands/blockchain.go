@@ -85,17 +85,13 @@ func getStellarLumens() string {
 
 		if err2 == nil {
 			json.Unmarshal([]byte(stellarLumensJSON), &stellarLumensLedger)
-			Logger.Printf("%v", stellarLumensLedger)
 			// find correct Balance -> AssetType == "native"
 			for _, balance := range stellarLumensLedger.Balances {
 				if balance.AssetType == "native" {
-					balanceFloat, _ := strconv.ParseFloat(balance.Balance, 64)
-					response = fmt.Sprintf("%f", balanceFloat)
-					Logger.Printf("found %f Lumens", balanceFloat)
+					response = balance.Balance
 					break
 				}
 			}
-			response = fmt.Sprintf("%f", stellarLumensLedger.Balances[1].Balance)
 		} else {
 			response = fmt.Sprintf("ERR: stellar Lumens ioutil.ReadAll: %s", err2)
 		}
