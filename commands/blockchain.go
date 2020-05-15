@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -44,8 +45,29 @@ func checkStellarLumensValue() string {
 }
 
 func getStellarPrice() string {
+	response := ""
 
-	return ""
+	stellarPriceResp, err := http.Get("https://api.stellarterm.com/v1/ticker.json")
+	if err != nil {
+		response = fmt.Sprintf("ERR: stellar Lumens http.Get: %s", err)
+	} else {
+		defer stellarPriceResp.Body.Close()
+		stellarPriceJSON, _ := ioutil.ReadAll(stellarPriceResp.Body)
+		// "externalPrices":{"USD_BTC":9650.16,"BTC_XLM":0.00000717,"USD_XLM":0.069192,"USD_XLM_24hAgo":0.070537,"USD_XLM_change":-1.90748}
+
+		re := regexp.MustCompile(`"USD_XLM":(?P<price>[0-9]+\.?[0-9]*),`)
+		matches := re.FindAllStringSubmatch(string(stellarPriceJSON), -1)
+		names := re.SubexpNames()
+
+		m := map[string]string{}
+		for i, n := range matches[0] {
+			m[names[i]] = n
+		}
+		Logger.Println(m["price"])
+		response = m["price"]
+	}
+
+	return response
 }
 
 func getStellarLumens() string {
