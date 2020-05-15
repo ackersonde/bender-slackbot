@@ -64,14 +64,14 @@ type StellarLumensLedger struct {
 
 // Balance contains account information
 type Balance struct {
-	Balance                           float64 `json:"balance"`
-	Limit                             string  `json:"limit,omitempty"`
-	BuyingLiabilities                 string  `json:"buying_liabilities"`
-	SellingLiabilities                string  `json:"selling_liabilities"`
-	LastModifiedLedger                int     `json:"last_modified_ledger,omitempty"`
-	IsAuthorized                      bool    `json:"is_authorized,omitempty"`
-	IsAuthorizedToMaintainLiabilities bool    `json:"is_authorized_to_maintain_liabilities,omitempty"`
-	AssetType                         string  `json:"asset_type"`
-	AssetCode                         string  `json:"asset_code,omitempty"`
-	AssetIssuer                       string  `json:"asset_issuer,omitempty"`
+	Balance                           string `json:"balance"`
+	Limit                             string `json:"limit,omitempty"`
+	BuyingLiabilities                 string `json:"buying_liabilities"`
+	SellingLiabilities                string `json:"selling_liabilities"`
+	LastModifiedLedger                int    `json:"last_modified_ledger,omitempty"`
+	IsAuthorized                      bool   `json:"is_authorized,omitempty"`
+	IsAuthorizedToMaintainLiabilities bool   `json:"is_authorized_to_maintain_liabilities,omitempty"`
+	AssetType                         string `json:"asset_type"`
+	AssetCode                         string `json:"asset_code,omitempty"`
+	AssetIssuer                       string `json:"asset_issuer,omitempty"`
 }

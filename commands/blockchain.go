@@ -89,9 +89,10 @@ func getStellarLumens() string {
 			// find correct Balance -> AssetType == "native"
 			for _, balance := range stellarLumensLedger.Balances {
 				if balance.AssetType == "native" {
-					response = fmt.Sprintf("%f", balance.Balance)
-					Logger.Printf("found %f Lumens", balance.Balance)
-					//break
+					balanceFloat, _ := strconv.ParseFloat(balance.Balance, 64)
+					response = fmt.Sprintf("%f", balanceFloat)
+					Logger.Printf("found %f Lumens", balanceFloat)
+					break
 				}
 			}
 			response = fmt.Sprintf("%f", stellarLumensLedger.Balances[1].Balance)
