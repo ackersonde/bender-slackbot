@@ -91,7 +91,7 @@ func getStellarLumens() string {
 					Logger.Printf("%d: %v", i, balance)
 					response = fmt.Sprintf("%f", balance.Balance)
 					Logger.Printf("found %f Lumens", balance.Balance)
-					break
+					//break
 				}
 			}
 			response = fmt.Sprintf("%f", stellarLumensLedger.Balances[1].Balance)
