@@ -63,7 +63,7 @@ func getStellarPrice() string {
 		for i, n := range matches[0] {
 			m[names[i]] = n
 		}
-		Logger.Println(m["price"])
+		Logger.Println(" @ $" + m["price"])
 		response = m["price"]
 	}
 
@@ -75,7 +75,6 @@ func getStellarLumens() string {
 
 	stellarLumensURL := fmt.Sprintf("https://horizon.stellar.org/accounts/%s", stellarAccount)
 	// {"status":"1","message":"OK","result":{"ethbtc":"0.0217","ethbtc_timestamp":"1589119180","ethusd":"190.57","ethusd_timestamp":"1589119172"}}
-	Logger.Println(stellarLumensURL)
 	stellarResp, err := http.Get(stellarLumensURL)
 	if err != nil {
 		response = fmt.Sprintf("ERR: stellar Lumens http.Get: %s", err)
@@ -86,7 +85,14 @@ func getStellarLumens() string {
 
 		if err2 == nil {
 			json.Unmarshal([]byte(stellarLumensJSON), &stellarLumensLedger)
-			Logger.Printf("%f", stellarLumensLedger.Balances[1].Balance)
+			// find correct Balance -> AssetType == "native"
+			for _, balance := range stellarLumensLedger.Balances {
+				if balance.AssetType == "native" {
+					response = fmt.Sprintf("%f", balance.Balance)
+					Logger.Printf("found %f Lumens", balance.Balance)
+					break
+				}
+			}
 			response = fmt.Sprintf("%f", stellarLumensLedger.Balances[1].Balance)
 		} else {
 			response = fmt.Sprintf("ERR: stellar Lumens ioutil.ReadAll: %s", err2)
