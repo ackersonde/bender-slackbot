@@ -88,7 +88,7 @@ func SearchFor(term string, cat Category) (*structures.Torrents, string) {
 			}
 			if seeders > 10 {
 				found++
-				size, err3 := strconv.Atoi(t.Size)
+				size, err3 := strconv.ParseUint(t.Size, 10, 64)
 				if err3 != nil {
 					Logger.Printf("ERR torrent size Atoi: %s\n", err3.Error())
 					continue
