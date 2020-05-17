@@ -81,10 +81,18 @@ func SearchFor(term string, cat Category) (*structures.Torrents, string) {
 	found := 0
 	if err == nil {
 		for i, t := range *torrents {
-			seeders, _ := strconv.Atoi(t.Seeders)
+			seeders, err2 := strconv.Atoi(t.Seeders)
+			if err2 != nil {
+				Logger.Printf("ERR torrent seeder Atoi: %s\n", err2.Error())
+				continue
+			}
 			if seeders > 10 {
 				found++
-				size, _ := strconv.Atoi(t.Size)
+				size, err3 := strconv.Atoi(t.Size)
+				if err3 != nil {
+					Logger.Printf("ERR torrent size Atoi: %s\n", err3.Error())
+					continue
+				}
 				humanSize := float64(size / (1024 * 1024))
 				sizeSuffix := fmt.Sprintf("*%.0f MiB*", humanSize)
 				if humanSize > 999 {
