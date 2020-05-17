@@ -138,7 +138,7 @@ func search(query string, cats ...Category) (*structures.Torrents, error) {
 		searchStringURL := "/api?url=/q.php?q=" + url.QueryEscape(query) + "&cat=" + catStr
 		torrents = searchProxy(searchStringURL)
 	} else {
-		torrents = searchProxy("/api?url=/q.php?q=category%3A207")
+		torrents = searchProxy("/api?url=/precompiled/data_top100_207.json")
 	}
 
 	if torrents == nil {
