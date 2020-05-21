@@ -39,14 +39,12 @@ func searchProxy(url string) []byte {
 		if resp != nil {
 			defer resp.Body.Close()
 			body, err := ioutil.ReadAll(resp.Body)
-			if err != nil {
+			if err != nil || body == nil {
 				Logger.Printf("failed to parse JSON: %s", err.Error())
 				continue
 			}
 
-			if err == nil && body != nil {
-				jsonResults = []byte(body)
-			}
+			return body
 		}
 	}
 
@@ -126,7 +124,7 @@ func getTorrentsFromJSON(jsonObject []byte) *structures.Torrents {
 	var s = new(structures.Torrents)
 	err := json.Unmarshal(jsonObject, &s)
 	if err != nil {
-		Logger.Printf("ERR: %s", err)
+		Logger.Printf("ERR: %s => %s", err, jsonObject)
 	}
 
 	return s
@@ -136,7 +134,7 @@ func getTop100FromJSON(jsonObject []byte) *structures.Top100Movies {
 	var s = new(structures.Top100Movies)
 	err := json.Unmarshal(jsonObject, &s)
 	if err != nil {
-		Logger.Printf("ERR: %s", err)
+		Logger.Printf("ERR: %s => %s", err, jsonObject)
 	}
 
 	return s
