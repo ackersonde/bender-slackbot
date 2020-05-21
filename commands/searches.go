@@ -60,29 +60,19 @@ func parseTorrents(jsonResponse []byte) string {
 }
 
 func top100Response(top100 structures.Top100Movies) string {
-	response := "Unable to find torrents for your search"
+	var response string
 
 	for i, torrent := range top100 {
 		if torrent.Seeders > 10 {
-			humanSize := float64(torrent.Size / (1024 * 1024))
-			sizeSuffix := fmt.Sprintf("*%.0f MiB*", humanSize)
-			if humanSize > 999 {
-				humanSize = humanSize / 1024
-				sizeSuffix = fmt.Sprintf("*%.1f GiB*", humanSize)
-			}
-
-			magnetLink := fmt.Sprintf("magnet/?xt=urn:btih:%s", torrent.InfoHash)
-			imdb := torrent.Imdb
-			if imdb != "" {
-				response += fmt.Sprintf(
-					"%d: <http://%s|%s> Seeds:%d %s(<https://www.imdb.com/title/%s|imdb>)\n",
-					i, magnetLink, torrent.Name, torrent.Seeders, sizeSuffix, imdb)
-			} else {
-				response += fmt.Sprintf(
-					"%d: <http://%s|%s> Seeds:%d %s\n",
-					i, magnetLink, torrent.Name, torrent.Seeders, sizeSuffix)
-			}
+			response += prepareLink(
+				i, torrent.InfoHash, torrent.Name,
+				torrent.Seeders, calculateHumanSize(torrent.Size),
+				torrent.Imdb.(string))
 		}
+	}
+
+	if response == "" {
+		return "Unable to find torrents for your search"
 	}
 
 	return response
@@ -97,27 +87,46 @@ func torrentResponse(torrents structures.Torrents) string {
 			Logger.Printf("ERR torrent seeder Atoi: %s\n", err2.Error())
 			continue
 		}
-		if seeders > 10 {
-			size, err3 := strconv.ParseUint(torrent.Size, 10, 64)
-			if err3 != nil {
-				Logger.Printf("ERR torrent size Atoi: %s\n", err3.Error())
-				continue
-			}
-			humanSize := float64(size / (1024 * 1024))
-			sizeSuffix := fmt.Sprintf("*%.0f MiB*", humanSize)
-			if humanSize > 999 {
-				humanSize = humanSize / 1024
-				sizeSuffix = fmt.Sprintf("*%.1f GiB*", humanSize)
-			}
+		size, err3 := strconv.ParseUint(torrent.Size, 10, 64)
+		if err3 != nil {
+			Logger.Printf("ERR torrent size Atoi: %s\n", err3.Error())
+			continue
+		}
 
-			magnetLink := fmt.Sprintf("magnet/?xt=urn:btih:%s", torrent.InfoHash)
-			response += fmt.Sprintf(
-				"%d: <http://%s|%s> Seeds:%d %s (<https://www.imdb.com/title/%s|imdb>)\n",
-				i, magnetLink, torrent.Name, seeders, sizeSuffix, torrent.Imdb)
+		if seeders > 10 {
+			response += prepareLink(
+				i, torrent.InfoHash, torrent.Name,
+				seeders, calculateHumanSize(size), torrent.Imdb)
 		}
 	}
 
 	return response
+}
+
+func calculateHumanSize(size uint64) string {
+	humanSize := float64(size / (1024 * 1024))
+	sizeSuffix := fmt.Sprintf("*%.0f MiB*", humanSize)
+	if humanSize > 999 {
+		humanSize = humanSize / 1024
+		sizeSuffix = fmt.Sprintf("*%.1f GiB*", humanSize)
+	}
+	return sizeSuffix
+}
+
+func prepareLink(i int, magnetLink string, torrentName string,
+	torrentSeeders int, sizeSuffix string, imdb string) string {
+	var response string
+
+	magnetLink = fmt.Sprintf("magnet/?xt=urn:btih:%s", magnetLink)
+	response += fmt.Sprintf(
+		"%d: <http://%s|%s> Seeds:%d %s", i, magnetLink,
+		torrentName, torrentSeeders, sizeSuffix)
+
+	if imdb != "" {
+		response += fmt.Sprintf(" (<https://www.imdb.com/title/%s|imdb>)", imdb)
+	}
+
+	return response + "\n"
 }
 
 func getTorrentsFromJSON(jsonObject []byte) *structures.Torrents {

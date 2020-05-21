@@ -24,7 +24,7 @@ type Top100Movies []struct {
 	Name     string      `json:"name"`
 	Status   string      `json:"status"`
 	NumFiles int         `json:"num_files"`
-	Size     int         `json:"size"`
+	Size     uint64      `json:"size"`
 	Seeders  int         `json:"seeders"`
 	Leechers int         `json:"leechers"`
 	Username string      `json:"username"`
