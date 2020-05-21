@@ -4,36 +4,20 @@ package commands
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"net/url"
 	"strconv"
 	"time"
 
 	"github.com/danackerson/bender-slackbot/structures"
 )
 
-// Category is the type of torrent to search for.
-type Category uint16
-
-const (
-	// Audio is the Category used to search for audio torrents.
-	Audio Category = 100
-	// Video is the Category used to search for video torrents.
-	Video Category = 200
-	// HDMovies is the Category used to search for HD movie torrents.
-	HDMovies Category = 207
-	// Applications is the Category used to search for applications torrents.
-	Applications Category = 300
-	// Games is the Category used to search for games torrents.
-	Games Category = 400
-)
-
 var proxies = []string{"tpb.cool", "piratebay.tech", "thepiratebay.fail", "piratebay.icu", "thepirate.host"}
 
-func searchProxy(url string) *structures.Torrents {
+func searchProxy(url string) []byte {
+	var jsonResults []byte
+
 	for i, proxy := range proxies {
 		uri := "https://" + proxy + url
 		Logger.Printf("torq try #%d: %s ...\n", i, uri)
@@ -53,6 +37,7 @@ func searchProxy(url string) *structures.Torrents {
 			continue
 		}
 		if resp != nil {
+			defer resp.Body.Close()
 			body, err := ioutil.ReadAll(resp.Body)
 			if err != nil {
 				Logger.Printf("failed to parse JSON: %s", err.Error())
@@ -60,96 +45,95 @@ func searchProxy(url string) *structures.Torrents {
 			}
 
 			if err == nil && body != nil {
-				torrents := getTorrentsFromJSON([]byte(body))
-				if torrents != nil {
-					Logger.Printf("%s%s succeeded!", proxy, url)
-					return torrents
-				}
+				jsonResults = []byte(body)
 			}
 		}
 	}
 
-	return nil
+	return jsonResults
 }
 
-// SearchFor is now commented
-func SearchFor(term string, cat Category) (*structures.Torrents, string) {
-	response := ""
+func parseTop100(jsonResponse []byte) string {
+	return top100Response(*getTop100FromJSON(jsonResponse))
+}
 
-	var torrents *structures.Torrents
-	torrents, err := search(term, cat)
-	found := 0
-	if err == nil {
-		for i, t := range *torrents {
-			seeders, err2 := strconv.Atoi(t.Seeders)
-			if err2 != nil {
-				Logger.Printf("ERR torrent seeder Atoi: %s\n", err2.Error())
+func parseTorrents(jsonResponse []byte) string {
+	return torrentResponse(*getTorrentsFromJSON(jsonResponse))
+}
+
+func top100Response(top100 structures.Top100Movies) string {
+	response := "Unable to find torrents for your search"
+
+	for i, torrent := range top100 {
+		if torrent.Seeders > 10 {
+			humanSize := float64(torrent.Size / (1024 * 1024))
+			sizeSuffix := fmt.Sprintf("*%.0f MiB*", humanSize)
+			if humanSize > 999 {
+				humanSize = humanSize / 1024
+				sizeSuffix = fmt.Sprintf("*%.1f GiB*", humanSize)
+			}
+
+			magnetLink := fmt.Sprintf("magnet/?xt=urn:btih:%s", torrent.InfoHash)
+			imdb := torrent.Imdb
+			if imdb != "" {
+				response += fmt.Sprintf(
+					"%d: <http://%s|%s> Seeds:%d %s(<https://www.imdb.com/title/%s|imdb>)\n",
+					i, magnetLink, torrent.Name, torrent.Seeders, sizeSuffix, imdb)
+			} else {
+				response += fmt.Sprintf(
+					"%d: <http://%s|%s> Seeds:%d %s\n",
+					i, magnetLink, torrent.Name, torrent.Seeders, sizeSuffix)
+			}
+		}
+	}
+
+	return response
+}
+
+func torrentResponse(torrents structures.Torrents) string {
+	response := "Unable to find torrents for your search"
+
+	for i, torrent := range torrents {
+		seeders, err2 := strconv.Atoi(torrent.Seeders)
+		if err2 != nil {
+			Logger.Printf("ERR torrent seeder Atoi: %s\n", err2.Error())
+			continue
+		}
+		if seeders > 10 {
+			size, err3 := strconv.ParseUint(torrent.Size, 10, 64)
+			if err3 != nil {
+				Logger.Printf("ERR torrent size Atoi: %s\n", err3.Error())
 				continue
 			}
-			if seeders > 10 {
-				found++
-				size, err3 := strconv.ParseUint(t.Size, 10, 64)
-				if err3 != nil {
-					Logger.Printf("ERR torrent size Atoi: %s\n", err3.Error())
-					continue
-				}
-				humanSize := float64(size / (1024 * 1024))
-				sizeSuffix := fmt.Sprintf("*%.0f MiB*", humanSize)
-				if humanSize > 999 {
-					humanSize = humanSize / 1024
-					sizeSuffix = fmt.Sprintf("*%.1f GiB*", humanSize)
-				}
-
-				magnetLink := fmt.Sprintf("magnet/?xt=urn:btih:%s", t.InfoHash)
-				response += fmt.Sprintf("%d: <http://%s|%s> Seeds:%d %s\n", i, magnetLink, t.Name, seeders, sizeSuffix)
+			humanSize := float64(size / (1024 * 1024))
+			sizeSuffix := fmt.Sprintf("*%.0f MiB*", humanSize)
+			if humanSize > 999 {
+				humanSize = humanSize / 1024
+				sizeSuffix = fmt.Sprintf("*%.1f GiB*", humanSize)
 			}
+
+			magnetLink := fmt.Sprintf("magnet/?xt=urn:btih:%s", torrent.InfoHash)
+			response += fmt.Sprintf(
+				"%d: <http://%s|%s> Seeds:%d %s (<https://www.imdb.com/title/%s|imdb>)\n",
+				i, magnetLink, torrent.Name, seeders, sizeSuffix, torrent.Imdb)
 		}
-	} else {
-		response = "PB seems to be offline: " + fmt.Sprintf("%v", err)
 	}
 
-	if found < 1 {
-		response = "Unable to find torrents with enough Seeders for '" + term + "'"
-	}
-
-	return torrents, response
-}
-
-// search returns the torrents found with the given search string and categories.
-func search(query string, cats ...Category) (*structures.Torrents, error) {
-	var torrents *structures.Torrents
-
-	if query != "" {
-		if len(cats) == 0 {
-			cats = []Category{0}
-		}
-
-		var catStr string
-		for i, c := range cats {
-			if i != 0 {
-				catStr += ","
-			}
-			catStr += strconv.Itoa(int(c))
-		}
-		if catStr == "" {
-			catStr = "0"
-		}
-
-		searchStringURL := "/api?url=/q.php?q=" + url.QueryEscape(query) + "&cat=" + catStr
-		torrents = searchProxy(searchStringURL)
-	} else {
-		torrents = searchProxy("/api?url=/precompiled/data_top100_207.json")
-	}
-
-	if torrents == nil {
-		return nil, errors.New("unable to contact any PB Proxy...try again later")
-	}
-
-	return torrents, nil
+	return response
 }
 
 func getTorrentsFromJSON(jsonObject []byte) *structures.Torrents {
 	var s = new(structures.Torrents)
+	err := json.Unmarshal(jsonObject, &s)
+	if err != nil {
+		Logger.Printf("ERR: %s", err)
+	}
+
+	return s
+}
+
+func getTop100FromJSON(jsonObject []byte) *structures.Top100Movies {
+	var s = new(structures.Top100Movies)
 	err := json.Unmarshal(jsonObject, &s)
 	if err != nil {
 		Logger.Printf("ERR: %s", err)

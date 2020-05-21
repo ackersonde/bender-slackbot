@@ -14,7 +14,6 @@ type Torrents []struct {
 	Status   string `json:"status"`
 	Category string `json:"category"`
 	Imdb     string `json:"imdb"`
-	Anon     int    `json:"anon,omitempty"`
 }
 
 // Top100Movies listing has an Anon field

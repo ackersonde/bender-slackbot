@@ -180,20 +180,15 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 		}
 	} else if args[0] == "torq" {
 		var response string
-		cat := 0
 		if len(args) > 1 {
-			if args[1] == "nfl" {
-				cat = 200
-			} else if args[1] == "ubuntu" {
-				cat = 300
-			}
+			searchString := strings.Join(args[1:], " ")
+			searchStringURL := "/api?url=/q.php?q=" + url.QueryEscape(searchString)
 
-			searchString := strings.Join(args, " ")
-			searchString = strings.TrimPrefix(searchString, "torq ")
-			_, response = SearchFor(searchString, Category(cat))
+			response = parseTorrents(searchProxy(searchStringURL))
 		} else {
-			_, response = SearchFor("", Category(cat))
+			response = parseTop100(searchProxy("/api?url=/precompiled/data_top100_207.json"))
 		}
+
 		api.PostMessage(slackMessage.Channel, slack.MsgOptionText(response, false), params)
 	} else if args[0] == "vpns" {
 		if len(args) > 1 {
