@@ -64,6 +64,9 @@ func top100Response(top100 structures.Top100Movies) string {
 
 	for i, torrent := range top100 {
 		if torrent.Seeders > 10 {
+			if torrent.Imdb == nil {
+				torrent.Imdb = ""
+			}
 			response += prepareLink(
 				i, torrent.InfoHash, torrent.Name,
 				torrent.Seeders, calculateHumanSize(torrent.Size),
