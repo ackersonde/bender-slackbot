@@ -82,7 +82,7 @@ func top100Response(top100 structures.Top100Movies) string {
 }
 
 func torrentResponse(torrents structures.Torrents) string {
-	response := "Unable to find torrents for your search"
+	var response string
 
 	for i, torrent := range torrents {
 		seeders, err2 := strconv.Atoi(torrent.Seeders)
@@ -103,6 +103,9 @@ func torrentResponse(torrents structures.Torrents) string {
 		}
 	}
 
+	if response == "" {
+		return "Unable to find torrents for your search"
+	}
 	return response
 }
 
