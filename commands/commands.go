@@ -1,8 +1,12 @@
 package commands
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
+	"net/http"
 	"net/url"
 	"os"
 	"regexp"
@@ -12,6 +16,7 @@ import (
 
 	"github.com/danackerson/bender-slackbot/structures"
 	"github.com/danackerson/digitalocean/common"
+	jsoniter "github.com/json-iterator/go"
 	"github.com/nlopes/slack"
 )
 
@@ -228,9 +233,10 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 		response := torrentCommand(args)
 		api.PostMessage(slackMessage.Channel, slack.MsgOptionText(response, false), params)
 	} else if args[0] == "mvv" {
-		response := "<https://img.srv2.de/customer/sbahnMuenchen/newsticker/newsticker.html|Aktuelles>"
-		response += " | <" + mvvRoute("Schwabhausen", "München, Hauptbahnhof") + "|Going in>"
+		response := "<" + mvvRoute("Schwabhausen", "München, Hauptbahnhof") + "|Going in>"
 		response += " | <" + mvvRoute("München, Hauptbahnhof", "Schwabhausen") + "|Going home>"
+
+		response += "\n" + fetchAktuelles()
 
 		api.PostMessage(slackMessage.Channel, slack.MsgOptionText(response, false), params)
 	} else if args[0] == "www" {
@@ -250,7 +256,7 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 			":ethereum: `crypto`: Current cryptocurrency stats :lumens:\n" +
 				":sleuth_or_spy: `pgp`: PGP keys\n" +
 				":sun_behind_rain_cloud: `sw`: Schwabhausen weather\n" +
-				":metro: `mvv`: Status | Trip In | Trip Home\n" +
+				":mvv: `mvv`: Status | Trip In | Trip Home\n" +
 				":baseball: `bb <YYYY-MM-DD>`: show baseball games from given date (default yesterday)\n" +
 				//":do_droplet: `do|dd <id>`: show|delete DigitalOcean droplet(s)\n" +
 				":wireguard: `wg[s|u|d]`: [S]how status, [U]p or [D]own wireguard tunnel\n" +
@@ -271,6 +277,85 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 	} else {
 		Logger.Printf("No Command found: %s", slackMessage.Text)
 	}
+}
+
+func fetchAktuelles() string {
+	rndString := strconv.FormatInt(time.Now().UnixNano(), 10)
+	url := "https://db-streckenagent.hafas.de/newsletter/gate?rnd=" + rndString
+
+	// Goto https://www.s-bahn-muenchen.de/s_muenchen/view/service/aktuelle_betriebslage.shtml w/ DevTools enabled
+	// inspect REQs like https://db-streckenagent.hafas.de/newsletter/gate?rnd=xyz
+	// as I expect the post data below may change regularly :(
+	var postData = []byte(`{"id":"ssww7rjiiqci9m88","ver":"1.25","lang":"deu","auth":{"type":"AID","aid":"da39a3ee5e6b4"},"client":{"id":"HAFAS","type":"WEB","name":"webapp","l":"vs_webapp"},"formatted":false,"svcReqL":[{"req":{"getChildren":true,"getParent":true,"maxNum":500,"himFltrL":[{"mode":"INC","type":"CH","value":"CUSTOM1"}],"sortL":["LMOD_DESC"]},"meth":"HimSearch","id":"1|1|"}]}`)
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(postData))
+	if err != nil {
+		log.Printf("ERR prep request: %s", err.Error())
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Printf("ERR make request: %s", err.Error())
+	}
+	defer resp.Body.Close()
+
+	response, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Printf("ERR read resp: %s", err.Error())
+	}
+
+	/* TEST response
+	response := []byte(`
+	{"ver":"1.25","lang":"deu","id":"ssww7rjiiqci9m88","err":"OK","graph":{"id":"standard","index":0},"subGraph":{"id":"global","index":0},"view":{"id":"standard","index":0,"type":"WGS84"},"svcResL":[{"id":"1|1|","meth":"HimSearch","err":"OK","res":{"common":{"locL":[{"lid":"A=1@O=München Ost@X=11604975@Y=48127437@U=80@L=8000262@","type":"S","name":"München Ost","icoX":0,"extId":"8000262","state":"F","crd":{"x":11604993,"y":48127302,"z":0},"pCls":447},{"lid":"A=1@O=München Donnersbergerbrücke@X=11536540@Y=48142620@U=80@L=8004128@","type":"S","name":"München Donnersbergerbrücke","icoX":1,"extId":"8004128","state":"F","crd":{"x":11537133,"y":48142683,"z":0},"pCls":56}],"prodL":[{"name":"S 1"},{"name":"S 6"},{"name":"S 7"},{"name":"S 8"},{"name":"S 2"}],"icoL":[{"res":"prod_ice","fg":{"r":255,"g":255,"b":255},"bg":{"r":40,"g":45,"b":55}},{"res":"prod_reg","fg":{"r":255,"g":255,"b":255},"bg":{"r":175,"g":180,"b":187}},{"res":"HIM1"}],"himMsgEdgeL":[{"icoCrd":{"x":11570757,"y":48135028}}],"himMsgCatL":[{"id":1}],"gTagL":["titleText","emailTitle","operationalSituationTitle","operationalSituation","email"]},"msgL":[{"hid":"RIS_HIM_FREETEXT_1080490","act":true,"head":"Bauarbeiten.","icoX":2,"prio":50,"fLocX":0,"tLocX":1,"prod":65535,"affProdRefL":[0,1,2,3,4],"src":99,"lModDate":"20200529","lModTime":"202744","sDate":"20200529","sTime":"223000","eDate":"20200601","eTime":"043000","sDaily":"000000","eDaily":"235900","comp":"Region Bayern","catRefL":[0],"pubChL":[{"name":"EMAIL","fDate":"20200529","fTime":"201500","tDate":"20200601","tTime":"043000"},{"name":"CUSTOM1","fDate":"20200529","fTime":"201500","tDate":"20200601","tTime":"043000"}],"edgeRefL":[0],"texts":[{"gTagXL":[0],"texts":[{"text":"Bauarbeiten."}]},{"gTagXL":[1,2],"texts":[{"text":"Stammstrecke: Bauarbeiten von Freitag, 29. Mai, 22.30 Uhr bis Montag, 01. Juni 2020, 4.30 Uhr zwischen München Ost und München-Pasing"}]},{"gTagXL":[3,4],"texts":[{"text":"Wegen Bauarbeiten zur 2.Stammstrecke kommt es von Freitag, 29. Mai (22:30 Uhr) durchgehend bis Montag, 1. Juni 2020 (4:30 Uhr) zwischen München Ost und München-Pasing zu Fahrplanänderungen mit Umleitungen und Haltausfällen auf fast allen S-Bahn-Linien. <br><br>Zwischen München Ost und München-Pasing verkehren nur die Linien S 6 und S 7 regulär durch die Stammstrecke.<br>Zwischen München-Ost und Hackerbrücke besteht am Samstag, jeweils von 9 bis 1 Uhr und am Sonntag, jeweils von 11 bis 21 Uhr ein Pendelverkehr im 20-Minuten-Takt.<br><br>Weitere Informationen, sowie die Fahrpläne der einzelnen Linien finden Sie unter https://t1p.de/94jj"}]}]}]}}]}`)
+	*/
+
+	svcResL := jsoniter.Get(response, "svcResL", 0).ToString()
+	res := jsoniter.Get([]byte(svcResL), "res").ToString()
+	common := jsoniter.Get([]byte(res), "common").ToString()
+	if common == "{}" {
+		return "Aktuell liegen uns keine Meldungen vor."
+	}
+
+	aktuell := ""
+	lines := strings.ToLower(jsoniter.Get([]byte(common), "prodL", '*').ToString())
+	if lines != "" {
+		effectedTrains := []map[string]string{}
+		effectedTrainLogos := ""
+
+		err2 := json.Unmarshal([]byte(lines), &effectedTrains)
+		if err2 != nil {
+			log.Printf("ERR parsing trains: %s", err2.Error())
+		} else {
+			for _, train := range effectedTrains {
+				logo := strings.Replace(train["name"], " ", "", 1)
+				effectedTrainLogos += fmt.Sprintf(":mvv_" + logo + ": ")
+			}
+			effectedTrainLogos += "\n"
+			aktuell = fmt.Sprintf("%s\n", effectedTrainLogos)
+		}
+	}
+
+	msgL := jsoniter.Get([]byte(res), "msgL", 0).ToString()
+	titleTexts := jsoniter.Get([]byte(msgL), "texts", 1).ToString()
+	gTagXL1 := jsoniter.Get([]byte(titleTexts), "texts", 0).ToString()
+	titleText := jsoniter.Get([]byte(gTagXL1), "text").ToString()
+
+	subjectTexts := jsoniter.Get([]byte(msgL), "texts", 2).ToString()
+	gTagXL2 := jsoniter.Get([]byte(subjectTexts), "texts", 0).ToString()
+	subjectText := jsoniter.Get([]byte(gTagXL2), "text").ToString()
+	subjectText = strings.ReplaceAll(subjectText, "<br>", "\n")
+
+	aktuell += fmt.Sprintf("%s\n\n%s\n\n", titleText, subjectText)
+
+	lModDate := jsoniter.Get([]byte(msgL), "lModDate").ToString()
+	lModTime := jsoniter.Get([]byte(msgL), "lModTime").ToString()
+	if lModDate != "" && lModTime != "" {
+		lastUpdate, _ := time.Parse("20060102150405", lModDate+lModTime)
+		aktuell += fmt.Sprintf("_update von %s_", lastUpdate.Format("02-Jan-2006 15:04"))
+	}
+
+	return aktuell
 }
 
 func mvvRoute(origin string, destination string) string {
