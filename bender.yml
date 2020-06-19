@@ -68,7 +68,7 @@ kind: Secret
 metadata:
   name: server-deploy-key-secret
 data:
-  id_rsa: {{CTX_SERVER_DEPLOY_SECRET}}
+  id_rsa: {{CTX_SERVER_DEPLOY_SECRET_B64}}
 
 ---
 # https://superuser.com/questions/120796/how-to-encode-base64-via-command-line#comment280484_120815
@@ -77,4 +77,4 @@ kind: Secret
 metadata:
   name: scp-pops4xl-key-secret
 data:
-  id_rsa_pix4x: {{CTX_POPS4XL_SCP_KEY_SECRET}}
+  id_rsa_pix4x: {{CTX_POPS4XL_SCP_KEY_SECRET_B64}}
