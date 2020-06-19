@@ -267,7 +267,7 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 				":youtube: `yt <video url>`: Download Youtube video to Papa's handy\n" +
 				":floppy_disk: `fsck`: show disk space on :raspberry_pi:\n" +
 				":bar_chart: `pi`: Stats of various :raspberry_pi:s\n" +
-				":circleci: `version`: Which build number is this Bender?\n" +
+				":github: `version`: Which build number is this Bender?\n" +
 				":earth_americas: `www`: Show various internal links\n" +
 				":copyright: `scpxl <URL>`: scp URL file to Pops4XL\n"
 		api.PostMessage(slackMessage.Channel, slack.MsgOptionText(response, true), params)
