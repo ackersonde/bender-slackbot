@@ -9,7 +9,7 @@ TR_TORRENT_NAME=${TR_TORRENT_NAME:-$2}
 TR_TORRENT_ID=${TR_TORRENT_ID:-$3}
 
 PLEX_TORRENT_LIBRARY_SECTION=3
-PLEX_TOKEN=$PLEX_TOKEN
+PLEX_TOKEN={{CTX_PLEX_TOKEN}}
 # https://support.plex.tv/articles/201638786-plex-media-server-url-commands/
 
 sourcePath="/home/ubuntu/torrents"

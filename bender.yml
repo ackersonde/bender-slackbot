@@ -20,7 +20,7 @@ spec:
         - name: dockerhub
       containers:
         - name: bender
-          image: danackerson/slackbot:vc{{CIRCLE_BUILD_NUM}}
+          image: danackerson/slackbot:vg{{GITHUB_RUN_ID}}
           envFrom:
           - secretRef:
               name: bender-env-secrets
@@ -50,16 +50,15 @@ kind: Secret
 metadata:
   name: bender-env-secrets
 data:
-  CIRCLE_BUILD_NUM: {{CIRCLE_BUILD_NUM_B64}}
-  homeDomain: {{homeDomain_B64}}
-  slackReportChannel: {{slackReportChannel_B64}}
-  PLEX_TOKEN: {{PLEX_TOKEN_B64}}
+  GITHUB_RUN_ID: {{GITHUB_RUN_ID_B64}}
+  HOMEPAGE_HOSTNAME: {{HOMEPAGE_HOSTNAME_B64}}
+  CTX_SLACK_CHANNEL: {{CTX_SLACK_CHANNEL_B64}}
+  CTX_PLEX_TOKEN: {{CTX_PLEX_TOKEN_B64}}
   CTX_CIRCLECI_API_TOKEN: {{CTX_CIRCLECI_API_TOKEN_B64}}
   CTX_DIGITALOCEAN_TOKEN: {{CTX_DIGITALOCEAN_TOKEN_B64}}
   CTX_SLACK_API_TOKEN: {{CTX_SLACK_API_TOKEN_B64}}
   CTX_JOIN_API_KEY: {{CTX_JOIN_API_KEY_B64}}
   CTX_DROPBOX_ACCESS_TOKEN: {{CTX_DROPBOX_ACCESS_TOKEN_B64}}
-  CTX_VPNC_GATEWAY: {{CTX_VPNC_GATEWAY_B64}}
   CTX_ETHERSCAN_API_KEY: {{CTX_ETHERSCAN_API_KEY_B64}}
   CTX_ETHEREUM_ADDRESS_METAMASK: {{CTX_ETHEREUM_ADDRESS_METAMASK_B64}}
   CTX_CURRENT_PGP_FINGERPRINT: {{CTX_CURRENT_PGP_FINGERPRINT_B64}}
@@ -80,4 +79,4 @@ kind: Secret
 metadata:
   name: scp-pops4xl-key-secret
 data:
-  id_rsa_pix4x: {{POPS4XL_SCP_KEY_SECRET}}
+  id_rsa_pix4x: {{CTX_POPS4XL_SCP_KEY_SECRET}}

@@ -1,0 +1,103 @@
+name: Deploy bender slackbot
+
+on:
+  push:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-go@v2
+      - name: Build application and docker image
+        run: |
+          go get -t -d -v ./...
+          env GOOS=linux GOARCH=arm GOARM=7 go build bender.go
+
+          docker run --rm --privileged multiarch/qemu-user-static:register
+          docker build --compress -t danackerson/slackbot:vg$GITHUB_RUN_ID .
+
+          docker login -u ${{ secrets.CTX_DOCKER_USER }} -p ${{ secrets.CTX_DOCKER_PASS }}
+          docker tag danackerson/slackbot:vg$GITHUB_RUN_ID danackerson/slackbot:latest
+          docker push danackerson/slackbot:vg$GITHUB_RUN_ID
+          docker push danackerson/slackbot:latest
+
+      - name: Prepare K8S bundle config
+        run: |
+          export GITHUB_RUN_ID_B64=`echo -n $GITHUB_RUN_ID | base64`
+          sed -i -e "s@{{GITHUB_RUN_ID_B64}}@$GITHUB_RUN_ID_B64@" bender.yml
+          sed -i -e "s@{{GITHUB_RUN_ID}}@$GITHUB_RUN_ID@" bender.yml
+
+          export CTX_SLACK_CHANNEL_B64=`echo -n ${{ secrets.CTX_SLACK_CHANNEL }} | base64`
+          sed -i -e "s@{{CTX_SLACK_CHANNEL_B64}}@$CTX_SLACK_CHANNEL_B64@" bender.yml
+
+          echo -n "${{ secrets.CTX_PLEX_TOKEN }}" | base64 | tr -d \\n > .base64_enc
+          export CTX_PLEX_TOKEN_B64=`cat .base64_enc`
+          sed -i -e "s@{{CTX_PLEX_TOKEN_B64}}@$CTX_PLEX_TOKEN_B64@" bender.yml
+          sed -i -e "s@{{CTX_PLEX_TOKEN}}@${{ secrets.CTX_PLEX_TOKEN }}@" finished_torrent.sh
+
+          echo -n "${{ secrets.CTX_DIGITALOCEAN_TOKEN }}" | base64 | tr -d \\n > .base64_enc
+          export CTX_DIGITALOCEAN_TOKEN_B64=`cat .base64_enc`
+          sed -i -e "s@{{CTX_DIGITALOCEAN_TOKEN_B64}}@$CTX_DIGITALOCEAN_TOKEN_B64@" bender.yml
+
+          echo -n "${{ secrets.CTX_STELLAR_LUMENS_ADDRESS }}" | base64 | tr -d \\n > .base64_enc
+          export CTX_STELLAR_LUMENS_ADDRESS_B64=`cat .base64_enc`
+          sed -i -e "s@{{CTX_STELLAR_LUMENS_ADDRESS_B64}}@$CTX_STELLAR_LUMENS_ADDRESS_B64@" bender.yml
+
+          echo -n "${{ secrets.CTX_CURRENT_PGP_FINGERPRINT }}" | base64 | tr -d \\n > .base64_enc
+          export CTX_CURRENT_PGP_FINGERPRINT_B64=`cat .base64_enc`
+          sed -i -e "s@{{CTX_CURRENT_PGP_FINGERPRINT_B64}}@$CTX_CURRENT_PGP_FINGERPRINT_B64@" bender.yml
+
+          echo -n "${{ secrets.CTX_ETHEREUM_ADDRESS_METAMASK }}" | base64 | tr -d \\n > .base64_enc
+          export CTX_ETHEREUM_ADDRESS_METAMASK_B64=`cat .base64_enc`
+          sed -i -e "s@{{CTX_ETHEREUM_ADDRESS_METAMASK_B64}}@$CTX_ETHEREUM_ADDRESS_METAMASK_B64@" bender.yml
+
+          echo -n "${{ secrets.CTX_ETHERSCAN_API_KEY }}" | base64 | tr -d \\n > .base64_enc
+          export CTX_ETHERSCAN_API_KEY_B64=`cat .base64_enc`
+          sed -i -e "s@{{CTX_ETHERSCAN_API_KEY_B64}}@$CTX_ETHERSCAN_API_KEY_B64@" bender.yml
+
+          echo -n "${{ secrets.CTX_SLACK_API_TOKEN }}" | base64 | tr -d \\n > .base64_enc
+          export CTX_SLACK_API_TOKEN_B64=`cat .base64_enc`
+          sed -i -e "s@{{CTX_SLACK_API_TOKEN_B64}}@$CTX_SLACK_API_TOKEN_B64@" bender.yml
+
+          echo -n "${{ secrets.CTX_JOIN_API_KEY }}" | base64 | tr -d \\n > .base64_enc
+          export CTX_JOIN_API_KEY_B64=`cat .base64_enc`
+          sed -i -e "s@{{CTX_JOIN_API_KEY_B64}}@$CTX_JOIN_API_KEY_B64@" bender.yml
+
+          echo -n "${{ secrets.CTX_DROPBOX_ACCESS_TOKEN }}" | base64 | tr -d \\n > .base64_enc
+          export CTX_DROPBOX_ACCESS_TOKEN_B64=`cat .base64_enc`
+          sed -i -e "s@{{CTX_DROPBOX_ACCESS_TOKEN_B64}}@$CTX_DROPBOX_ACCESS_TOKEN_B64@" bender.yml
+
+          sed -i -e "s@{{ secrets.CTX_SERVER_DEPLOY_SECRET }}@$CTX_SERVER_DEPLOY_SECRET@" bender.yml
+          sed -i -e "s@{{ secrets.CTX_POPS4XL_SCP_KEY_SECRET }}@$CTX_POPS4XL_SCP_KEY_SECRET@" bender.yml
+
+          rm .base64_enc
+
+      - name: Create wireguard tunnel configuration
+        run: |
+          sudo apt-get install wireguard
+
+          curl -O https://raw.githubusercontent.com/ackersonde/traefik2_k3s/master/tunnel.conf
+          sed -i -e "s@{{CTX_WIREGUARD_PRIVATE_KEY}}@${{ secrets.CTX_WIREGUARD_PRIVATE_KEY }}@" tunnel.conf
+          sed -i -e "s@{{CTX_WIREGUARD_SERVER_PUBLIC_KEY}}@${{ secrets.CTX_WIREGUARD_SERVER_PUBLIC_KEY }}@" tunnel.conf
+          sed -i -e "s@{{CTX_WIREGUARD_PRESHARED_KEY}}@${{ secrets.CTX_WIREGUARD_PRESHARED_KEY }}@" tunnel.conf
+          sed -i -e "s@{{CTX_WIREGUARD_SERVER_ENDPOINT}}@${{ secrets.CTX_WIREGUARD_SERVER_ENDPOINT }}@" tunnel.conf
+          sudo mv tunnel.conf /etc/wireguard/
+
+      - name: Prepare ssh key for remote login
+        run: |
+          mkdir ~/.ssh/
+          echo "${{ secrets.CTX_SERVER_DEPLOY_SECRET }}" | base64 -d > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+
+      - name: Deploy to K8S
+        env:
+          SSH_CXN: ${{ secrets.CTX_K8S_SSH_USER }}@${{ secrets.CTX_K8S_SSH_HOST }}
+        run: |
+          wg-quick up tunnel
+
+          scp -o StrictHostKeyChecking=no bender.yml $SSH_CXN:~/k3s/
+          ssh $SSH_CXN -- "sudo kubectl apply -f k3s/bender.yml"
+
+          wg-quick down tunnel

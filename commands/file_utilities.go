@@ -119,7 +119,7 @@ func MoveTorrentFile(api *slack.Client, sourceFile string, destinationDir string
 	} else {
 		response += fmt.Sprintf("moved: %s to %s\n", sourceFile, destinationDir)
 		librarySection := "1"
-		plexToken := os.Getenv("PLEX_TOKEN")
+		plexToken := os.Getenv("CTX_PLEX_TOKEN")
 		if strings.HasPrefix(destinationDir, "tv") {
 			librarySection = "2"
 		}

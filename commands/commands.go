@@ -23,7 +23,7 @@ import (
 var rtm *slack.RTM
 var joinAPIKey = os.Getenv("CTX_JOIN_API_KEY")
 var vpnGateway = os.Getenv("CTX_VPNC_GATEWAY")
-var circleCIBuildNum = os.Getenv("CIRCLE_BUILD_NUM")
+var githubRunID = os.Getenv("GITHUB_RUN_ID")
 
 // Logger to give senseful settings
 var Logger = log.New(os.Stdout, "", log.LstdFlags)
@@ -32,7 +32,7 @@ var Logger = log.New(os.Stdout, "", log.LstdFlags)
 var VPNCountry = "NL"
 
 // SlackReportChannel default reporting channel for bot crons
-var SlackReportChannel = os.Getenv("slackReportChannel") // C33QYV3PW is #remote_network_report
+var SlackReportChannel = os.Getenv("CTX_SLACK_CHANNEL")
 
 // SetRTM sets singleton
 func SetRTM(rtmPassed *slack.RTM) {
@@ -223,8 +223,8 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 					slackMessage.Channel))
 		}
 	} else if args[0] == "version" {
-		response := ":circleci: <https://circleci.com/gh/danackerson/bender-slackbot/" +
-			circleCIBuildNum + "|" + circleCIBuildNum + ">"
+		response := ":github: <https://github.com/ackersonde/bender-slackbot/actions/runs/" +
+			githubRunID + "|" + githubRunID + ">"
 		api.PostMessage(slackMessage.Channel, slack.MsgOptionText(response, false), params)
 	} else if args[0] == "sw" {
 		response := ":partly_sunny_rain: <https://darksky.net/forecast/48.3028,11.3591/ca24/en#week|7-day forecast Schwabhausen>"
