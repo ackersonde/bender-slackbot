@@ -89,7 +89,7 @@ jobs:
       - name: Prepare ssh key for remote login
         run: |
           mkdir ~/.ssh/
-          echo "${{ secrets.CTX_SERVER_DEPLOY_SECRET_64 }}" | base64 -d > ~/.ssh/id_rsa
+          echo "${{ secrets.CTX_SERVER_DEPLOY_SECRET_B64 }}" | base64 -d > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
 
       - name: Deploy to K8S
