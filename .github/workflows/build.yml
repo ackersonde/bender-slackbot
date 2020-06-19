@@ -69,7 +69,7 @@ jobs:
           export CTX_DROPBOX_ACCESS_TOKEN_B64=`cat .base64_enc`
           sed -i -e "s@{{CTX_DROPBOX_ACCESS_TOKEN_B64}}@$CTX_DROPBOX_ACCESS_TOKEN_B64@" bender.yml
 
-          sed -i -e "s@{{CTX_SERVER_DEPLOY_SECRET}}@${{ secrets.CTX_SERVER_DEPLOY_SECRET }}@" bender.yml\
+          sed -i -e "s@{{CTX_SERVER_DEPLOY_SECRET}}@${{ secrets.CTX_SERVER_DEPLOY_SECRET }}@" bender.yml
 
           sed -i -e "s@{{CTX_POPS4XL_SCP_KEY_SECRET}}@${{ secrets.CTX_POPS4XL_SCP_KEY_SECRET }}@" bender.yml
 
