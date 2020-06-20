@@ -162,7 +162,7 @@ func getEthereumPrice() string {
 
 func getEthereumTokens() string {
 	response := ""
-	credentials := fmt.Sprintf("&address=%s&apikey=%s",
+	credentials := fmt.Sprintf("&address=0x%s&apikey=%s",
 		ethAddrMetaMask,
 		etherscanAPIKey)
 
