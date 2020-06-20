@@ -21,7 +21,7 @@ type RemoteResult struct {
 var AndroidRCC = &RemoteConnectConfig{
 	User:           "ackersond",
 	PrivateKeyPath: "/root/.ssh/id_rsa_pix4x", // path must match K8S secret declaration in bender.yml
-	HostEndpoints:  []string{"192.168.178.37:2222", "192.168.178.61:2222", "192.168.178.62:2222"},
+	HostEndpoints:  []string{"192.168.178.37:2222", "192.168.178.56:2222", "192.168.178.61:2222", "192.168.178.62:2222"},
 	HostSSHKey:     "ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBHFhojNPu3wLn4NrLlyCQnLBCBkdGtYGYTl7IBfOefr05BKmq4WqBFt3U+hRmE9ti4xtjJw7Sz60qDkbuvpPt3c=",
 	HostPath:       "/storage/emulated/0/Download/",
 }

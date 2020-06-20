@@ -163,7 +163,7 @@ func scpFileBetweenHosts(remoteClient scp.Client, sourceURI string, hostPath str
 		path := fetchURL.Path
 		segments := strings.Split(path, "/")
 
-		destination = segments[len(segments)-1]
+		destination = strings.ReplaceAll(segments[len(segments)-1], " ", "_")
 	}
 
 	response, err := http.Get(fetchURL.String())
