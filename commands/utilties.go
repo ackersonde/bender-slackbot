@@ -156,7 +156,7 @@ func sendPayloadToJoinAPI(fileURL string, humanFilename string, icon string, sma
 
 	completeURL := pushURL + defaultParams + apiKey + fileOnPhone + "&file=" + fileURL
 	// Get the data
-	Logger.Printf("joinPushURL: %s\n", completeURL)
+	//Logger.Printf("joinPushURL: %s\n", completeURL)
 	resp, err := http.Get(completeURL)
 	if err != nil {
 		Logger.Printf("ERR: unable to call Join Push\n")

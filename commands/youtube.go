@@ -94,8 +94,8 @@ func downloadYoutubeVideo(origURL string) bool {
 	downloaded := false
 
 	config := dropbox.Config{
-		Token:    dropboxAccessToken,
-		LogLevel: dropbox.LogInfo, // if needed, set the desired logging level. Default is off
+		Token: dropboxAccessToken,
+		// LogLevel: dropbox.LogInfo, // if needed, set the desired logging level. Default is off
 	}
 
 	vid, err := ytdl.GetVideoInfo(context.Background(), origURL)
@@ -105,14 +105,14 @@ func downloadYoutubeVideo(origURL string) bool {
 		}
 		URI, err := client.GetDownloadURL(context.Background(), vid, vid.Formats[0])
 		if err == nil {
-			Logger.Printf("preparing to download: %s\n", URI.String())
+			//Logger.Printf("preparing to download: %s\n", URI.String())
 
 			uploadToPath := "/youtube/" + vid.Title + "." + vid.Formats[0].Extension
 			tempPublicURL, err := uploadInternetFileToDropbox(URI.String(), uploadToPath, config)
 			if err != nil {
 				Logger.Printf("%s %s\n", tempPublicURL, err.Error())
 			} else {
-				Logger.Printf("Uploaded %s\n", tempPublicURL)
+				//Logger.Printf("Uploaded %s\n", tempPublicURL)
 				tempPublicURL = strings.Replace(tempPublicURL, "dl=0", "dl=1", 1)
 				icon := "https://emoji.slack-edge.com/T092UA8PR/youtube/a9a89483b7536f8a.png"
 				smallIcon := "http://icons.iconarchive.com/icons/iconsmind/outline/16/Youtube-icon.png"

@@ -141,22 +141,25 @@ func ensureTransmissionBind() string {
 	cmd := "VPN_IP=`ip address | grep '10\\.' | awk '{print $2}' | cut -f1 -d/`; " +
 		`grep "\"bind-address-ipv4\": \"$VPN_IP\"" ` + transmissionSettingsPath +
 		" || echo $VPN_IP"
-	Logger.Printf("VPN_IP running %s", cmd)
 	remoteResult := executeRemoteCmd(cmd, structures.VPNPIRemoteConnectConfig)
 	// ^-- returns e.g. "bind-address-ipv4": "10.1.8.75", if found
 	// else 10.1.8.75 if *not* found
 
 	internalIP := strings.TrimSuffix(remoteResult.Stdout, "\n")
-	// TODO: while - do this in 5sec increments for up to 60secs!
-	if internalIP == "" {
+	i := 1 // let's give ProtonVPN 60secs to connect
+	for i < 7 && internalIP == "" {
+		Logger.Printf("No VPN connection established yet...(try #%d)\n", i)
 		time.Sleep(10 * time.Second)
 		remoteResult = executeRemoteCmd(cmd, structures.VPNPIRemoteConnectConfig)
 		internalIP = strings.TrimSuffix(remoteResult.Stdout, "\n")
+		i++
 	}
 
-	if remoteResult.Err == nil && internalIP != "" &&
+	if remoteResult.Err != nil {
+		response += "\n with " + remoteResult.Err.Error()
+	} else if internalIP != "" &&
 		!strings.Contains(internalIP, "bind-address-ipv4") {
-		Logger.Printf("internal VPN IP: %s", internalIP)
+		Logger.Printf("new internal VPN IP: %s - updating transmission", internalIP)
 
 		sedCmd := `sed -rie 's/"bind-address-ipv4": "(.*)"/"bind-address-ipv4": "` +
 			internalIP + `"/' `
@@ -164,13 +167,10 @@ func ensureTransmissionBind() string {
 			sedCmd + transmissionSettingsPath +
 			` && sudo service transmission-daemon start`
 
-		Logger.Printf("exec VPN PI update: %s", cmd)
 		remoteResult = executeRemoteCmd(cmd, structures.VPNPIRemoteConnectConfig)
 		if remoteResult.Err == nil {
 			response = "Changed :transmission: ipv4 bind: " + internalIP
 		}
-	} else if remoteResult.Err != nil {
-		response += "\n with " + remoteResult.Err.Error()
 	} else if strings.Contains(internalIP, "bind-address-ipv4") {
 		response = ":transmission: ipv4 bind already correct: " + internalIP
 	}
@@ -198,12 +198,8 @@ func transmissionSettingsAreSane(internalIP string) bool {
 			cmd = `sudo service transmission-daemon stop && ` + sedCmd +
 				` && sudo service transmission-daemon start`
 
-			Logger.Printf("FIX Transmission settings update: %s", cmd)
+			Logger.Printf("FIX Transmission settings update: %s not found...", internalIP)
 			remoteResult = executeRemoteCmd(cmd, structures.VPNPIRemoteConnectConfig)
-			if remoteResult.Err == nil {
-				// may cause infinite loop here...
-				return transmissionSettingsAreSane(internalIP)
-			}
 		}
 	}
 

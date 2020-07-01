@@ -33,23 +33,9 @@ func homeAndInternetIPsDoNotMatch(tunnelIP string) bool {
 		results <- strings.TrimSuffix(remoteResult.Stdout, "\n")
 	}()
 
-	// type IPInfoResponse struct {
-	// 	IP          string
-	// 	CountryCode string `json:"country_code"`
-	// 	RegionName  string `json:"region_name"`
-	// }
-	// var jsonRes IPInfoResponse
-
 	select {
 	case res := <-results:
 		if res != "" {
-			// err := json.Unmarshal([]byte(res), &jsonRes)
-			// if err != nil {
-			// 	logger.Printf("unable to parse JSON string (%v)\n%s\n", err, res)
-			// } else {
-			// 	logger.Printf("ipleak.net: %v\n", jsonRes)
-			// }
-
 			// We're not in Kansas anymore + using tunnel IP for Internet
 			if res == tunnelIP {
 				resultsDig := make(chan string, 10)
@@ -187,22 +173,20 @@ func ChangeToFastestVPNServer(vpnCountry string, userCall bool) string {
 
 // VpnPiTunnelChecks ensures correct VPN connection
 func VpnPiTunnelChecks(vpnCountry string, userCall bool) string {
-	tunnelIP := ""
 	response := ":protonvpn: VPN: DOWN :rotating_light:"
 
 	vpnTunnelSpecs := inspectVPNConnection()
-	Logger.Printf("Using VPN server: %s\n", vpnTunnelSpecs["endpointDNS"])
 	if len(vpnTunnelSpecs) > 0 {
-		tunnelIP = vpnTunnelSpecs["endpointIP"]
+		Logger.Printf("Using VPN server: %s\n", vpnTunnelSpecs["endpointDNS"])
 		response += " with " + vpnTunnelSpecs["time"] + " (using " +
 			vpnTunnelSpecs["endpointDNS"] + ")"
-	}
 
-	if homeAndInternetIPsDoNotMatch(tunnelIP) &&
-		transmissionSettingsAreSane(vpnTunnelSpecs["internalIP"]) {
-		response = ":protonvpn: VPN: UP @ " + vpnTunnelSpecs["internalIP"] +
-			" for " + vpnTunnelSpecs["time"] + " (using " +
-			vpnTunnelSpecs["endpointDNS"] + ")"
+		if homeAndInternetIPsDoNotMatch(vpnTunnelSpecs["endpointIP"]) &&
+			transmissionSettingsAreSane(vpnTunnelSpecs["internalIP"]) {
+			response = ":protonvpn: VPN: UP @ " + vpnTunnelSpecs["internalIP"] +
+				" for " + vpnTunnelSpecs["time"] + " (using " +
+				vpnTunnelSpecs["endpointDNS"] + ")"
+		}
 	}
 
 	bestVPNServer := findBestVPNServer(vpnCountry)
