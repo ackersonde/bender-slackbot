@@ -65,6 +65,10 @@ jobs:
           export CTX_JOIN_API_KEY_B64=`cat .base64_enc`
           sed -i -e "s@{{CTX_JOIN_API_KEY_B64}}@$CTX_JOIN_API_KEY_B64@" bender.yml
 
+          echo -n "${{ secrets.CTX_VPNC_GATEWAY }}" | base64 | tr -d \\n > .base64_enc
+          export CTX_VPNC_GATEWAY_B64=`cat .base64_enc`
+          sed -i -e "s@{{CTX_VPNC_GATEWAY_B64}}@$CTX_VPNC_GATEWAY_B64@" bender.yml
+
           echo -n "${{ secrets.CTX_DROPBOX_ACCESS_TOKEN }}" | base64 | tr -d \\n > .base64_enc
           export CTX_DROPBOX_ACCESS_TOKEN_B64=`cat .base64_enc`
           sed -i -e "s@{{CTX_DROPBOX_ACCESS_TOKEN_B64}}@$CTX_DROPBOX_ACCESS_TOKEN_B64@" bender.yml
