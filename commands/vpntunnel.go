@@ -2,9 +2,11 @@ package commands
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os/exec"
 	"regexp"
 	"sort"
 	"strings"
@@ -216,10 +218,12 @@ func updateVpnPiTunnel(vpnServerDomain string) string {
 	cmd := sedCmd + `/etc/ipsec.conf && sudo ipsec update && sudo ipsec restart && sudo ipsec up proton`
 
 	remoteResult := executeRemoteCmd(cmd, structures.VPNPIRemoteConnectConfig)
-	// TODO: stderr often doesn't have real errors :(
-	if remoteResult.Err == nil {
-		response = "Updated :protonvpn: to " + vpnServerDomain
-		return response + " & " + ensureTransmissionBind()
+	var ee *exec.ExitError
+	if errors.As(remoteResult.Err, &ee) {
+		if ee.ExitCode() == 7 || ee.ExitCode() == 0 {
+			response = "Updated :protonvpn: to " + vpnServerDomain
+			return response + " & " + ensureTransmissionBind()
+		}
 	}
 
 	response += "(" + remoteResult.Err.Error() + ")"
