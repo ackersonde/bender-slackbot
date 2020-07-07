@@ -2,11 +2,9 @@ package commands
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"os/exec"
 	"regexp"
 	"sort"
 	"strings"
@@ -101,7 +99,7 @@ func inspectVPNConnection() map[string]string {
 			}
 
 			if len(m) < 1 {
-				cmd := "sudo ipsec restart"
+				cmd := "sudo ipsec up proton"
 				remoteResult := executeRemoteCmd(cmd, structures.VPNPIRemoteConnectConfig)
 				Logger.Printf("restarting VPN %s", remoteResult.Stdout)
 			}
@@ -215,15 +213,13 @@ func updateVpnPiTunnel(vpnServerDomain string) string {
 
 	// First, update ipsec.conf with desired server & restart ipsec
 	sedCmd := `sudo sed -rie 's@[A-Za-z]{2}-[0-9]{2}\.protonvpn\.com@` + vpnServerDomain + `@g' `
-	cmd := sedCmd + `/etc/ipsec.conf && sudo ipsec update && sudo ipsec restart && sudo ipsec up proton`
+	cmd := sedCmd + `/etc/ipsec.conf && sudo ipsec update && sudo ipsec up proton`
 
 	remoteResult := executeRemoteCmd(cmd, structures.VPNPIRemoteConnectConfig)
-	var ee *exec.ExitError
-	if errors.As(remoteResult.Err, &ee) {
-		if ee.ExitCode() == 7 || ee.ExitCode() == 0 {
-			response = "Updated :protonvpn: to " + vpnServerDomain
-			return response + " & " + ensureTransmissionBind()
-		}
+	if remoteResult.Err == nil ||
+		strings.HasSuffix(remoteResult.Err.Error(), "exited with status 7") {
+		response = "Updated :protonvpn: to " + vpnServerDomain
+		return response + " & " + ensureTransmissionBind()
 	}
 
 	response += "(" + remoteResult.Err.Error() + ")"
