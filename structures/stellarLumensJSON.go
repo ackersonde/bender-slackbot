@@ -1,6 +1,6 @@
 package structures
 
-// StellarLumensLedger contains all pertinent account information
+// StellarLumensLedger contains all the pertinent account information
 type StellarLumensLedger struct {
 	Links struct {
 		Self struct {
