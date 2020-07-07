@@ -99,7 +99,7 @@ func inspectVPNConnection() map[string]string {
 			}
 
 			if len(m) < 1 {
-				cmd := "sudo ipsec up proton"
+				cmd := "sudo ipsec down proton && sudo ipsec up proton"
 				remoteResult := executeRemoteCmd(cmd, structures.VPNPIRemoteConnectConfig)
 				Logger.Printf("restarting VPN %s", remoteResult.Stdout)
 			}
@@ -212,8 +212,10 @@ func updateVpnPiTunnel(vpnServerDomain string) string {
 	response := "Failed changing :protonvpn: to " + vpnServerDomain
 
 	// First, update ipsec.conf with desired server & restart ipsec
-	sedCmd := `sudo sed -rie 's@[A-Za-z]{2}-[0-9]{2}\.protonvpn\.com@` + vpnServerDomain + `@g' `
-	cmd := sedCmd + `/etc/ipsec.conf && sudo ipsec update && sleep 5 && sudo ipsec up proton`
+	sedCmd := `sudo sed -rie 's@[A-Za-z]{2}-[0-9]{2}\.protonvpn\.com@` +
+		vpnServerDomain + `@g' `
+	cmd := `sudo ipsec down proton && ` + sedCmd +
+		`/etc/ipsec.conf && sudo ipsec update && sleep 5 && sudo ipsec up proton`
 
 	remoteResult := executeRemoteCmd(cmd, structures.VPNPIRemoteConnectConfig)
 	if remoteResult.Err == nil ||
