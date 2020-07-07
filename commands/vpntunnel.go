@@ -213,7 +213,7 @@ func updateVpnPiTunnel(vpnServerDomain string) string {
 
 	// First, update ipsec.conf with desired server & restart ipsec
 	sedCmd := `sudo sed -rie 's@[A-Za-z]{2}-[0-9]{2}\.protonvpn\.com@` + vpnServerDomain + `@g' `
-	cmd := sedCmd + `/etc/ipsec.conf && sudo ipsec update && sudo ipsec up proton`
+	cmd := sedCmd + `/etc/ipsec.conf && sudo ipsec update && sleep 5 && sudo ipsec up proton`
 
 	remoteResult := executeRemoteCmd(cmd, structures.VPNPIRemoteConnectConfig)
 	if remoteResult.Err == nil ||
