@@ -8,8 +8,8 @@ import (
 	"os/exec"
 	"strings"
 
+	"github.com/ackersonde/bender-slackbot/structures"
 	"github.com/bramvdbogaerde/go-scp"
-	"github.com/danackerson/bender-slackbot/structures"
 	"github.com/nlopes/slack"
 )
 

@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/danackerson/bender-slackbot/structures"
+	"github.com/ackersonde/bender-slackbot/structures"
 	"github.com/odwrtw/transmission"
 )
 
@@ -190,7 +190,7 @@ func transmissionSettingsAreSane(internalIP string) bool {
 	if remoteResult.Err == nil {
 		if len(strings.Split(remoteResult.Stdout, "\n")) == 3 { // incl trailing \n
 			result = true
-		} else { // fix it!
+		} else if internalIP != "" { // fix it!
 			sedCmd := `sed -rie 's/"bind-address-ipv4": "(.*)"/"bind-address-ipv4": "` +
 				internalIP + `"/' ` + transmissionSettingsPath +
 				` && sed -rie 's/"bind-address-ipv6": "(.*)"/"bind-address-ipv6": "fe80::"/' ` +
@@ -200,6 +200,9 @@ func transmissionSettingsAreSane(internalIP string) bool {
 
 			Logger.Printf("FIX Transmission settings update: %s not found...", internalIP)
 			remoteResult = executeRemoteCmd(cmd, structures.VPNPIRemoteConnectConfig)
+			if remoteResult.Err == nil {
+				result = true
+			}
 		}
 	}
 

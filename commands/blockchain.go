@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/danackerson/bender-slackbot/structures"
+	"github.com/ackersonde/bender-slackbot/structures"
 )
 
 var ethAddrMetaMask = os.Getenv("CTX_ETHEREUM_ADDRESS_METAMASK")

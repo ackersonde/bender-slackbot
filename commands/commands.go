@@ -14,7 +14,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/danackerson/bender-slackbot/structures"
+	"github.com/ackersonde/bender-slackbot/structures"
 	"github.com/danackerson/digitalocean/common"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/nlopes/slack"

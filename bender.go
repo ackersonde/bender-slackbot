@@ -6,7 +6,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/danackerson/bender-slackbot/commands"
+	"github.com/ackersonde/bender-slackbot/commands"
 	"github.com/jasonlvhit/gocron"
 	"github.com/nlopes/slack"
 )

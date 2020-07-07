@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/danackerson/bender-slackbot/structures"
+	"github.com/ackersonde/bender-slackbot/structures"
 	"github.com/nlopes/slack"
 )
 

@@ -10,9 +10,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ackersonde/bender-slackbot/structures"
 	"github.com/bramvdbogaerde/go-scp"
 	"github.com/bramvdbogaerde/go-scp/auth"
-	"github.com/danackerson/bender-slackbot/structures"
 	"golang.org/x/crypto/ssh"
 )
 

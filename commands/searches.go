@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/danackerson/bender-slackbot/structures"
+	"github.com/ackersonde/bender-slackbot/structures"
 )
 
 var proxies = []string{"tpb.cool", "piratebay.tech", "thepiratebay.fail", "piratebay.icu", "thepirate.host"}
