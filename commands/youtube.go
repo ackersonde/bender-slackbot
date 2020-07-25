@@ -6,7 +6,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/dropbox/dropbox-sdk-go-unofficial/dropbox"
+	"github.com/ackersonde/bender-slackbot/filemanager"
 	"github.com/rylio/ytdl"
 )
 
@@ -23,7 +23,7 @@ func downloadYoutubeVideo(origURL string) bool {
 			//Logger.Printf("preparing to download: %s\n", URI.String())
 
 			uploadToPath := "/youtube/" + vid.Title + "." + vid.Formats[0].Extension
-			tempPublicURL, err := dropbox.UploadInternetFileToDropbox(URI.String(), uploadToPath)
+			tempPublicURL, err := filemanager.UploadInternetFileToDropbox(URI.String(), uploadToPath)
 			if err != nil {
 				Logger.Printf("%s %s\n", tempPublicURL, err.Error())
 			} else {
@@ -32,7 +32,7 @@ func downloadYoutubeVideo(origURL string) bool {
 				icon := "https://emoji.slack-edge.com/T092UA8PR/youtube/a9a89483b7536f8a.png"
 				smallIcon := "http://icons.iconarchive.com/icons/iconsmind/outline/16/Youtube-icon.png"
 
-				dropbox.SendPayloadToJoinAPI(tempPublicURL, vid.Title, icon, smallIcon)
+				filemanager.SendPayloadToJoinAPI(tempPublicURL, vid.Title, icon, smallIcon)
 				downloaded = true
 			}
 		} else {
