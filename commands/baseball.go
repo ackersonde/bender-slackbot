@@ -38,7 +38,7 @@ func ShowBBGames(userCall bool, fromDate string) string {
 
 	for _, gameMetaData := range response.Games {
 		watchURL := "<" + gameMetaData[10] + "|" + gameMetaData[0] + " @ " + gameMetaData[4] + ">"
-		downloadURL := "<https://ackerson.de/bb_download?gameTitle=" + gameMetaData[2] + "-" + gameMetaData[6] + "__" + response.ReadableDate + "&gameURL=" + gameMetaData[10] + " | :smartphone:    >"
+		downloadURL := "<https://ackerson.de/bb_download?gameTitle=" + gameMetaData[2] + "-" + gameMetaData[6] + "__" + response.ReadableDate + "&gameURL=" + gameMetaData[10] + " | :red_dot:    >"
 
 		result += downloadURL + watchURL + "\n"
 	}
