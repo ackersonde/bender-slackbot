@@ -4,8 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
-	"net/http"
-	"net/url"
 	"regexp"
 	"strings"
 	"time"
@@ -142,32 +140,6 @@ func initialDialOut(hostname string, remoteConfig *ssh.ClientConfig) *ssh.Client
 	}
 
 	return sshClient
-}
-
-func sendPayloadToJoinAPI(fileURL string, humanFilename string, icon string, smallIcon string) string {
-	response := "Sorry, couldn't resend..."
-	humanFilenameEnc := &url.URL{Path: humanFilename}
-	humanFilenameEncoded := humanFilenameEnc.String()
-	// NOW send this URL to the Join Push App API
-	pushURL := "https://joinjoaomgcd.appspot.com/_ah/api/messaging/v1/sendPush"
-	defaultParams := "?deviceId=d888b2e9a3a24a29a15178b2304a40b3&icon=" + icon + "&smallicon=" + smallIcon
-	fileOnPhone := "&title=" + humanFilenameEncoded
-	apiKey := "&apikey=" + joinAPIKey
-
-	completeURL := pushURL + defaultParams + apiKey + fileOnPhone + "&file=" + fileURL
-	// Get the data
-	//Logger.Printf("joinPushURL: %s\n", completeURL)
-	resp, err := http.Get(completeURL)
-	if err != nil {
-		Logger.Printf("ERR: unable to call Join Push\n")
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode == 200 {
-		Logger.Printf("successfully sent payload to Join!\n")
-		response = "Success!"
-	}
-
-	return response
 }
 
 // Slack gets excited when it recognizes a string that might be a URL
