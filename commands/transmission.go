@@ -146,11 +146,12 @@ func ensureTransmissionBind() string {
 	// else 10.1.8.75 if *not* found
 
 	internalIP := strings.TrimSuffix(remoteResult.Stdout, "\n")
-	i := 1 // let's give ProtonVPN 60secs to connect
-	for i < 7 && internalIP == "" {
+	i := 0 // let's give ProtonVPN 20secs to connect, else restart it 6 times
+	for i < 6 && internalIP == "" {
 		Logger.Printf("No VPN connection established yet...(try #%d)\n", i)
-		time.Sleep(10 * time.Second)
-		remoteResult = executeRemoteCmd(cmd, structures.VPNPIRemoteConnectConfig)
+		time.Sleep(20 * time.Second)
+		remoteResult = executeRemoteCmd("sudo ipsec restart && "+
+			cmd, structures.VPNPIRemoteConnectConfig)
 		internalIP = strings.TrimSuffix(remoteResult.Stdout, "\n")
 		i++
 	}

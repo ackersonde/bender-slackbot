@@ -18,7 +18,34 @@ import (
 var dropboxAccessToken = os.Getenv("CTX_DROPBOX_ACCESS_TOKEN")
 var chunkSize = int64(1 << 27) // ~138 MB
 
-func uploadInternetFileToDropbox(downloadFromURL string, uploadToPath string,
+// DownloadFileToPhone accepts a URL and filename to upload to a public dropbox
+// folder and then invoke JoinAPI to download to mobile
+func DownloadFileToPhone(url string, filename string) bool {
+	result := false
+
+	config := dropbox.Config{
+		Token: dropboxAccessToken,
+	}
+
+	tempPublicURL, err := uploadInternetFileToDropbox(url, "/other/"+filename, config)
+	if err != nil {
+		Logger.Printf("%s %s\n", tempPublicURL, err.Error())
+	} else {
+		//Logger.Printf("Uploaded %s\n", tempPublicURL)
+		tempPublicURL = strings.Replace(tempPublicURL, "dl=0", "dl=1", 1)
+		icon := "https://upload.wikimedia.org/wikipedia/commons/9/99/1328101811_Download.png"
+		smallIcon := "https://upload.wikimedia.org/wikipedia/commons/thumb/1/11/Breathe-folder-download.svg/128px-Breathe-folder-download.svg.png"
+
+		sendPayloadToJoinAPI(tempPublicURL, filename, icon, smallIcon)
+		result = true
+	}
+
+	return result
+}
+
+func uploadInternetFileToDropbox(
+	downloadFromURL string,
+	uploadToPath string,
 	config dropbox.Config) (tempPublicURL string, err error) {
 	dbx := files.New(config)
 
