@@ -133,7 +133,7 @@ func SendPayloadToJoinAPI(fileURL string, humanFilename string, icon string, sma
 	apiKey := "&apikey=" + joinAPIKey
 
 	completeURL := pushURL + defaultParams + apiKey + fileOnPhone + "&file=" + fileURL
-	Logger.Println("PUSH from JOIN: " + completeURL)
+	//Logger.Println("PUSH from JOIN: " + completeURL)
 	// Get the data
 	resp, err := http.Get(completeURL)
 	if err != nil {
