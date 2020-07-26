@@ -111,7 +111,6 @@ func torrentCommand(cmd []string) (result string) {
 		if len(cmd) == 1 {
 			result = "Usage: `tranc <Torrent link>`"
 		} else {
-			ensureTransmissionBind()
 			paused := false
 			result = addTorrents(t, cmd[1], paused)
 		}
@@ -135,40 +134,29 @@ func torrentCommand(cmd []string) (result string) {
 	return result
 }
 
-func ensureTransmissionBind() string {
-	response := "Unable to update :transmission: ipv4 bind"
-
+func checkTransmissionBindAddress() structures.RemoteResult {
 	cmd := "VPN_IP=`ip address | grep '10\\.' | awk '{print $2}' | cut -f1 -d/`; " +
 		`grep "\"bind-address-ipv4\": \"$VPN_IP\"" ` + transmissionSettingsPath +
 		" || echo $VPN_IP"
-	remoteResult := executeRemoteCmd(cmd, structures.VPNPIRemoteConnectConfig)
+	return executeRemoteCmd(cmd, structures.VPNPIRemoteConnectConfig)
 	// ^-- returns e.g. "bind-address-ipv4": "10.1.8.75", if found
 	// else 10.1.8.75 if *not* found
+}
 
-	internalIP := strings.TrimSuffix(remoteResult.Stdout, "\n")
-	i := 0 // let's give ProtonVPN 20secs to connect, else restart it 6 times
-	for i < 6 && internalIP == "" {
-		Logger.Printf("No VPN connection established yet...(try #%d)\n", i)
-		time.Sleep(20 * time.Second)
-		remoteResult = executeRemoteCmd("sudo ipsec restart && "+
-			cmd, structures.VPNPIRemoteConnectConfig)
-		internalIP = strings.TrimSuffix(remoteResult.Stdout, "\n")
-		i++
-	}
+func ensureTransmissionBind(internalIP string) string {
+	response := "Unable to update :transmission: ipv4 bind"
 
-	if remoteResult.Err != nil {
-		response += "\n with " + remoteResult.Err.Error()
-	} else if internalIP != "" &&
+	if internalIP != "" &&
 		!strings.Contains(internalIP, "bind-address-ipv4") {
 		Logger.Printf("new internal VPN IP: %s - updating transmission", internalIP)
 
 		sedCmd := `sed -rie 's/"bind-address-ipv4": "(.*)"/"bind-address-ipv4": "` +
 			internalIP + `"/' `
-		cmd = `sudo service transmission-daemon stop && ` +
+		cmd := `sudo service transmission-daemon stop && ` +
 			sedCmd + transmissionSettingsPath +
 			` && sudo service transmission-daemon start`
 
-		remoteResult = executeRemoteCmd(cmd, structures.VPNPIRemoteConnectConfig)
+		remoteResult := executeRemoteCmd(cmd, structures.VPNPIRemoteConnectConfig)
 		if remoteResult.Err == nil {
 			response = "Changed :transmission: ipv4 bind: " + internalIP
 		}

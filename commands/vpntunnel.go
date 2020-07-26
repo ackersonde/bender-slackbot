@@ -99,7 +99,7 @@ func inspectVPNConnection() map[string]string {
 			}
 
 			if len(m) < 1 {
-				cmd := "sudo ipsec stop && sudo ipsec start"
+				cmd := "sudo ipsec restart"
 				remoteResult := executeRemoteCmd(cmd, structures.VPNPIRemoteConnectConfig)
 				Logger.Printf("restarting VPN %s", remoteResult.Stdout)
 			}
@@ -217,13 +217,29 @@ func updateVpnPiTunnel(vpnServerDomain string) string {
 	cmd := `sudo ipsec stop && ` + sedCmd + `/etc/ipsec.conf && sudo ipsec start`
 
 	remoteResult := executeRemoteCmd(cmd, structures.VPNPIRemoteConnectConfig)
-	if remoteResult.Err == nil ||
-		strings.HasSuffix(remoteResult.Err.Error(), "exited with status 7") {
-		response = "Updated :protonvpn: to " + vpnServerDomain
-		return response + " & " + ensureTransmissionBind()
+	time.Sleep(30 * time.Second)
+	remoteResult = checkTransmissionBindAddress()
+	internalIP := strings.TrimSuffix(remoteResult.Stdout, "\n")
+	if internalIP == "" {
+		i := 0 // let's give ProtonVPN 30secs to connect, else retry 6 times
+		for i < 6 && internalIP == "" {
+			Logger.Printf("No VPN connection established yet...(try #%d)\n", i)
+			time.Sleep(30 * time.Second)
+			remoteResult = executeRemoteCmd("sudo ipsec restart",
+				structures.VPNPIRemoteConnectConfig)
+			remoteResult = checkTransmissionBindAddress()
+			internalIP = strings.TrimSuffix(remoteResult.Stdout, "\n")
+			i++
+		}
 	}
 
-	response += "(" + remoteResult.Err.Error() + ")"
+	remoteResult = checkTransmissionBindAddress()
+	internalIP = strings.TrimSuffix(remoteResult.Stdout, "\n")
+	if internalIP != "" {
+		response = "Updated :protonvpn: to " + vpnServerDomain + " & " + ensureTransmissionBind(internalIP)
+	} else {
+		response += "(" + remoteResult.Err.Error() + ")"
+	}
 
 	return response
 }
