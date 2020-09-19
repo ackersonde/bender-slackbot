@@ -88,7 +88,7 @@ func wireguardAction(action string) string {
 
 func wireguardShow() string {
 	response := ":wireguard: "
-	cmd := fmt.Sprintf("sudo wg show")
+	cmd := fmt.Sprintf("sudo wg")
 	Logger.Printf("cmd: %s", cmd)
 	remoteResult := executeRemoteCmd(cmd, structures.BlondeBomberRemoteConnectConfig)
 
@@ -192,6 +192,9 @@ func measureCPUTemp(hosts *[]structures.RemoteConnectConfig) string {
 		if remoteResult.Stdout == "" && remoteResult.Stderr != "" {
 			result += host.HostName + ": " + remoteResult.Stderr
 		} else {
+			if remoteResult.Stdout == "C" {
+				remoteResult = executeRemoteCmd("sensors | grep Tctl | awk '{print $2}'", &host)
+			}
 			result += "_" + host.HostName + "_: *" + strings.TrimSuffix(remoteResult.Stdout, "\n") + "*\n"
 		}
 	}
