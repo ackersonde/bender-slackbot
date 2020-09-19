@@ -75,7 +75,7 @@ func wireguardAction(action string) string {
 	response := ":wireguard: "
 	cmd := fmt.Sprintf("sudo wg-quick %s wg0", action)
 	Logger.Printf("cmd: %s", cmd)
-	remoteResult := executeRemoteCmd(cmd, structures.BlackPearlRemoteConnectConfig)
+	remoteResult := executeRemoteCmd(cmd, structures.BlondeBomberRemoteConnectConfig)
 
 	if remoteResult.Stdout == "" && remoteResult.Stderr != "" {
 		response += remoteResult.Stderr
@@ -90,7 +90,7 @@ func wireguardShow() string {
 	response := ":wireguard: "
 	cmd := fmt.Sprintf("sudo wg show")
 	Logger.Printf("cmd: %s", cmd)
-	remoteResult := executeRemoteCmd(cmd, structures.BlackPearlRemoteConnectConfig)
+	remoteResult := executeRemoteCmd(cmd, structures.BlondeBomberRemoteConnectConfig)
 
 	if remoteResult.Stdout == "" && remoteResult.Stderr != "" {
 		response += remoteResult.Stderr
@@ -160,7 +160,7 @@ func scrubParamOfHTTPMagicCrap(sourceString string) string {
 func raspberryPIChecks() string {
 	response := ""
 	hosts := []structures.RemoteConnectConfig{
-		*structures.BlackPearlRemoteConnectConfig,
+		*structures.BlondeBomberRemoteConnectConfig,
 		*structures.VPNPIRemoteConnectConfig,
 		*structures.PI4RemoteConnectConfig}
 

@@ -36,6 +36,16 @@ var VPNPIRemoteConnectConfig = &RemoteConnectConfig{
 	HostName:       "vpnpi.fritz.box",
 }
 
+// BlondeBomberRemoteConnectConfig connects to blonde-bomber
+var BlondeBomberRemoteConnectConfig = &RemoteConnectConfig{
+	User:           "ackersond",
+	PrivateKeyPath: "/Users/ackersond/.ssh/circleci_rsa",
+	HostEndpoints:  []string{"192.168.178.20:22"},
+	HostSSHKey:     "ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBJBLGv3gAVIH2iM1I52Ckb2vnBKJtF+w1q3vVHxLY/J71v5edHrdr+ZpmegnpYdltJDsoJoVCD26MTXjWfJQbFg=",
+	HostPath:       "/home/ackersond/",
+	HostName:       "blonde-bomber.fritz.box",
+}
+
 // BlackPearlRemoteConnectConfig connects to blackpearl
 var BlackPearlRemoteConnectConfig = &RemoteConnectConfig{
 	User:           "ubuntu",
