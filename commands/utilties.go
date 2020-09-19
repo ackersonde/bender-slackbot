@@ -193,8 +193,8 @@ func measureCPUTemp(hosts *[]structures.RemoteConnectConfig) string {
 		if remoteResult.Stdout == "" && remoteResult.Stderr != "" {
 			result += host.HostName + ": " + remoteResult.Stderr
 		} else {
-			log.Printf("got %s", remoteResult.Stdout)
-			if len(remoteResult.Stdout) == 1 {
+			log.Printf("got %s (%d)", remoteResult.Stdout, len(remoteResult.Stdout))
+			if strings.TrimSpace(remoteResult.Stdout) == "C" {
 				remoteResult = executeRemoteCmd("sensors | grep Tctl | awk '{print $2}'", &host)
 				log.Printf("now %s", remoteResult.Stdout)
 			}
