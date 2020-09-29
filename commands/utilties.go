@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"regexp"
 	"strings"
 	"time"
@@ -64,9 +65,22 @@ func remoteConnectionConfiguration(unparsedHostKey string, username string) *ssh
 		Logger.Printf("Unable to parse private key: %v", err)
 	}
 
+	cert, err := ioutil.ReadFile("/root/.ssh/id_rsa-cert.pub")
+	pk, _, _, _, err := ssh.ParseAuthorizedKey(cert)
+	if err != nil {
+		log.Printf("unable to parse CA public key: %v", err)
+		return nil
+	}
+
+	certSigner, err := ssh.NewCertSigner(pk.(*ssh.Certificate), signer)
+	if err != nil {
+		log.Printf("failed to create cert signer: %v", err)
+		return nil
+	}
+
 	return &ssh.ClientConfig{
 		User:            username,
-		Auth:            []ssh.AuthMethod{ssh.PublicKeys(signer)},
+		Auth:            []ssh.AuthMethod{ssh.PublicKeys(certSigner)},
 		HostKeyCallback: ssh.FixedHostKey(hostKey),
 	}
 }
@@ -109,7 +123,7 @@ func executeRemoteCmd(cmd string, config *structures.RemoteConnectConfig) struct
 	}()
 
 	remoteConfig := remoteConnectionConfiguration(config.HostSSHKey, config.User)
-	if config.HostName != "" {
+	if remoteConfig != nil && config.HostName != "" {
 		sshClient := initialDialOut(config.HostName, remoteConfig)
 
 		session, _ := sshClient.NewSession()
