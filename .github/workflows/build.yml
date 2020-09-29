@@ -95,6 +95,7 @@ jobs:
           mkdir ~/.ssh/
           echo "${{ secrets.CTX_SERVER_DEPLOY_SECRET_B64 }}" | base64 -d > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
+          echo "${{ secrets.CTX_SERVER_DEPLOY_CACERT_B64 }}" | base64 -d > ~/.ssh/id_rsa-cert.pub
 
       - name: Deploy to K8S
         env:
