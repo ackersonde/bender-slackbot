@@ -74,9 +74,9 @@ jobs:
           sed -i -e "s@{{CTX_DROPBOX_ACCESS_TOKEN_B64}}@$CTX_DROPBOX_ACCESS_TOKEN_B64@" bender.yml
 
           sed -i -e "s@{{CTX_SERVER_DEPLOY_SECRET_B64}}@${{ secrets.CTX_SERVER_DEPLOY_SECRET_B64 }}@" bender.yml
-    
+
           sed -i -e "s@{{CTX_SERVER_DEPLOY_CACERT_B64}}@${{ secrets.CTX_SERVER_DEPLOY_CACERT_B64 }}@" bender.yml
-          
+
           sed -i -e "s@{{CTX_POPS4XL_SCP_KEY_SECRET_B64}}@${{ secrets.CTX_POPS4XL_SCP_KEY_SECRET_B64 }}@" bender.yml
 
           rm .base64_enc
@@ -95,9 +95,9 @@ jobs:
       - name: Prepare ssh key for remote login
         run: |
           mkdir ~/.ssh/
-          echo "${{ secrets.CTX_SERVER_DEPLOY_SECRET_B64 }}" | base64 -d > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          echo "${{ secrets.CTX_SERVER_DEPLOY_CACERT_B64 }}" | base64 -d > ~/.ssh/id_rsa-cert.pub
+          echo "${{ secrets.CTX_SERVER_DEPLOY_SECRET_B64 }}" | base64 -d > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          echo "${{ secrets.CTX_SERVER_DEPLOY_CACERT_B64 }}" | base64 -d > ~/.ssh/id_ed25519-cert.pub
 
       - name: Deploy to K8S
         env:

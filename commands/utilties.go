@@ -59,13 +59,13 @@ func remoteConnectionConfiguration(unparsedHostKey string, username string) *ssh
 		Logger.Printf("error parsing: %v", err)
 	}
 
-	key, err := ioutil.ReadFile("/root/.ssh/id_rsa")
+	key, err := ioutil.ReadFile("/root/.ssh/id_ed25519")
 	signer, err := ssh.ParsePrivateKey(key)
 	if err != nil {
 		Logger.Printf("Unable to parse private key: %v", err)
 	}
 
-	cert, err := ioutil.ReadFile("/root/.ssh/id_rsa-cert.pub")
+	cert, err := ioutil.ReadFile("/root/.ssh/id_ed25519-cert.pub")
 	pk, _, _, _, err := ssh.ParseAuthorizedKey(cert)
 	if err != nil {
 		log.Printf("unable to parse CA public key: %v", err)

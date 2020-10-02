@@ -21,7 +21,7 @@ type RemoteResult struct {
 var AndroidRCC = &RemoteConnectConfig{
 	User:           "ackersond",
 	PrivateKeyPath: "/root/.ssh/id_rsa_pix4x", // path must match K8S secret declaration in bender.yml
-	HostEndpoints:  []string{"192.168.178.37:2222", "192.168.178.56:2222", "192.168.178.61:2222", "192.168.178.62:2222"},
+	HostEndpoints:  []string{"192.168.178.73:2222", "192.168.178.63:2222", "192.168.178.37:2222"},
 	HostSSHKey:     "ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBHFhojNPu3wLn4NrLlyCQnLBCBkdGtYGYTl7IBfOefr05BKmq4WqBFt3U+hRmE9ti4xtjJw7Sz60qDkbuvpPt3c=",
 	HostPath:       "/storage/emulated/0/Download/",
 }
@@ -59,7 +59,7 @@ var BlackPearlRemoteConnectConfig = &RemoteConnectConfig{
 // PI4RemoteConnectConfig connects to pi4
 var PI4RemoteConnectConfig = &RemoteConnectConfig{
 	User:           "ubuntu",
-	PrivateKeyPath: "/root/.ssh/id_rsa",
+	PrivateKeyPath: "/root/.ssh/id_ed25519",
 	HostEndpoints:  []string{"192.168.178.29:22"},
 	HostSSHKey:     "ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBC9wGQXT5zifmoWRaLeDrf/j98ShzZ29CilfVUVtSeKJp1k2uh8pMM/NTiG9FQQmitEIZXdwlcl2+Uj8YD21sAI=",
 	HostPath:       "/home/ubuntu/",
