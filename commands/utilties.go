@@ -2,9 +2,12 @@ package commands
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
+	"os"
 	"regexp"
 	"strings"
 	"time"
@@ -83,6 +86,26 @@ func remoteConnectionConfiguration(unparsedHostKey string, username string) *ssh
 		Auth:            []ssh.AuthMethod{ssh.PublicKeys(certSigner)},
 		HostKeyCallback: ssh.FixedHostKey(hostKey),
 	}
+}
+
+func getDeployFingerprint() string {
+	response := "Deploy fingerprint: "
+	// `ssh-keygen -L -f id_ed25519_github_deploy-cert.pub`
+	f, err := os.Open("/root/.ssh/id_ed25519-cert.pub")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer f.Close()
+
+	h := sha256.New()
+	if _, err := io.Copy(h, f); err != nil {
+		log.Println(err)
+	} else {
+		log.Printf("SHA256: %x", h.Sum(nil))
+		response += string(h.Sum(nil))
+	}
+
+	return response
 }
 
 func wireguardAction(action string) string {

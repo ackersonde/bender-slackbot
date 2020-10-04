@@ -223,8 +223,9 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 					slackMessage.Channel))
 		}
 	} else if args[0] == "version" {
+		fingerprint := getDeployFingerprint()
 		response := ":github: <https://github.com/ackersonde/bender-slackbot/actions/runs/" +
-			githubRunID + "|" + githubRunID + ">"
+			githubRunID + "|" + githubRunID + "> (SHA256: " + fingerprint + ")"
 		api.PostMessage(slackMessage.Channel, slack.MsgOptionText(response, false), params)
 	} else if args[0] == "sw" {
 		response := ":partly_sunny_rain: <https://darksky.net/forecast/48.3028,11.3591/ca24/en#week|7-day forecast Schwabhausen>"
@@ -242,12 +243,10 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 	} else if args[0] == "www" {
 		fritzBox := ":fritzbox: <https://fritz.ackerson.de/|fritz.box> | "
 		fritzBox += ":traefik: <https://monitor.ackerson.de/dashboard/#/ | traefik> | "
-		pi4 := ":k8s: <https://dash.ackerson.de/#/overview?namespace=default|k8s> | "
-		pi4 += ":netdata: <http://pi4:19999/#menu_cpu_submenu_utilization;theme=slate;help=true|netdata>\n"
-		pi4 += ":pihole: <http://hole.ackerson.de/admin/|pi.hole> | "
-		vpnpi := ":transmission: <http://vpnpi:9091/transmission/web/|trans> | "
-		vpnpi += ":plex: <http://vpnpi:32400/web/index.html#|plex> | "
-		vpnpi += ":traefik: <https://api-wc-gcp.ackerson.de/dashboard/#/ | weechat>\n"
+		pi4 := ":k8s: <https://dash.ackerson.de/#/overview?namespace=default|k8s>\n"
+		pi4 += ":pihole: <https://hole.ackerson.de/admin/|pi.hole> | "
+		vpnpi := ":transmission: <https://transmission.ackerson.de/transmission/web/|trans> | "
+		vpnpi += ":plex: <https://plex.ackerson.de/web/index.html#|plex>\n"
 
 		response := fritzBox + pi4 + vpnpi
 		api.PostMessage(slackMessage.Channel, slack.MsgOptionText(response, false), params)
@@ -267,7 +266,7 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 				":youtube: `yt <video url>`: Download Youtube video to Papa's handy\n" +
 				":floppy_disk: `fsck`: show disk space on :raspberry_pi:\n" +
 				":bar_chart: `pi`: Stats of various :raspberry_pi:s\n" +
-				":github: `version`: Which build number is this Bender?\n" +
+				":bender: `version`: Which build/deploy is this Bender bot?\n" +
 				":earth_americas: `www`: Show various internal links\n" +
 				":copyright: `scpxl <URL>`: scp URL file to Pops4XL\n"
 		api.PostMessage(slackMessage.Channel, slack.MsgOptionText(response, true), params)
