@@ -5,8 +5,10 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
+	"os"
 	"regexp"
 	"strings"
 	"time"
@@ -99,10 +101,17 @@ func getPublicCertificate(privateKeyPath string) ssh.Signer {
 
 func getDeployFingerprint(deployCertFilePath string) string {
 	response := "Deploy fingerprint: "
-	certSigner := getPublicCertificate(deployCertFilePath)
+	//certSigner := getPublicCertificate(deployCertFilePath)
 
 	hasher := sha256.New()
-	hasher.Write(certSigner.PublicKey().Marshal())
+	f, err := os.Open(deployCertFilePath)
+	if err != nil {
+		log.Println(err)
+	}
+	defer f.Close()
+	if _, err := io.Copy(hasher, f); err != nil {
+		log.Println(err)
+	}
 
 	response += base64.URLEncoding.EncodeToString(hasher.Sum(nil))
 
