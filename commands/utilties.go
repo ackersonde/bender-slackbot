@@ -2,7 +2,7 @@ package commands
 
 import (
 	"bytes"
-	"crypto/md5"
+	"crypto/sha256"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -101,7 +101,7 @@ func getDeployFingerprint(deployCertFilePath string) string {
 	certSigner := getPublicCertificate(deployCertFilePath)
 
 	hostKeyBytes := certSigner.PublicKey().Marshal()
-	fingerprint := md5.Sum(hostKeyBytes)
+	fingerprint := sha256.Sum256(hostKeyBytes)
 
 	var buf bytes.Buffer
 	for i, f := range fingerprint {
