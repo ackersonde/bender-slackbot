@@ -223,7 +223,7 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 					slackMessage.Channel))
 		}
 	} else if args[0] == "version" {
-		fingerprint := getDeployFingerprint()
+		fingerprint := getDeployFingerprint("/root/.ssh/id_ed25519")
 		response := ":github: <https://github.com/ackersonde/bender-slackbot/actions/runs/" +
 			githubRunID + "|" + githubRunID + "> (SHA256: " + fingerprint + ")"
 		api.PostMessage(slackMessage.Channel, slack.MsgOptionText(response, false), params)

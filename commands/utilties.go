@@ -2,6 +2,7 @@ package commands
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -70,9 +71,13 @@ func remoteConnectionConfiguration(unparsedHostKey string, username string) *ssh
 
 func getPublicCertificate(privateKeyPath string) ssh.Signer {
 	key, err := ioutil.ReadFile(privateKeyPath)
+	if err != nil {
+		log.Printf("unable to read private key file: %v", err)
+	}
+
 	signer, err := ssh.ParsePrivateKey(key)
 	if err != nil {
-		Logger.Printf("Unable to parse private key: %v", err)
+		log.Printf("Unable to parse private key: %v", err)
 	}
 
 	cert, err := ioutil.ReadFile(privateKeyPath + "-cert.pub")
@@ -91,11 +96,17 @@ func getPublicCertificate(privateKeyPath string) ssh.Signer {
 	return certSigner
 }
 
-func getDeployFingerprint() string {
+func getDeployFingerprint(deployCertFilePath string) string {
 	response := "Deploy fingerprint: "
-	certSigner := getPublicCertificate("/root/.ssh/id_ed25519")
-	response += string(certSigner.PublicKey().Marshal())
-	log.Printf("%v", certSigner)
+	certSigner := getPublicCertificate(deployCertFilePath)
+
+	hostKeyBytes := certSigner.PublicKey().Marshal()
+
+	h := sha256.New()
+	h.Write(hostKeyBytes)
+	log.Printf("%x", h.Sum(nil))
+
+	response += string(h.Sum(nil))
 
 	return response
 }
