@@ -117,5 +117,5 @@ jobs:
           wg-quick down tunnel
 
           curl -s -F token=${{ secrets.CTX_SLACK_API_TOKEN }} -F channel=C092UE0H4 \
-            -F text="Deployed: $GITHUB_RUN_ID @ https://github.com/ackersonde/bender-slackbot/actions" \
+            -F text="Deployed: <https://github.com/ackersonde/bender-slackbot/actions/runs/$GITHUB_RUN_ID | $GITHUB_RUN_ID>" \
             https://slack.com/api/chat.postMessage
