@@ -87,9 +87,7 @@ func remoteConnectionConfiguration(unparsedHostKey string, username string) *ssh
 
 func getDeployFingerprint() string {
 	response := "Deploy fingerprint: "
-	// `ssh-keygen -L -f id_ed25519_github_deploy-cert.pub`
-	// Load the certificate
-	cert, err := ioutil.ReadFile("/tmp/mycert-cert.pub")
+	cert, err := ioutil.ReadFile("/root/.ssh/id_ed25519-cert.pub")
 	if err != nil {
 		log.Fatalf("unable to read certificate file: %v", err)
 	}
