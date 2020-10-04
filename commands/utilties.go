@@ -5,10 +5,8 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"log"
-	"os"
 	"regexp"
 	"strings"
 	"time"
@@ -104,14 +102,7 @@ func getDeployFingerprint(deployCertFilePath string) string {
 	certSigner := getPublicCertificate(deployCertFilePath)
 
 	hasher := sha256.New()
-	f, err := os.Open(string(certSigner.PublicKey().Marshal()))
-	if err != nil {
-		log.Println(err)
-	}
-	defer f.Close()
-	if _, err := io.Copy(hasher, f); err != nil {
-		log.Println(err)
-	}
+	hasher.Write(certSigner.PublicKey().Marshal())
 
 	response += hex.EncodeToString(hasher.Sum(nil))
 
