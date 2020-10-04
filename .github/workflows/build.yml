@@ -115,3 +115,7 @@ jobs:
           ssh $SSH_CXN -- "sudo kubectl apply -f k3s/bender.yml"
 
           wg-quick down tunnel
+
+          curl -s -F token=${{ secrets.CTX_SLACK_API_TOKEN }} -F channel=C092UE0H4 \
+            -F text="Deployed: $GITHUB_RUN_ID @ https://github.com/ackersonde/bender-slackbot/actions" \
+            https://slack.com/api/chat.postMessage
