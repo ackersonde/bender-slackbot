@@ -3,9 +3,12 @@ package commands
 import (
 	"bytes"
 	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
+	"os"
 	"regexp"
 	"strings"
 	"time"
@@ -98,20 +101,19 @@ func getPublicCertificate(privateKeyPath string) ssh.Signer {
 
 func getDeployFingerprint(deployCertFilePath string) string {
 	response := "Deploy fingerprint: "
-	certSigner := getPublicCertificate(deployCertFilePath)
+	//certSigner := getPublicCertificate(deployCertFilePath)
 
-	hostKeyBytes := certSigner.PublicKey().Marshal()
-	fingerprint := sha256.Sum256(hostKeyBytes)
-
-	var buf bytes.Buffer
-	for i, f := range fingerprint {
-		if i > 0 {
-			fmt.Fprintf(&buf, ":")
-		}
-		fmt.Fprintf(&buf, "%02X", f)
+	hasher := sha256.New()
+	f, err := os.Open(deployCertFilePath)
+	if err != nil {
+		log.Println(err)
+	}
+	defer f.Close()
+	if _, err := io.Copy(hasher, f); err != nil {
+		log.Println(err)
 	}
 
-	response += buf.String()
+	response += hex.EncodeToString(hasher.Sum(nil))
 
 	return response
 }
