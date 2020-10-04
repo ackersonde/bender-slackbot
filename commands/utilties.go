@@ -59,13 +59,23 @@ func remoteConnectionConfiguration(unparsedHostKey string, username string) *ssh
 		Logger.Printf("error parsing: %v", err)
 	}
 
-	key, err := ioutil.ReadFile("/root/.ssh/id_ed25519")
+	certSigner := getPublicCertificate("/root/.ssh/id_ed25519")
+
+	return &ssh.ClientConfig{
+		User:            username,
+		Auth:            []ssh.AuthMethod{ssh.PublicKeys(certSigner)},
+		HostKeyCallback: ssh.FixedHostKey(hostKey),
+	}
+}
+
+func getPublicCertificate(privateKeyPath string) ssh.Signer {
+	key, err := ioutil.ReadFile(privateKeyPath)
 	signer, err := ssh.ParsePrivateKey(key)
 	if err != nil {
 		Logger.Printf("Unable to parse private key: %v", err)
 	}
 
-	cert, err := ioutil.ReadFile("/root/.ssh/id_ed25519-cert.pub")
+	cert, err := ioutil.ReadFile(privateKeyPath + "-cert.pub")
 	pk, _, _, _, err := ssh.ParseAuthorizedKey(cert)
 	if err != nil {
 		log.Printf("unable to parse CA public key: %v", err)
@@ -78,28 +88,15 @@ func remoteConnectionConfiguration(unparsedHostKey string, username string) *ssh
 		return nil
 	}
 
-	return &ssh.ClientConfig{
-		User:            username,
-		Auth:            []ssh.AuthMethod{ssh.PublicKeys(certSigner)},
-		HostKeyCallback: ssh.FixedHostKey(hostKey),
-	}
+	return certSigner
 }
 
 func getDeployFingerprint() string {
 	response := "Deploy fingerprint: "
-	cert, err := ioutil.ReadFile("/root/.ssh/id_ed25519-cert.pub")
-	if err != nil {
-		log.Fatalf("unable to read certificate file: %v", err)
-	}
+	certSigner := getPublicCertificate("")
+	response += string(certSigner.PublicKey().Marshal())
+	log.Printf("%v", certSigner)
 
-	pk, err := ssh.ParsePublicKey(cert)
-	if err != nil {
-		log.Printf("unable to parse public key: %v", err)
-		response += "ERROR: " + err.Error()
-	} else {
-		log.Printf("%v", pk.(*ssh.Certificate))
-		response += string(pk.(*ssh.Certificate).Key.Marshal())
-	}
 	return response
 }
 
