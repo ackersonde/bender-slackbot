@@ -3,7 +3,7 @@ package commands
 import (
 	"bytes"
 	"crypto/sha256"
-	"encoding/base64"
+	"encoding/base32"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -113,7 +113,7 @@ func getDeployFingerprint(deployCertFilePath string) string {
 		log.Println(err)
 	}
 
-	response += base64.URLEncoding.EncodeToString(hasher.Sum(nil))
+	response += base32.StdEncoding.EncodeToString(hasher.Sum(nil))
 
 	return response
 }
