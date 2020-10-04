@@ -92,7 +92,7 @@ func getDeployFingerprint() string {
 		log.Fatalf("unable to read certificate file: %v", err)
 	}
 
-	pk, _, _, _, err := ssh.ParseAuthorizedKey(cert)
+	pk, err := ssh.ParsePublicKey(cert)
 	if err != nil {
 		log.Printf("unable to parse public key: %v", err)
 		response += "ERROR: " + err.Error()
