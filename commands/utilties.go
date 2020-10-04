@@ -101,10 +101,10 @@ func getPublicCertificate(privateKeyPath string) ssh.Signer {
 
 func getDeployFingerprint(deployCertFilePath string) string {
 	response := "Deploy fingerprint: "
-	//certSigner := getPublicCertificate(deployCertFilePath)
+	certSigner := getPublicCertificate(deployCertFilePath)
 
 	hasher := sha256.New()
-	f, err := os.Open(deployCertFilePath)
+	f, err := os.Open(string(certSigner.PublicKey().Marshal()))
 	if err != nil {
 		log.Println(err)
 	}
