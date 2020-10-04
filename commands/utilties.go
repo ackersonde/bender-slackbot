@@ -104,7 +104,7 @@ func getDeployFingerprint(deployCertFilePath string) string {
 	//certSigner := getPublicCertificate(deployCertFilePath)
 
 	hasher := sha256.New()
-	f, err := os.Open(deployCertFilePath)
+	f, err := os.Open(deployCertFilePath + "-cert.pub")
 	if err != nil {
 		log.Println(err)
 	}
