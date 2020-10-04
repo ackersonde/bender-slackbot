@@ -3,6 +3,11 @@ name: Deploy bender slackbot
 on:
   push:
     branches: [ master ]
+  workflow_dispatch:
+    inputs:
+      ca_pub_fingerprint:
+        description: fingerprint of CA signed user cert
+        required: false
 
 jobs:
   build:
@@ -106,6 +111,7 @@ jobs:
           wg-quick up tunnel
 
           scp -o StrictHostKeyChecking=no bender.yml $SSH_CXN:~/k3s/
+          # TODO: `k delete -f k3s/bender.yaml` forces SECRETS update
           ssh $SSH_CXN -- "sudo kubectl apply -f k3s/bender.yml"
 
           wg-quick down tunnel
