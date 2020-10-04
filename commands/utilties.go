@@ -93,7 +93,7 @@ func getPublicCertificate(privateKeyPath string) ssh.Signer {
 
 func getDeployFingerprint() string {
 	response := "Deploy fingerprint: "
-	certSigner := getPublicCertificate("")
+	certSigner := getPublicCertificate("/root/.ssh/id_ed25519")
 	response += string(certSigner.PublicKey().Marshal())
 	log.Printf("%v", certSigner)
 
