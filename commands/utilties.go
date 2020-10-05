@@ -97,7 +97,7 @@ func GetPublicCertificate(privateKeyPath string) ssh.Signer {
 }
 
 func getDeployFingerprint(deployCertFilePath string) string {
-	out, err := exec.Command("/usr/bin/ssh-keygen", "-Lf", "/home/ackersond/.ssh/id_dan-cert.pub").Output()
+	out, err := exec.Command("/usr/bin/ssh-keygen", "-Lf", deployCertFilePath).Output()
 	if err != nil {
 		log.Println(err)
 	}
