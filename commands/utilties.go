@@ -2,11 +2,10 @@ package commands
 
 import (
 	"bytes"
-	"crypto/sha256"
-	"encoding/base64"
 	"fmt"
 	"io/ioutil"
 	"log"
+	"os/exec"
 	"regexp"
 	"strings"
 	"time"
@@ -61,7 +60,7 @@ func remoteConnectionConfiguration(unparsedHostKey string, username string) *ssh
 		Logger.Printf("error parsing: %v", err)
 	}
 
-	certSigner := getPublicCertificate("/root/.ssh/id_ed25519")
+	certSigner := GetPublicCertificate("/root/.ssh/id_ed25519")
 
 	return &ssh.ClientConfig{
 		User:            username,
@@ -70,7 +69,7 @@ func remoteConnectionConfiguration(unparsedHostKey string, username string) *ssh
 	}
 }
 
-func getPublicCertificate(privateKeyPath string) ssh.Signer {
+func GetPublicCertificate(privateKeyPath string) ssh.Signer {
 	key, err := ioutil.ReadFile(privateKeyPath)
 	if err != nil {
 		log.Printf("unable to read private key file: %v", err)
@@ -98,16 +97,12 @@ func getPublicCertificate(privateKeyPath string) ssh.Signer {
 }
 
 func getDeployFingerprint(deployCertFilePath string) string {
-	response := "Deploy fingerprint: "
-	certSigner := getPublicCertificate(deployCertFilePath)
-	//certKey, err := ioutil.ReadFile(deployCertFilePath + "-cert.pub")
+	out, err := exec.Command("/usr/bin/ssh-keygen", "-Lf", "/home/ackersond/.ssh/id_dan-cert.pub").Output()
+	if err != nil {
+		log.Println(err)
+	}
 
-	hasher := sha256.New()
-	hasher.Write(certSigner.PublicKey().Marshal())
-
-	response += base64.RawStdEncoding.EncodeToString(hasher.Sum(nil))
-
-	return response
+	return string(out)
 }
 
 func wireguardAction(action string) string {
