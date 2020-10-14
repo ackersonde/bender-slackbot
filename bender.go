@@ -31,7 +31,7 @@ func prepareScheduler() {
 }
 
 func main() {
-	api := slack.New(os.Getenv("CTX_SLACK_API_TOKEN"))
+	api := slack.New(os.Getenv("CTX_SLACK_NEW_API_TOKEN"))
 
 	slack.OptionLog(commands.Logger)
 	slack.OptionDebug(true)
