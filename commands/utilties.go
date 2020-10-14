@@ -69,6 +69,7 @@ func remoteConnectionConfiguration(unparsedHostKey string, username string) *ssh
 	}
 }
 
+// GetPublicCertificate retrieves it from the given privateKeyPath param
 func GetPublicCertificate(privateKeyPath string) ssh.Signer {
 	key, err := ioutil.ReadFile(privateKeyPath)
 	if err != nil {

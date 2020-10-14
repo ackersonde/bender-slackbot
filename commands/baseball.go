@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/ackersonde/ackerson.de-go/baseball"
-	"github.com/nlopes/slack"
+	"github.com/slack-go/slack"
 )
 
 // FavGames is now commented

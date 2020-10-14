@@ -17,7 +17,7 @@ import (
 	"github.com/ackersonde/bender-slackbot/structures"
 	"github.com/danackerson/digitalocean/common"
 	jsoniter "github.com/json-iterator/go"
-	"github.com/nlopes/slack"
+	"github.com/slack-go/slack"
 )
 
 var rtm *slack.RTM
@@ -266,7 +266,7 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 				":youtube: `yt <video url>`: Download Youtube video to Papa's handy\n" +
 				":floppy_disk: `fsck`: show disk space on :raspberry_pi:\n" +
 				":bar_chart: `pi`: Stats of various :raspberry_pi:s\n" +
-				":bender: `version`: Which build/deploy is this Bender bot?\n" +
+				":github: `version`: Which build/deploy is this Bender bot?\n" +
 				":earth_americas: `www`: Show various internal links\n" +
 				":copyright: `scpxl <URL>`: scp URL file to Pops4XL\n"
 		api.PostMessage(slackMessage.Channel, slack.MsgOptionText(response, true), params)

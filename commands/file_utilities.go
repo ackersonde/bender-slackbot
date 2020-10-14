@@ -10,7 +10,7 @@ import (
 
 	"github.com/ackersonde/bender-slackbot/structures"
 	"github.com/bramvdbogaerde/go-scp"
-	"github.com/nlopes/slack"
+	"github.com/slack-go/slack"
 )
 
 var piTorrentsPath = "/home/ubuntu/torrents"

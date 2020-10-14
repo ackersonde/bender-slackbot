@@ -8,10 +8,10 @@ import (
 
 	"github.com/ackersonde/bender-slackbot/commands"
 	"github.com/jasonlvhit/gocron"
-	"github.com/nlopes/slack"
+	"github.com/slack-go/slack"
 )
 
-var botID = "N/A" // U2NQSPHHD bender bot userID
+var botID = "N/A" // U2NQSPHHD is old bender bot userID
 
 func prepareScheduler() {
 	gocron.Every(1).Day().At("08:04").Do(
@@ -31,7 +31,7 @@ func prepareScheduler() {
 }
 
 func main() {
-	api := slack.New(os.Getenv("CTX_SLACK_API_TOKEN"))
+	api := slack.New(os.Getenv("CTX_SLACK_NEW_API_TOKEN"))
 
 	slack.OptionLog(commands.Logger)
 	slack.OptionDebug(false)

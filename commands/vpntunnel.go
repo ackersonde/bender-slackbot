@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/ackersonde/bender-slackbot/structures"
-	"github.com/nlopes/slack"
+	"github.com/slack-go/slack"
 )
 
 var vpnLogicalsURI = "https://api.protonmail.ch/vpn/logicals"

@@ -5,7 +5,7 @@ import (
 	"strconv"
 
 	"github.com/danackerson/digitalocean/common"
-	"github.com/nlopes/slack"
+	"github.com/slack-go/slack"
 )
 
 // ListDODroplets is now commented
