@@ -34,7 +34,7 @@ func main() {
 	api := slack.New(os.Getenv("CTX_SLACK_NEW_API_TOKEN"))
 
 	slack.OptionLog(commands.Logger)
-	slack.OptionDebug(false)
+	slack.OptionDebug(true)
 
 	go prepareScheduler() // spawn cron scheduler jobs
 
