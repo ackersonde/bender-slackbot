@@ -88,6 +88,11 @@ func parseSlackEvent(w http.ResponseWriter, r *http.Request) slackevents.EventsA
 
 func processMessage(api *slack.Client, ev *slackevents.MessageEvent) {
 	originalMessage := ev.Text
+
+	// TODO: Huge! determine if the requested Event is already being processed
+	// if so, ignore it :( you'll need some global event.process channel
+	// upon completion, this event.process channel should be flushed
+
 	if ev.User != "" && ev.User != botID && ev.User != "U2NQSPHHD" &&
 		ev.SubType != "message_deleted" &&
 		(strings.Contains(ev.Text, "<@"+botID+">") ||
@@ -98,7 +103,8 @@ func processMessage(api *slack.Client, ev *slackevents.MessageEvent) {
 		r, n := utf8.DecodeRuneInString(parsedMessage)
 		parsedMessage = string(unicode.ToLower(r)) + parsedMessage[n:]
 
-		commands.Logger.Printf("%s(%s) asks '%v'\n", ev.Username, ev.User, parsedMessage)
+		commands.Logger.Printf("%s(%s) asks '%v'\nEventTimestamp: %s \t ThreadTimestamp: %s \t Timestamp: %s\n",
+			ev.Username, ev.User, parsedMessage, ev.EventTimeStamp, ev.ThreadTimeStamp, ev.TimeStamp)
 		commands.CheckCommand(api, ev, parsedMessage)
 	}
 }
