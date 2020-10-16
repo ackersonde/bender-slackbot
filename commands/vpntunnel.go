@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/ackersonde/bender-slackbot/structures"
-	"github.com/slack-go/slack"
 )
 
 var vpnLogicalsURI = "https://api.protonmail.ch/vpn/logicals"
@@ -158,21 +157,17 @@ func findBestVPNServer(vpnCountry string) structures.LogicalServer {
 }
 
 // ChangeToFastestVPNServer on cronjob call
-func ChangeToFastestVPNServer(vpnCountry string, userCall bool) string {
+func ChangeToFastestVPNServer(vpnCountry string) string {
 	response := "Failed auto VPN update"
 
 	bestVPNServer := findBestVPNServer(vpnCountry)
 	response = updateVpnPiTunnel(bestVPNServer.Domain)
-	if !userCall {
-		customEvent := slack.RTMEvent{Type: "ChangeToFastestVPNServer", Data: response}
-		rtm.IncomingEvents <- customEvent
-	}
 
 	return response
 }
 
 // VpnPiTunnelChecks ensures correct VPN connection
-func VpnPiTunnelChecks(vpnCountry string, userCall bool) string {
+func VpnPiTunnelChecks(vpnCountry string) string {
 	response := ":protonvpn: VPN: DOWN :rotating_light:"
 
 	vpnTunnelSpecs := inspectVPNConnection()
@@ -196,11 +191,6 @@ func VpnPiTunnelChecks(vpnCountry string, userCall bool) string {
 			bestVPNServer.Load,
 			bestVPNServer.Score,
 			bestVPNServer.Domain)
-
-	if !userCall {
-		customEvent := slack.RTMEvent{Type: "VpnPiTunnelChecks", Data: response}
-		rtm.IncomingEvents <- customEvent
-	}
 
 	return response
 }

@@ -17,6 +17,7 @@ import (
 	"github.com/ackersonde/bender-slackbot/structures"
 	"github.com/danackerson/digitalocean/common"
 	jsoniter "github.com/json-iterator/go"
+	"github.com/nlopes/slack/slackevents"
 	"github.com/slack-go/slack"
 )
 
@@ -34,15 +35,9 @@ var VPNCountry = "NL"
 // SlackReportChannel default reporting channel for bot crons
 var SlackReportChannel = os.Getenv("CTX_SLACK_CHANNEL")
 
-// SetRTM sets singleton
-func SetRTM(rtmPassed *slack.RTM) {
-	rtm = rtmPassed
-}
-
 // CheckCommand is now commented
-func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
+func CheckCommand(api *slack.Client, event *slackevents.MessageEvent, command string) {
 	args := strings.Fields(command)
-	callingUserProfile, _ := api.GetUserInfo(slackMessage.User)
 	params := slack.MsgOptionAsUser(true)
 
 	if args[0] == "scpxl" {
@@ -52,7 +47,7 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 			uri, err := url.ParseRequestURI(downloadURL)
 			Logger.Printf("parsed %s from %s", uri.RequestURI(), downloadURL)
 			if err != nil {
-				api.PostMessage(slackMessage.Channel,
+				api.PostMessage(event.Channel,
 					slack.MsgOptionText(
 						"Invalid URL for downloading! ("+err.Error()+
 							")", true), params)
@@ -62,28 +57,28 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 					remoteClient,
 					downloadURL,
 					structures.AndroidRCC.HostPath) {
-					api.PostMessage(slackMessage.Channel,
+					api.PostMessage(event.Channel,
 						slack.MsgOptionText(
 							"Requested URL...", true), params)
 				} else {
-					api.PostMessage(slackMessage.Channel,
+					api.PostMessage(event.Channel,
 						slack.MsgOptionText(
 							"Unable to download URL...", true), params)
 				}
 			}
 		} else {
-			api.PostMessage(slackMessage.Channel,
+			api.PostMessage(event.Channel,
 				slack.MsgOptionText("Please provide source file URL!", true), params)
 		}
 	} else if args[0] == "crypto" {
 		response := checkEthereumValue() + "\n" + checkStellarLumensValue()
-		api.PostMessage(slackMessage.Channel,
+		api.PostMessage(event.Channel,
 			slack.MsgOptionText(response, false), params)
 	} else if args[0] == "pgp" {
-		api.PostMessage(slackMessage.Channel,
+		api.PostMessage(event.Channel,
 			slack.MsgOptionText(pgpKeys(), false), params)
 	} else if args[0] == "pi" {
-		api.PostMessage(slackMessage.Channel,
+		api.PostMessage(event.Channel,
 			slack.MsgOptionText(raspberryPIChecks(), false), params)
 	} else if args[0] == "yt" {
 		if len(args) > 1 {
@@ -92,23 +87,23 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 			uri, err := url.ParseRequestURI(downloadURL)
 			Logger.Printf("parsed %s from %s", uri.RequestURI(), downloadURL)
 			if err != nil {
-				api.PostMessage(slackMessage.Channel,
+				api.PostMessage(event.Channel,
 					slack.MsgOptionText(
 						"Invalid URL for downloading! ("+err.Error()+
 							")", true), params)
 			} else {
 				if downloadYoutubeVideo(uri.String()) {
-					api.PostMessage(slackMessage.Channel,
+					api.PostMessage(event.Channel,
 						slack.MsgOptionText(
 							"Requested YouTube video...", true), params)
 				} else {
-					api.PostMessage(slackMessage.Channel,
+					api.PostMessage(event.Channel,
 						slack.MsgOptionText(
 							"Unable to download YouTube video...", true), params)
 				}
 			}
 		} else {
-			api.PostMessage(slackMessage.Channel,
+			api.PostMessage(event.Channel,
 				slack.MsgOptionText("Please provide YouTube video URL!", true), params)
 		}
 	} else if args[0] == "bb" {
@@ -122,26 +117,26 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 
 			if err != nil {
 				result = "Couldn't figure out date '" + args[1] + "'. Try `help`"
-				api.PostMessage(slackMessage.Channel, slack.MsgOptionText(result, false), params)
+				api.PostMessage(event.Channel, slack.MsgOptionText(result, false), params)
 				return
 			}
 		}
-		result = ShowBBGames(true, dateString)
-		api.PostMessage(slackMessage.Channel, slack.MsgOptionText(result, false), params)
+		result = ShowBBGames(dateString)
+		api.PostMessage(event.Channel, slack.MsgOptionText(result, false), params)
 	} else if args[0] == "do" {
-		response := ListDODroplets(true)
-		api.PostMessage(slackMessage.Channel, slack.MsgOptionText(response, false), params)
+		response := ListDODroplets()
+		api.PostMessage(event.Channel, slack.MsgOptionText(response, false), params)
 	} else if args[0] == "dd" {
 		if len(args) > 1 {
 			number, err := strconv.Atoi(args[1])
 			if err != nil {
-				api.PostMessage(slackMessage.Channel, slack.MsgOptionText("Invalid integer value for ID!", true), params)
+				api.PostMessage(event.Channel, slack.MsgOptionText("Invalid integer value for ID!", true), params)
 			} else {
 				result := common.DeleteDODroplet(number)
-				api.PostMessage(slackMessage.Channel, slack.MsgOptionText(result, true), params)
+				api.PostMessage(event.Channel, slack.MsgOptionText(result, true), params)
 			}
 		} else {
-			api.PostMessage(slackMessage.Channel, slack.MsgOptionText("Please provide Droplet ID from `do` cmd!", true), params)
+			api.PostMessage(event.Channel, slack.MsgOptionText("Please provide Droplet ID from `do` cmd!", true), params)
 		}
 	} else if args[0] == "fsck" {
 		response := ""
@@ -153,18 +148,14 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 			response += CheckMediaDiskSpace("")
 			response += CheckServerDiskSpace("")
 		}
-		rtm.SendMessage(rtm.NewOutgoingMessage(response, slackMessage.Channel))
+		api.PostMessage(event.Channel, slack.MsgOptionText(response, true), params)
 	} else if args[0] == "wgs" {
-		response := wireguardShow()
-		rtm.SendMessage(rtm.NewOutgoingMessage(response, slackMessage.Channel))
+		api.PostMessage(event.Channel, slack.MsgOptionText(wireguardShow(), true), params)
 	} else if args[0] == "wgu" {
-		response := wireguardAction("up")
-		rtm.SendMessage(rtm.NewOutgoingMessage(response, slackMessage.Channel))
+		api.PostMessage(event.Channel, slack.MsgOptionText(wireguardAction("up"), true), params)
 	} else if args[0] == "wgd" {
-		response := wireguardAction("down")
-		rtm.SendMessage(rtm.NewOutgoingMessage(response, slackMessage.Channel))
+		api.PostMessage(event.Channel, slack.MsgOptionText(wireguardAction("down"), true), params)
 	} else if args[0] == "mv" {
-		response := ""
 		if len(args) == 3 &&
 			(strings.HasPrefix(args[2], "movies") ||
 				strings.HasPrefix(args[2], "tv")) {
@@ -172,16 +163,16 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 			destinationDir := args[2]
 			if strings.Contains(destinationDir, "..") || strings.HasPrefix(destinationDir, "/") {
 				msg := fmt.Sprintln("Please prefix destination w/ either `[movies|tv]`")
-				rtm.IncomingEvents <- slack.RTMEvent{Type: "MoveTorrent", Data: msg}
+				api.PostMessage(event.Channel, slack.MsgOptionText(msg, true), params)
 			} else if strings.Contains(sourceFile, "..") || strings.HasPrefix(sourceFile, "/") {
 				msg := fmt.Sprintf("Please specify file to move relative to `%s/torrents/`\n", piPlexPath)
-				rtm.IncomingEvents <- slack.RTMEvent{Type: "MoveTorrent", Data: msg}
+				api.PostMessage(event.Channel, slack.MsgOptionText(msg, true), params)
 			} else {
 				MoveTorrentFile(api, sourceFile, destinationDir)
-				rtm.SendMessage(rtm.NewOutgoingMessage(response, slackMessage.Channel))
 			}
 		} else {
-			rtm.SendMessage(rtm.NewOutgoingMessage("Please provide a src file and destination [e.g. `movies` or `tv`]", slackMessage.Channel))
+			msg := "Please provide a src file and destination [e.g. `movies` or `tv`]"
+			api.PostMessage(event.Channel, slack.MsgOptionText(msg, true), params)
 		}
 	} else if args[0] == "torq" {
 		var response string
@@ -194,52 +185,45 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 			response = parseTop100(searchProxy("/api?url=/precompiled/data_top100_207.json"))
 		}
 
-		api.PostMessage(slackMessage.Channel, slack.MsgOptionText(response, false), params)
+		api.PostMessage(event.Channel, slack.MsgOptionText(response, false), params)
 	} else if args[0] == "vpns" {
 		if len(args) > 1 {
 			VPNCountry = strings.ToUpper(args[1])
 		}
-		response := VpnPiTunnelChecks(VPNCountry, true)
-		rtm.SendMessage(rtm.NewOutgoingMessage(response, slackMessage.Channel))
+		response := VpnPiTunnelChecks(VPNCountry)
+		api.PostMessage(event.Channel, slack.MsgOptionText(response, false), params)
 	} else if args[0] == "vpnc" {
+		response := "Please provide a new VPN server (hint: output from `vpns`)"
 		if len(args) > 1 {
 			vpnServerDomain := strings.ToLower(scrubParamOfHTTPMagicCrap(args[1]))
 			// ensure vpnServerDomain has format e.g. DE-19
 			var rxPat = regexp.MustCompile(`^[A-Za-z]{2}-[0-9]{2}`)
 			if !rxPat.MatchString(vpnServerDomain) {
-				rtm.SendMessage(
-					rtm.NewOutgoingMessage(
-						"Provide a validly formatted VPN server (hint: output from `vpns`)",
-						slackMessage.Channel))
+				response = "Provide a validly formatted VPN server (hint: output from `vpns`)"
+
 			} else {
-				response := updateVpnPiTunnel(vpnServerDomain)
-				rtm.SendMessage(
-					rtm.NewOutgoingMessage(response, slackMessage.Channel))
+				response = updateVpnPiTunnel(vpnServerDomain)
 			}
-		} else {
-			rtm.SendMessage(
-				rtm.NewOutgoingMessage(
-					"Please provide a new VPN server (hint: output from `vpns`)",
-					slackMessage.Channel))
 		}
+		api.PostMessage(event.Channel, slack.MsgOptionText(response, false), params)
 	} else if args[0] == "version" {
 		fingerprint := getDeployFingerprint("/root/.ssh/id_ed25519-cert.pub")
 		response := ":github: <https://github.com/ackersonde/bender-slackbot/actions/runs/" +
 			githubRunID + "|" + githubRunID + "> using :key: " + fingerprint
-		api.PostMessage(slackMessage.Channel, slack.MsgOptionText(response, false), params)
+		api.PostMessage(event.Channel, slack.MsgOptionText(response, false), params)
 	} else if args[0] == "sw" {
 		response := ":partly_sunny_rain: <https://darksky.net/forecast/48.3028,11.3591/ca24/en#week|7-day forecast Schwabhausen>"
-		api.PostMessage(slackMessage.Channel, slack.MsgOptionText(response, false), params)
+		api.PostMessage(event.Channel, slack.MsgOptionText(response, false), params)
 	} else if args[0] == "trans" || args[0] == "trand" || args[0] == "tranc" || args[0] == "tranp" {
 		response := torrentCommand(args)
-		api.PostMessage(slackMessage.Channel, slack.MsgOptionText(response, false), params)
+		api.PostMessage(event.Channel, slack.MsgOptionText(response, false), params)
 	} else if args[0] == "mvv" {
 		response := "<" + mvvRoute("Schwabhausen", "München, Hauptbahnhof") + "|Going in>"
 		response += " | <" + mvvRoute("München, Hauptbahnhof", "Schwabhausen") + "|Going home>"
 
 		response += "\n" + fetchAktuelles()
 
-		api.PostMessage(slackMessage.Channel, slack.MsgOptionText(response, false), params)
+		api.PostMessage(event.Channel, slack.MsgOptionText(response, false), params)
 	} else if args[0] == "www" {
 		fritzBox := ":fritzbox: <https://fritz.ackerson.de/|fritz.box> | "
 		fritzBox += ":traefik: <https://monitor.ackerson.de/dashboard/#/ | traefik> | "
@@ -249,7 +233,7 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 		vpnpi += ":plex: <https://plex.ackerson.de/web/index.html#|plex>\n"
 
 		response := fritzBox + pi4 + vpnpi
-		api.PostMessage(slackMessage.Channel, slack.MsgOptionText(response, false), params)
+		api.PostMessage(event.Channel, slack.MsgOptionText(response, false), params)
 	} else if args[0] == "help" {
 		response :=
 			":ethereum: `crypto`: Current cryptocurrency stats :lumens:\n" +
@@ -269,12 +253,12 @@ func CheckCommand(api *slack.Client, slackMessage slack.Msg, command string) {
 				":github: `version`: Which build/deploy is this Bender bot?\n" +
 				":earth_americas: `www`: Show various internal links\n" +
 				":copyright: `scpxl <URL>`: scp URL file to Pops4XL\n"
-		api.PostMessage(slackMessage.Channel, slack.MsgOptionText(response, true), params)
-	} else if callingUserProfile != nil {
-		rtm.SendMessage(rtm.NewOutgoingMessage("whaddya say <@"+callingUserProfile.Name+">? Try `help` instead...",
-			slackMessage.Channel))
+		api.PostMessage(event.Channel, slack.MsgOptionText(response, true), params)
+	} else if event.User != "" {
+		response := "whaddya say <@" + event.Username + ">? Try `help` instead..."
+		api.PostMessage(event.Channel, slack.MsgOptionText(response, false), params)
 	} else {
-		Logger.Printf("No Command found: %s", slackMessage.Text)
+		Logger.Printf("No Command found: %s", event.Text)
 	}
 }
 
