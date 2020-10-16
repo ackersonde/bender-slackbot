@@ -18,11 +18,7 @@ var piPlexPath = "/mnt/usb4TB/DLNA"
 
 // CheckServerDiskSpace now exported
 func CheckServerDiskSpace(path string) string {
-	userCall := true
-	if path == "---" {
-		path = ""
-		userCall = false
-	} else if path != "" {
+	if path != "" {
 		path = strings.TrimSuffix(path, "/")
 		if !strings.HasPrefix(path, "/") {
 			path = "/" + path
@@ -37,22 +33,12 @@ func CheckServerDiskSpace(path string) string {
 		response += string(out2)
 	}
 
-	response = ":k8s: *SD Card Disk Usage* `pi4`\n" + response
-	if !userCall {
-		customEvent := slack.RTMEvent{Type: "CheckPiDiskSpace", Data: response}
-		rtm.IncomingEvents <- customEvent
-	}
-
-	return response
+	return ":k8s: *SD Card Disk Usage* `pi4`\n" + response
 }
 
 // CheckMediaDiskSpace now exported
 func CheckMediaDiskSpace(path string) string {
-	userCall := true
-	if path == "---" {
-		path = ""
-		userCall = false
-	} else if path != "" {
+	if path != "" {
 		path = strings.TrimSuffix(path, "/")
 		if !strings.HasPrefix(path, "/") {
 			path = "/" + path
@@ -85,11 +71,6 @@ func CheckMediaDiskSpace(path string) string {
 		response = response + "\n" + remoteResult.Stdout
 	}
 	response += "\n=============================\n"
-
-	if !userCall {
-		customEvent := slack.RTMEvent{Type: "CheckPiDiskSpace", Data: response}
-		rtm.IncomingEvents <- customEvent
-	}
 
 	return response
 }

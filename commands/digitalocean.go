@@ -5,11 +5,10 @@ import (
 	"strconv"
 
 	"github.com/danackerson/digitalocean/common"
-	"github.com/slack-go/slack"
 )
 
 // ListDODroplets is now commented
-func ListDODroplets(userCall bool) string {
+func ListDODroplets() string {
 	doDropletInfoSite := "https://cloud.digitalocean.com/droplets/"
 	response := ""
 
@@ -25,10 +24,6 @@ func ListDODroplets(userCall bool) string {
 			addr := doDropletInfoSite + strconv.Itoa(droplet.ID)
 			response += fmt.Sprintf(":do_droplet: <%s|%s> (%s) [ID: %d]\n", addr, droplet.Name, ipv4, droplet.ID)
 		}
-	}
-
-	if !userCall {
-		rtm.IncomingEvents <- slack.RTMEvent{Type: "ListDODroplets", Data: response}
 	}
 
 	return response

@@ -70,6 +70,22 @@ jobs:
           export CTX_SLACK_NEW_API_TOKEN_B64=`cat .base64_enc`
           sed -i -e "s@{{CTX_SLACK_NEW_API_TOKEN_B64}}@$CTX_SLACK_NEW_API_TOKEN_B64@" bender.yml
 
+          echo -n "${{ secrets.SLACK_EVENTSAPI_ENDPOINT }}" | base64 | tr -d \\n > .base64_enc
+          export SLACK_EVENTSAPI_ENDPOINT_B64=`cat .base64_enc`
+          sed -i -e "s@{{SLACK_EVENTSAPI_ENDPOINT_B64}}@$SLACK_EVENTSAPI_ENDPOINT_B64@" bender.yml
+
+          echo -n "${{ secrets.SLACK_VERIFICATION_TOKEN }}" | base64 | tr -d \\n > .base64_enc
+          export SLACK_VERIFICATION_TOKEN_B64=`cat .base64_enc`
+          sed -i -e "s@{{SLACK_VERIFICATION_TOKEN_B64}}@$SLACK_VERIFICATION_TOKEN_B64@" bender.yml
+
+          echo -n "${{ secrets.SLACK_SIGNING_SECRET }}" | base64 | tr -d \\n > .base64_enc
+          export SLACK_SIGNING_SECRET_B64=`cat .base64_enc`
+          sed -i -e "s@{{SLACK_SIGNING_SECRET_B64}}@$SLACK_SIGNING_SECRET_B64@" bender.yml
+
+          echo -n "${{ secrets.SLACK_BENDER_BOT_USERID }}" | base64 | tr -d \\n > .base64_enc
+          export SLACK_BENDER_BOT_USERID_B64=`cat .base64_enc`
+          sed -i -e "s@{{SLACK_BENDER_BOT_USERID_B64}}@$SLACK_BENDER_BOT_USERID_B64@" bender.yml
+
           echo -n "${{ secrets.CTX_JOIN_API_KEY }}" | base64 | tr -d \\n > .base64_enc
           export CTX_JOIN_API_KEY_B64=`cat .base64_enc`
           sed -i -e "s@{{CTX_JOIN_API_KEY_B64}}@$CTX_JOIN_API_KEY_B64@" bender.yml
@@ -120,6 +136,6 @@ jobs:
 
           wg-quick down tunnel
 
-          curl -s -F token=${{ secrets.CTX_SLACK_API_TOKEN }} -F channel=C092UE0H4 \
+          curl -s -F token=${{ secrets.CTX_SLACK_NOTIFICATIONS_TOKEN }} -F channel=C092UE0H4 \
             -F text="Deployed: <https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID | $GITHUB_REPOSITORY>" \
             https://slack.com/api/chat.postMessage
