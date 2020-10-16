@@ -137,5 +137,5 @@ jobs:
           wg-quick down tunnel
 
           curl -s -F token=${{ secrets.CTX_SLACK_NOTIFICATIONS_TOKEN }} -F channel=C092UE0H4 \
-            -F text="Deployed: <https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID | $GITHUB_REPOSITORY>" \
+            -F text="<https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID | $GITHUB_REPOSITORY @ $GITHUB_RUN_ID>" \
             https://slack.com/api/chat.postMessage
