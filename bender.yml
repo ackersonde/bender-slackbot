@@ -1,3 +1,16 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: bender
+spec:
+  ports:
+    - name: bender
+      port: 3000
+      protocol: TCP
+  selector:
+    app: bender
+
+---
 kind: Deployment
 apiVersion: apps/v1
 metadata:
@@ -21,6 +34,9 @@ spec:
       containers:
         - name: bender
           image: danackerson/slackbot:vg{{GITHUB_RUN_ID}}
+          ports:
+            - name: bender
+              containerPort: 3000
           envFrom:
           - secretRef:
               name: bender-env-secrets
@@ -99,3 +115,24 @@ metadata:
   name: scp-pops4xl-key-secret
 data:
   id_rsa_pix4x: {{CTX_POPS4XL_SCP_KEY_SECRET_B64}}
+
+---
+
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: bender-ingress
+  namespace: default
+spec:
+  entryPoints:
+    - web
+    - secure
+  routes:
+  - match: Host(`{{BENDER_HOSTNAME}}`)
+    middlewares:
+    - name: tls-redirect
+    - name: careful-ratelimit
+    kind: Rule
+    services:
+    - name: bender
+      port: 3000

@@ -96,6 +96,8 @@ jobs:
 
           echo -n "${{ secrets.CTX_DROPBOX_ACCESS_TOKEN }}" | base64 | tr -d \\n > .base64_enc
           export CTX_DROPBOX_ACCESS_TOKEN_B64=`cat .base64_enc`
+          rm .base64_enc
+
           sed -i -e "s@{{CTX_DROPBOX_ACCESS_TOKEN_B64}}@$CTX_DROPBOX_ACCESS_TOKEN_B64@" bender.yml
 
           sed -i -e "s@{{CTX_SERVER_DEPLOY_SECRET_B64}}@${{ secrets.CTX_SERVER_DEPLOY_SECRET_B64 }}@" bender.yml
@@ -104,7 +106,8 @@ jobs:
 
           sed -i -e "s@{{CTX_POPS4XL_SCP_KEY_SECRET_B64}}@${{ secrets.CTX_POPS4XL_SCP_KEY_SECRET_B64 }}@" bender.yml
 
-          rm .base64_enc
+          sed -i -e "s@{{BENDER_HOSTNAME}}@${{ secrets.BENDER_HOSTNAME }}@g" bender.yml
+
 
       - name: Create wireguard tunnel configuration
         run: |
