@@ -207,10 +207,10 @@ func updateVpnPiTunnel(vpnServerDomain string) string {
 	// First, update ipsec.conf with desired server & restart ipsec
 	sedCmd := `sudo sed -rie 's@[A-Za-z]{2}-[0-9]{2}\.protonvpn\.com@` +
 		vpnServerDomain + `@g' `
-	cmd := `sudo ipsec stop && ` + sedCmd + `/etc/ipsec.conf && sudo ipsec start`
+	cmd := sedCmd + `/etc/ipsec.conf && sudo ipsec restart && sudo ipsec up protonvpn`
 
 	remoteResult := executeRemoteCmd(cmd, structures.VPNPIRemoteConnectConfig)
-	time.Sleep(30 * time.Second)
+	//time.Sleep(30 * time.Second)
 	remoteResult = checkTransmissionBindAddress()
 	internalIP := strings.TrimSuffix(remoteResult.Stdout, "\n")
 	if internalIP == "" {
@@ -218,7 +218,7 @@ func updateVpnPiTunnel(vpnServerDomain string) string {
 		for i < 6 && internalIP == "" {
 			Logger.Printf("No VPN connection established yet...(try #%d)\n", i)
 			time.Sleep(30 * time.Second)
-			remoteResult = executeRemoteCmd("sudo ipsec restart",
+			remoteResult = executeRemoteCmd("sudo ipsec restart && sudo ipsec up protonvpn",
 				structures.VPNPIRemoteConnectConfig)
 			remoteResult = checkTransmissionBindAddress()
 			internalIP = strings.TrimSuffix(remoteResult.Stdout, "\n")

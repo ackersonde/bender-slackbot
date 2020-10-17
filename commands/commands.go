@@ -201,7 +201,6 @@ func CheckCommand(event *slackevents.MessageEvent, command string) {
 			var rxPat = regexp.MustCompile(`^[A-Za-z]{2}-[0-9]{2}`)
 			if !rxPat.MatchString(vpnServerDomain) {
 				response = "Provide a validly formatted VPN server (hint: output from `vpns`)"
-
 			} else {
 				response = updateVpnPiTunnel(vpnServerDomain)
 			}
