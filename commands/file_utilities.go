@@ -17,7 +17,7 @@ var piTorrentsPath = "/home/ubuntu/torrents"
 var piPlexPath = "/mnt/usb4TB/DLNA"
 
 // CheckServerDiskSpace now exported
-func CheckServerDiskSpace(path string, api *slack.Client) {
+func CheckServerDiskSpace(path string) {
 	if path != "" {
 		path = strings.TrimSuffix(path, "/")
 		if !strings.HasPrefix(path, "/") {
@@ -39,7 +39,7 @@ func CheckServerDiskSpace(path string, api *slack.Client) {
 }
 
 // CheckMediaDiskSpace now exported
-func CheckMediaDiskSpace(path string, api *slack.Client) {
+func CheckMediaDiskSpace(path string) {
 	if path != "" {
 		path = strings.TrimSuffix(path, "/")
 		if !strings.HasPrefix(path, "/") {
@@ -90,7 +90,7 @@ func (i basePlexRefreshCmdString) String() string {
 }
 
 // MoveTorrentFile now exported
-func MoveTorrentFile(api *slack.Client, sourceFile string, destinationDir string) {
+func MoveTorrentFile(sourceFile string, destinationDir string) {
 	params := slack.MsgOptionAsUser(true)
 	response := ""
 

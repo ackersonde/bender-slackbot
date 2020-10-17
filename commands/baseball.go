@@ -28,7 +28,7 @@ func GetBaseBallGame(gameID string) string {
 }
 
 // ShowBBGames is now commented
-func ShowBBGames(fromDate string, api *slack.Client) {
+func ShowBBGames(fromDate string) {
 	if fromDate == "" {
 		yesterday := time.Now().AddDate(0, 0, -1)
 		fromDate = yesterday.Format("2006/month_01/day_02")

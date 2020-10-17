@@ -21,7 +21,7 @@ import (
 	"github.com/slack-go/slack"
 )
 
-var rtm *slack.RTM
+var api *slack.Client
 var joinAPIKey = os.Getenv("CTX_JOIN_API_KEY")
 var vpnGateway = os.Getenv("CTX_VPNC_GATEWAY")
 var githubRunID = os.Getenv("GITHUB_RUN_ID")
@@ -35,8 +35,13 @@ var VPNCountry = "NL"
 // SlackReportChannel default reporting channel for bot crons
 var SlackReportChannel = os.Getenv("CTX_SLACK_CHANNEL")
 
+// SetAPI sets singleton
+func SetAPI(apiPassed *slack.Client) {
+	api = apiPassed
+}
+
 // CheckCommand is now commented
-func CheckCommand(api *slack.Client, event *slackevents.MessageEvent, command string) {
+func CheckCommand(event *slackevents.MessageEvent, command string) {
 	args := strings.Fields(command)
 	params := slack.MsgOptionAsUser(true)
 
@@ -121,7 +126,7 @@ func CheckCommand(api *slack.Client, event *slackevents.MessageEvent, command st
 				return
 			}
 		}
-		ShowBBGames(dateString, api)
+		ShowBBGames(dateString)
 	} else if args[0] == "do" {
 		response := ListDODroplets()
 		api.PostMessage(event.Channel, slack.MsgOptionText(response, false), params)
@@ -140,11 +145,11 @@ func CheckCommand(api *slack.Client, event *slackevents.MessageEvent, command st
 	} else if args[0] == "fsck" {
 		if len(args) > 1 {
 			path := strings.Join(args[1:], " ")
-			CheckMediaDiskSpace(path, api)
-			CheckServerDiskSpace(path, api)
+			CheckMediaDiskSpace(path)
+			CheckServerDiskSpace(path)
 		} else {
-			CheckMediaDiskSpace("", api)
-			CheckServerDiskSpace("", api)
+			CheckMediaDiskSpace("")
+			CheckServerDiskSpace("")
 		}
 	} else if args[0] == "wgs" {
 		api.PostMessage(event.Channel, slack.MsgOptionText(wireguardShow(), true), params)
@@ -165,7 +170,7 @@ func CheckCommand(api *slack.Client, event *slackevents.MessageEvent, command st
 				msg := fmt.Sprintf("Please specify file to move relative to `%s/torrents/`\n", piPlexPath)
 				api.PostMessage(event.Channel, slack.MsgOptionText(msg, true), params)
 			} else {
-				MoveTorrentFile(api, sourceFile, destinationDir)
+				MoveTorrentFile(sourceFile, destinationDir)
 			}
 		} else {
 			msg := "Please provide a src file and destination [e.g. `movies` or `tv`]"
@@ -187,7 +192,7 @@ func CheckCommand(api *slack.Client, event *slackevents.MessageEvent, command st
 		if len(args) > 1 {
 			VPNCountry = strings.ToUpper(args[1])
 		}
-		VpnPiTunnelChecks(VPNCountry, api)
+		VpnPiTunnelChecks(VPNCountry)
 	} else if args[0] == "vpnc" {
 		response := "Please provide a new VPN server (hint: output from `vpns`)"
 		if len(args) > 1 {

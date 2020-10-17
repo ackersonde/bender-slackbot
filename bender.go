@@ -19,14 +19,14 @@ import (
 
 var botID = os.Getenv("SLACK_BENDER_BOT_USERID")
 
-func prepareScheduler(api *slack.Client) {
+func prepareScheduler() {
 	gocron.Every(1).Day().At("08:04").Do(
-		commands.ChangeToFastestVPNServer, commands.VPNCountry, api)
+		commands.ChangeToFastestVPNServer, commands.VPNCountry)
 	gocron.Every(1).Friday().At("09:04").Do(
-		commands.VpnPiTunnelChecks, commands.VPNCountry, api)
-	gocron.Every(1).Friday().At("09:05").Do(commands.CheckMediaDiskSpace, "", api)
-	gocron.Every(1).Friday().At("09:05").Do(commands.CheckServerDiskSpace, "", api)
-	gocron.Every(1).Day().At("17:30").Do(commands.ShowBBGames, "", api)
+		commands.VpnPiTunnelChecks, commands.VPNCountry)
+	gocron.Every(1).Friday().At("09:05").Do(commands.CheckMediaDiskSpace, "")
+	gocron.Every(1).Friday().At("09:05").Do(commands.CheckServerDiskSpace, "")
+	gocron.Every(1).Day().At("17:30").Do(commands.ShowBBGames, "")
 	//gocron.Every(1).Day().At("05:30").Do(common.UpdateFirewall)
 	//gocron.Every(1).Friday().At("09:03").Do(commands.ListDODroplets, false)
 	<-gocron.Start()
@@ -86,7 +86,7 @@ func parseSlackEvent(w http.ResponseWriter, r *http.Request) slackevents.EventsA
 	return eventsAPIEvent
 }
 
-func processMessage(api *slack.Client, ev *slackevents.MessageEvent) {
+func processMessage(ev *slackevents.MessageEvent) {
 	originalMessage := ev.Text
 
 	if ev.User != "" && ev.User != botID && ev.User != "U2NQSPHHD" &&
@@ -100,7 +100,7 @@ func processMessage(api *slack.Client, ev *slackevents.MessageEvent) {
 		parsedMessage = string(unicode.ToLower(r)) + parsedMessage[n:]
 
 		commands.Logger.Printf("%s(%s) asks '%v'\n", ev.Username, ev.User, parsedMessage)
-		commands.CheckCommand(api, ev, parsedMessage)
+		commands.CheckCommand(ev, parsedMessage)
 	}
 }
 
@@ -110,7 +110,8 @@ func main() {
 		slack.OptionDebug(false),
 		slack.OptionLog(commands.Logger),
 	)
-	go prepareScheduler(api) // spawn cron scheduler jobs
+	commands.SetAPI(api)
+	go prepareScheduler() // spawn cron scheduler jobs
 
 	http.HandleFunc("/"+os.Getenv("SLACK_EVENTSAPI_ENDPOINT"),
 		func(w http.ResponseWriter, r *http.Request) {
@@ -119,7 +120,7 @@ func main() {
 				innerEvent := eventsAPIEvent.InnerEvent
 				switch ev := innerEvent.Data.(type) {
 				case *slackevents.MessageEvent:
-					go processMessage(api, ev)
+					go processMessage(ev)
 					// HTTP 202 -> we heard and are working on an async response
 					w.WriteHeader(http.StatusAccepted)
 				}

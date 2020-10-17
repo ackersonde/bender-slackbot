@@ -158,7 +158,7 @@ func findBestVPNServer(vpnCountry string) structures.LogicalServer {
 }
 
 // ChangeToFastestVPNServer on cronjob call
-func ChangeToFastestVPNServer(vpnCountry string, api *slack.Client) {
+func ChangeToFastestVPNServer(vpnCountry string) {
 	response := "Failed auto VPN update"
 
 	bestVPNServer := findBestVPNServer(vpnCountry)
@@ -169,7 +169,7 @@ func ChangeToFastestVPNServer(vpnCountry string, api *slack.Client) {
 }
 
 // VpnPiTunnelChecks ensures correct VPN connection
-func VpnPiTunnelChecks(vpnCountry string, api *slack.Client) {
+func VpnPiTunnelChecks(vpnCountry string) {
 	response := ":protonvpn: VPN: DOWN :rotating_light:"
 
 	vpnTunnelSpecs := inspectVPNConnection()
