@@ -210,29 +210,21 @@ func updateVpnPiTunnel(vpnServerDomain string) string {
 	cmd := sedCmd + `/etc/ipsec.conf && sudo ipsec restart && sleep 3 && sudo ipsec up protonvpn`
 
 	remoteResult := executeRemoteCmd(cmd, structures.VPNPIRemoteConnectConfig)
-	//time.Sleep(30 * time.Second)
 	remoteResult = checkTransmissionBindAddress()
 	internalIP := strings.TrimSuffix(remoteResult.Stdout, "\n")
-	if internalIP == "" {
-		i := 0 // let's give ProtonVPN 30secs to connect, else retry 6 times
-		for i < 6 && internalIP == "" {
-			Logger.Printf("No VPN connection established yet...(try #%d)\n", i)
-			time.Sleep(3 * time.Second)
-			remoteResult = executeRemoteCmd("sudo ipsec up protonvpn",
-				structures.VPNPIRemoteConnectConfig)
-			remoteResult = checkTransmissionBindAddress()
-			internalIP = strings.TrimSuffix(remoteResult.Stdout, "\n")
-			i++
-		}
-	}
-
-	remoteResult = checkTransmissionBindAddress()
-	internalIP = strings.TrimSuffix(remoteResult.Stdout, "\n")
-	if internalIP != "" {
-		response = "Updated :protonvpn: to " + vpnServerDomain + " & " + ensureTransmissionBind(internalIP)
-	} else {
-		response += "(" + remoteResult.Err.Error() + ")"
-	}
+	// if internalIP == "" {
+	// 	i := 0 // let's give ProtonVPN 30secs to connect, else retry 6 times
+	// 	for i < 6 && internalIP == "" {
+	// 		Logger.Printf("No VPN connection established yet...(try #%d)\n", i)
+	// 		time.Sleep(3 * time.Second)
+	// 		remoteResult = executeRemoteCmd("sudo ipsec up protonvpn",
+	// 			structures.VPNPIRemoteConnectConfig)
+	// 		remoteResult = checkTransmissionBindAddress()
+	// 		internalIP = strings.TrimSuffix(remoteResult.Stdout, "\n")
+	// 		i++
+	// 	}
+	// }
+	response = "Updated :protonvpn: to " + vpnServerDomain + " & " + ensureTransmissionBind(internalIP)
 
 	return response
 }
