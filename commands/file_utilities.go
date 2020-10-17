@@ -17,7 +17,7 @@ var piTorrentsPath = "/home/ubuntu/torrents"
 var piPlexPath = "/mnt/usb4TB/DLNA"
 
 // CheckServerDiskSpace now exported
-func CheckServerDiskSpace(path string) string {
+func CheckServerDiskSpace(path string, api *slack.Client) {
 	if path != "" {
 		path = strings.TrimSuffix(path, "/")
 		if !strings.HasPrefix(path, "/") {
@@ -33,11 +33,13 @@ func CheckServerDiskSpace(path string) string {
 		response += string(out2)
 	}
 
-	return ":k8s: *SD Card Disk Usage* `pi4`\n" + response
+	response = ":k8s: *SD Card Disk Usage* `pi4`\n" + response
+	api.PostMessage(SlackReportChannel, slack.MsgOptionText(response, false),
+		slack.MsgOptionAsUser(true))
 }
 
 // CheckMediaDiskSpace now exported
-func CheckMediaDiskSpace(path string) string {
+func CheckMediaDiskSpace(path string, api *slack.Client) {
 	if path != "" {
 		path = strings.TrimSuffix(path, "/")
 		if !strings.HasPrefix(path, "/") {
@@ -72,7 +74,8 @@ func CheckMediaDiskSpace(path string) string {
 	}
 	response += "\n=============================\n"
 
-	return response
+	api.PostMessage(SlackReportChannel, slack.MsgOptionText(response, false),
+		slack.MsgOptionAsUser(true))
 }
 
 type basePlexRefreshCmdString struct {

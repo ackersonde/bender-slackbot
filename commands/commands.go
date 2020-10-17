@@ -121,8 +121,7 @@ func CheckCommand(api *slack.Client, event *slackevents.MessageEvent, command st
 				return
 			}
 		}
-		result = ShowBBGames(dateString)
-		api.PostMessage(event.Channel, slack.MsgOptionText(result, false), params)
+		ShowBBGames(dateString, api)
 	} else if args[0] == "do" {
 		response := ListDODroplets()
 		api.PostMessage(event.Channel, slack.MsgOptionText(response, false), params)
@@ -139,16 +138,14 @@ func CheckCommand(api *slack.Client, event *slackevents.MessageEvent, command st
 			api.PostMessage(event.Channel, slack.MsgOptionText("Please provide Droplet ID from `do` cmd!", true), params)
 		}
 	} else if args[0] == "fsck" {
-		response := ""
 		if len(args) > 1 {
 			path := strings.Join(args[1:], " ")
-			response += CheckMediaDiskSpace(path)
-			response += CheckServerDiskSpace(path)
+			CheckMediaDiskSpace(path, api)
+			CheckServerDiskSpace(path, api)
 		} else {
-			response += CheckMediaDiskSpace("")
-			response += CheckServerDiskSpace("")
+			CheckMediaDiskSpace("", api)
+			CheckServerDiskSpace("", api)
 		}
-		api.PostMessage(event.Channel, slack.MsgOptionText(response, true), params)
 	} else if args[0] == "wgs" {
 		api.PostMessage(event.Channel, slack.MsgOptionText(wireguardShow(), true), params)
 	} else if args[0] == "wgu" {
@@ -190,8 +187,7 @@ func CheckCommand(api *slack.Client, event *slackevents.MessageEvent, command st
 		if len(args) > 1 {
 			VPNCountry = strings.ToUpper(args[1])
 		}
-		response := VpnPiTunnelChecks(VPNCountry)
-		api.PostMessage(event.Channel, slack.MsgOptionText(response, false), params)
+		VpnPiTunnelChecks(VPNCountry, api)
 	} else if args[0] == "vpnc" {
 		response := "Please provide a new VPN server (hint: output from `vpns`)"
 		if len(args) > 1 {

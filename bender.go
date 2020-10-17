@@ -19,14 +19,14 @@ import (
 
 var botID = os.Getenv("SLACK_BENDER_BOT_USERID")
 
-func prepareScheduler() {
+func prepareScheduler(api *slack.Client) {
 	gocron.Every(1).Day().At("08:04").Do(
-		commands.ChangeToFastestVPNServer, commands.VPNCountry)
+		commands.ChangeToFastestVPNServer, commands.VPNCountry, api)
 	gocron.Every(1).Friday().At("09:04").Do(
-		commands.VpnPiTunnelChecks, commands.VPNCountry)
-	gocron.Every(1).Friday().At("09:05").Do(commands.CheckMediaDiskSpace, "")
-	gocron.Every(1).Friday().At("09:05").Do(commands.CheckServerDiskSpace, "")
-	gocron.Every(1).Day().At("17:30").Do(commands.ShowBBGames, "")
+		commands.VpnPiTunnelChecks, commands.VPNCountry, api)
+	gocron.Every(1).Friday().At("09:05").Do(commands.CheckMediaDiskSpace, "", api)
+	gocron.Every(1).Friday().At("09:05").Do(commands.CheckServerDiskSpace, "", api)
+	gocron.Every(1).Day().At("17:30").Do(commands.ShowBBGames, "", api)
 	//gocron.Every(1).Day().At("05:30").Do(common.UpdateFirewall)
 	//gocron.Every(1).Friday().At("09:03").Do(commands.ListDODroplets, false)
 	<-gocron.Start()
@@ -110,7 +110,7 @@ func main() {
 		slack.OptionDebug(false),
 		slack.OptionLog(commands.Logger),
 	)
-	go prepareScheduler() // spawn cron scheduler jobs
+	go prepareScheduler(api) // spawn cron scheduler jobs
 
 	http.HandleFunc("/"+os.Getenv("SLACK_EVENTSAPI_ENDPOINT"),
 		func(w http.ResponseWriter, r *http.Request) {
