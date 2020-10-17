@@ -119,9 +119,9 @@ func main() {
 				innerEvent := eventsAPIEvent.InnerEvent
 				switch ev := innerEvent.Data.(type) {
 				case *slackevents.MessageEvent:
+					go processMessage(api, ev)
 					// HTTP 202 -> we heard and are working on an async response
 					w.WriteHeader(http.StatusAccepted)
-					processMessage(api, ev)
 				}
 			}
 		})
