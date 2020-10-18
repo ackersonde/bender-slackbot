@@ -62,10 +62,6 @@ jobs:
           export CTX_ETHERSCAN_API_KEY_B64=`cat .base64_enc`
           sed -i -e "s@{{CTX_ETHERSCAN_API_KEY_B64}}@$CTX_ETHERSCAN_API_KEY_B64@" bender.yml
 
-          echo -n "${{ secrets.CTX_SLACK_API_TOKEN }}" | base64 | tr -d \\n > .base64_enc
-          export CTX_SLACK_API_TOKEN_B64=`cat .base64_enc`
-          sed -i -e "s@{{CTX_SLACK_API_TOKEN_B64}}@$CTX_SLACK_API_TOKEN_B64@" bender.yml
-
           echo -n "${{ secrets.CTX_SLACK_NEW_API_TOKEN }}" | base64 | tr -d \\n > .base64_enc
           export CTX_SLACK_NEW_API_TOKEN_B64=`cat .base64_enc`
           sed -i -e "s@{{CTX_SLACK_NEW_API_TOKEN_B64}}@$CTX_SLACK_NEW_API_TOKEN_B64@" bender.yml
