@@ -23,6 +23,7 @@ spec:
   selector:
     matchLabels:
       app: bender
+  revisionHistoryLimit: 5
   template:
     metadata:
       labels:
