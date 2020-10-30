@@ -26,7 +26,7 @@ func prepareScheduler() {
 		commands.VpnPiTunnelChecks, commands.VPNCountry)
 	gocron.Every(1).Friday().At("09:05").Do(commands.CheckMediaDiskSpace, "")
 	gocron.Every(1).Friday().At("09:05").Do(commands.CheckServerDiskSpace, "")
-	gocron.Every(1).Day().At("17:30").Do(commands.ShowBBGames, "")
+	//gocron.Every(1).Day().At("17:30").Do(commands.ShowBBGames, "")
 	//gocron.Every(1).Day().At("05:30").Do(common.UpdateFirewall)
 	//gocron.Every(1).Friday().At("09:03").Do(commands.ListDODroplets, false)
 	<-gocron.Start()
