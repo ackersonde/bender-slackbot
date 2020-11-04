@@ -127,6 +127,7 @@ jobs:
         env:
           SSH_CXN: ${{ secrets.CTX_K8S_SSH_USER }}@${{ secrets.CTX_K8S_SSH_HOST }}
         run: |
+          ssh-keygen -L -f ~/.ssh/id_ed25519-cert.pub
           wg-quick up tunnel
 
           scp -o StrictHostKeyChecking=no bender.yml $SSH_CXN:~/k3s/
