@@ -107,14 +107,8 @@ jobs:
 
       - name: Create wireguard tunnel configuration
         run: |
-          sudo apt-get install wireguard
-
-          curl -O https://raw.githubusercontent.com/ackersonde/traefik2_k3s/master/tunnel.conf
-          sed -i -e "s@{{CTX_WIREGUARD_PRIVATE_KEY}}@${{ secrets.CTX_WIREGUARD_PRIVATE_KEY }}@" tunnel.conf
-          sed -i -e "s@{{CTX_WIREGUARD_SERVER_PUBLIC_KEY}}@${{ secrets.CTX_WIREGUARD_SERVER_PUBLIC_KEY }}@" tunnel.conf
-          sed -i -e "s@{{CTX_WIREGUARD_PRESHARED_KEY}}@${{ secrets.CTX_WIREGUARD_PRESHARED_KEY }}@" tunnel.conf
-          sed -i -e "s@{{CTX_WIREGUARD_SERVER_ENDPOINT}}@${{ secrets.CTX_WIREGUARD_SERVER_ENDPOINT }}@" tunnel.conf
-          sudo mv tunnel.conf /etc/wireguard/
+          sudo apt-get install wireguard resolvconf
+          echo "${{ secrets.CTX_WIREGUARD_GITHUB_ACTIONS_CLIENT_CONFIG }}" | sudo tee /etc/wireguard/tunnel.conf
 
       - name: Prepare ssh key for remote login
         run: |
