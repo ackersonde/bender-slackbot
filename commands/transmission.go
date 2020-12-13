@@ -135,7 +135,7 @@ func torrentCommand(cmd []string) (result string) {
 }
 
 func checkTransmissionBindAddress() structures.RemoteResult {
-	cmd := "VPN_IP=`ip address | grep '10\\.' | awk '{print $2}' | cut -f1 -d/`; " +
+	cmd := "VPN_IP=`ip address | grep 'ipsec' | grep '10\\.' | awk '{print $2}' | cut -f1 -d/`; " +
 		`grep "\"bind-address-ipv4\": \"$VPN_IP\"" ` + transmissionSettingsPath +
 		" || echo $VPN_IP"
 	return executeRemoteCmd(cmd, structures.VPNPIRemoteConnectConfig)
