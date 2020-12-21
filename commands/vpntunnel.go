@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"regexp"
 	"sort"
@@ -204,27 +205,20 @@ func updateVpnPiTunnel(vpnServerDomain string) string {
 	}
 	response := "Failed changing :protonvpn: to " + vpnServerDomain
 
-	// First, update ipsec.conf with desired server & restart ipsec
-	sedCmd := `sudo sed -rie 's@[A-Za-z]{2}-[0-9]{2}\.protonvpn\.com@` +
-		vpnServerDomain + `@g' `
-	cmd := sedCmd + `/etc/ipsec.conf && sudo ipsec restart && sleep 3 && sudo ipsec up protonvpn`
+	stopVPNCmd := `sudo docker rm -f vpnission && `
+	startVPNCmd := `sudo docker run --env-file .config/vpnission.env.list -d \
+        --name vpnission --cap-add NET_ADMIN -p9091:9091 -p51413:51413 \
+        -v /mnt/usb4TB/DLNA/torrents:/mnt/torrents \
+        danackerson/vpnission ` + vpnServerDomain
+
+	cmd := stopVPNCmd + startVPNCmd
 
 	remoteResult := executeRemoteCmd(cmd, structures.VPNPIRemoteConnectConfig)
-	remoteResult = checkTransmissionBindAddress()
-	internalIP := strings.TrimSuffix(remoteResult.Stdout, "\n")
-	// if internalIP == "" {
-	// 	i := 0 // let's give ProtonVPN 30secs to connect, else retry 6 times
-	// 	for i < 6 && internalIP == "" {
-	// 		Logger.Printf("No VPN connection established yet...(try #%d)\n", i)
-	// 		time.Sleep(3 * time.Second)
-	// 		remoteResult = executeRemoteCmd("sudo ipsec up protonvpn",
-	// 			structures.VPNPIRemoteConnectConfig)
-	// 		remoteResult = checkTransmissionBindAddress()
-	// 		internalIP = strings.TrimSuffix(remoteResult.Stdout, "\n")
-	// 		i++
-	// 	}
-	// }
-	response = "Updated :protonvpn: to " + vpnServerDomain + " & " + ensureTransmissionBind(internalIP)
+	if remoteResult.Err != nil || remoteResult.Stderr != "" {
+		log.Printf("Errors on updating protonvpn: %s \n%s", remoteResult.Err.Error(), remoteResult.Stderr)
+	} else {
+		response = "Updated :protonvpn: to " + vpnServerDomain
+	}
 
 	return response
 }
