@@ -171,7 +171,7 @@ func transmissionSettingsAreSane(internalIP string) bool {
 	result := false
 
 	// match for correct ipv4 IP bind & broken ipv6 bind
-	cmd := `sudo docker exec -it vpnission grep -e '"bind-address-ipv4": "` + internalIP + `",' ` +
+	cmd := `sudo docker exec vpnission grep -e '"bind-address-ipv4": "` + internalIP + `",' ` +
 		`-e '"bind-address-ipv6": "fe80::",' ` +
 		transmissionSettingsPath
 	remoteResult := executeRemoteCmd(cmd, structures.VPNPIRemoteConnectConfig)

@@ -199,7 +199,7 @@ func raspberryPIChecks() string {
 		*structures.PI4RemoteConnectConfig}
 
 	response = measureCPUTemp(&hosts)
-	apps := []string{"sudo docker exec -it vpnission ipsec", "k3s"} // app order MUST match host above --^
+	apps := []string{"sudo docker exec vpnission ipsec", "k3s"} // app order MUST match host above --^
 	response += getAppVersions(apps, &hosts)
 
 	return response
@@ -209,13 +209,14 @@ func getAppVersions(apps []string, hosts *[]structures.RemoteConnectConfig) stri
 	result := "\n*APPs* :martial_arts_uniform:\n"
 	for i, host := range *hosts {
 		remoteResult := executeRemoteCmd(apps[i]+" --version", &host)
+		result := "_" + host.HostName + "_: "
 		if remoteResult.Stdout == "" && remoteResult.Stderr != "" {
-			result += host.HostName + ": " + remoteResult.Stderr
+			result += remoteResult.Stderr
 		} else {
-			result += "_" + host.HostName + "_: " + remoteResult.Stdout + "\n"
+			result += remoteResult.Stdout
 		}
 	}
-	return result
+	return result + "\n"
 }
 func measureCPUTemp(hosts *[]structures.RemoteConnectConfig) string {
 	measureCPUTempCmd := "((TEMP=`cat /sys/class/thermal/thermal_zone0/temp`/1000)); echo \"$TEMP\"C"

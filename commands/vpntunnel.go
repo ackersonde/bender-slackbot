@@ -27,7 +27,7 @@ func homeAndInternetIPsDoNotMatch(tunnelIP string) bool {
 	ipCheckHost := "https://ipv4.icanhazip.com"
 
 	go func() {
-		cmd := "sudo docker exec -it vpnission curl " + ipCheckHost
+		cmd := "sudo docker exec vpnission curl " + ipCheckHost
 		remoteResult := executeRemoteCmd(cmd, structures.VPNPIRemoteConnectConfig)
 
 		tunnelIdleSince = time.Now()
@@ -43,7 +43,7 @@ func homeAndInternetIPsDoNotMatch(tunnelIP string) bool {
 				timeoutDig := time.After(10 * time.Second)
 				// ensure home.ackerson.de is DIFFERENT than PI IP address!
 				go func() {
-					cmd := "sudo docker exec -it vpnission dig " + vpnGateway + " A +short"
+					cmd := "sudo docker exec vpnission dig " + vpnGateway + " A +short"
 					remoteResult := executeRemoteCmd(cmd, structures.VPNPIRemoteConnectConfig)
 
 					tunnelIdleSince = time.Now()
@@ -72,19 +72,24 @@ func homeAndInternetIPsDoNotMatch(tunnelIP string) bool {
 }
 
 func inspectVPNConnection() map[string]string {
-	results := make(chan string, 10)
+	resultsChannel := make(chan string, 10)
 	timeout := time.After(10 * time.Second)
 	go func() {
-		cmd := "sudo docker exec -it vpnission ipsec status | grep -A 2 ESTABLISHED"
+		cmd := "sudo docker exec vpnission ipsec status | grep -A 2 ESTABLISHED"
 		remoteResult := executeRemoteCmd(cmd, structures.VPNPIRemoteConnectConfig)
-		Logger.Printf("1 ipsec status: %s\n", remoteResult.Stdout)
 		tunnelIdleSince = time.Now()
-		results <- remoteResult.Stdout
+
+		result := ""
+		if remoteResult.Stdout == "" && remoteResult.Stderr != "" {
+			result += remoteResult.Stderr
+		} else {
+			result += remoteResult.Stdout
+		}
+		resultsChannel <- result
 	}()
 
 	select {
-	case res := <-results:
-		Logger.Printf("2 ipsec status: %s\n", res)
+	case res := <-resultsChannel:
 		if res != "" {
 			/* look for 1) ESTABLISHED "ago" 2) ...X.Y.Z[<endpointDNS>] 3) internalIP/32 ===
 			   proton[34]: ESTABLISHED 89 minutes ago, 192.168.178.59[192.168.178.59]...37.120.217.164[de-14.protonvpn.com]
