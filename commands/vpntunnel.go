@@ -205,19 +205,11 @@ func updateVpnPiTunnel(vpnServerDomain string) string {
 	cmd := stopVPNCmd + startVPNCmd
 
 	remoteResult := executeRemoteCmd(cmd, structures.VPNPIRemoteConnectConfig)
-	if remoteResult.Stderr != "" || remoteResult.Err != nil {
-		errors := ""
-		if remoteResult.Err != nil {
-			errors = fmt.Sprintf("%s", remoteResult.Err)
-		}
-		if remoteResult.Stderr != "" {
-			errors = errors + fmt.Sprintf(" : %s", remoteResult.Err)
-		}
-		log.Printf("Errors on updating protonvpn: %s\n", errors)
-	} else {
-		// TODO: double check against VpnPiTunnelChecks() -> may need sleep()
-		response = "Updated :protonvpn: to " + vpnServerDomain + ".protonvpn.com"
+	if remoteResult.Err != nil {
+		log.Printf("Errors on updating protonvpn: %v\n", remoteResult)
 	}
+	// TODO: double check against VpnPiTunnelChecks() -> may need sleep()
+	response = "Updated :protonvpn: to " + vpnServerDomain + ".protonvpn.com"
 
 	return response
 }
