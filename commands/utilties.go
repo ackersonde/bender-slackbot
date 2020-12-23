@@ -209,7 +209,7 @@ func getAppVersions(apps []string, hosts *[]structures.RemoteConnectConfig) stri
 	result := "\n*APPs* :martial_arts_uniform:\n"
 	for i, host := range *hosts {
 		remoteResult := executeRemoteCmd(apps[i]+" --version", &host)
-		result := "_" + host.HostName + "_: "
+		result += "_" + host.HostName + "_: "
 		if remoteResult.Stdout == "" && remoteResult.Stderr != "" {
 			result += remoteResult.Stderr
 		} else {
@@ -225,7 +225,7 @@ func measureCPUTemp(hosts *[]structures.RemoteConnectConfig) string {
 	for _, host := range *hosts {
 		remoteResult := executeRemoteCmd(measureCPUTempCmd, &host)
 		if remoteResult.Stdout == "" && remoteResult.Stderr != "" {
-			result += host.HostName + ": " + remoteResult.Stderr
+			result += "_" + host.HostName + "_: " + remoteResult.Stderr + "\n"
 		} else {
 			if strings.TrimSpace(remoteResult.Stdout) == "C" {
 				remoteResult = executeRemoteCmd("sensors | grep Tctl | awk '{print $2}'", &host)

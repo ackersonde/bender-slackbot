@@ -97,14 +97,15 @@ func torrentCommand(cmd []string) (result string) {
 	result = ":closed_lock_with_key: unable to talk to raspberrypi..."
 
 	// Connect to Transmission RPC daemon
+	endpoint := structures.VPNPIRemoteConnectConfig.HostEndpoints[0]
 	conf := transmission.Config{
-		Address: "http://" + structures.VPNPIRemoteConnectConfig.HostName + ":9091/transmission/rpc",
+		Address: "http://" + strings.TrimSuffix(endpoint, ":22") + ":9091/transmission/rpc",
 	}
 	t, err := transmission.New(conf)
 	if err != nil {
 		Logger.Printf("\nNew err: %v", err)
 	}
-
+	// TODO
 	if cmd[0] == "trans" {
 		result = getTorrents(t)
 	} else if cmd[0] == "tranc" {

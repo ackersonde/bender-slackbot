@@ -214,7 +214,6 @@ func updateVpnPiTunnel(vpnServerDomain string) string {
 	if remoteResult.Err != nil {
 		log.Printf("Errors on updating protonvpn: %v\n", remoteResult)
 	}
-	// TODO: double check against VpnPiTunnelChecks() -> may need sleep()
 	response = "Updated :protonvpn: to " + vpnServerDomain + ".protonvpn.com"
 
 	return response
