@@ -77,14 +77,14 @@ func inspectVPNConnection() map[string]string {
 	go func() {
 		cmd := "sudo docker exec -it vpnission ipsec status | grep -A 2 ESTABLISHED"
 		remoteResult := executeRemoteCmd(cmd, structures.VPNPIRemoteConnectConfig)
-
+		Logger.Printf("1 ipsec status: %s\n", remoteResult.Stdout)
 		tunnelIdleSince = time.Now()
 		results <- remoteResult.Stdout
 	}()
 
 	select {
 	case res := <-results:
-		log.Printf("ipsec status: %s\n", res)
+		Logger.Printf("2 ipsec status: %s\n", res)
 		if res != "" {
 			/* look for 1) ESTABLISHED "ago" 2) ...X.Y.Z[<endpointDNS>] 3) internalIP/32 ===
 			   proton[34]: ESTABLISHED 89 minutes ago, 192.168.178.59[192.168.178.59]...37.120.217.164[de-14.protonvpn.com]

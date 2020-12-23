@@ -199,7 +199,7 @@ func raspberryPIChecks() string {
 		*structures.PI4RemoteConnectConfig}
 
 	response = measureCPUTemp(&hosts)
-	apps := []string{"wg", "ipsec", "k3s"} // app order MUST match host above --^
+	apps := []string{"sudo docker exec -it vpnission ipsec", "k3s"} // app order MUST match host above --^
 	response += getAppVersions(apps, &hosts)
 
 	return response
