@@ -22,8 +22,8 @@ var botID = os.Getenv("SLACK_BENDER_BOT_USERID")
 func prepareScheduler() {
 	gocron.Every(1).Day().At("08:04").Do(
 		commands.ChangeToFastestVPNServer, commands.VPNCountry)
-	//gocron.Every(1).Friday().At("09:04").Do(   # TODO
-	//	commands.VpnPiTunnelChecks, commands.VPNCountry)
+	gocron.Every(1).Friday().At("09:04").Do(
+		commands.VpnPiTunnelChecks, commands.VPNCountry)
 	gocron.Every(1).Friday().At("09:05").Do(commands.CheckMediaDiskSpace, "")
 	gocron.Every(1).Friday().At("09:05").Do(commands.CheckServerDiskSpace, "")
 	//gocron.Every(1).Day().At("17:30").Do(commands.ShowBBGames, "")

@@ -10,7 +10,7 @@ import (
 	"github.com/odwrtw/transmission"
 )
 
-var transmissionSettingsPath = "/home/ubuntu/.config/transmission-daemon/settings.json"
+var transmissionSettingsPath = "/root/.config/transmission-daemon/settings.json"
 
 func getTorrents(t *transmission.Client) (result string) {
 	// Get all torrents
@@ -171,7 +171,7 @@ func transmissionSettingsAreSane(internalIP string) bool {
 	result := false
 
 	// match for correct ipv4 IP bind & broken ipv6 bind
-	cmd := `grep -e '"bind-address-ipv4": "` + internalIP + `",' ` +
+	cmd := `sudo docker exec -it vpnission grep -e '"bind-address-ipv4": "` + internalIP + `",' ` +
 		`-e '"bind-address-ipv6": "fe80::",' ` +
 		transmissionSettingsPath
 	remoteResult := executeRemoteCmd(cmd, structures.VPNPIRemoteConnectConfig)
@@ -180,12 +180,11 @@ func transmissionSettingsAreSane(internalIP string) bool {
 		if len(strings.Split(remoteResult.Stdout, "\n")) == 3 { // incl trailing \n
 			result = true
 		} else if internalIP != "" { // fix it!
-			sedCmd := `sed -rie 's/"bind-address-ipv4": "(.*)"/"bind-address-ipv4": "` +
-				internalIP + `"/' ` + transmissionSettingsPath +
-				` && sed -rie 's/"bind-address-ipv6": "(.*)"/"bind-address-ipv6": "fe80::"/' ` +
-				transmissionSettingsPath
-			cmd = `sudo service transmission-daemon stop && ` + sedCmd +
-				` && sudo service transmission-daemon start`
+			//sedCmd := `sed -rie 's/"bind-address-ipv4": "(.*)"/"bind-address-ipv4": "` +
+			//	internalIP + `"/' ` + transmissionSettingsPath +
+			//	` && sed -rie 's/"bind-address-ipv6": "(.*)"/"bind-address-ipv6": "fe80::"/' ` +
+			//	transmissionSettingsPath
+			cmd = `sudo docker rm -f vpnission`
 
 			Logger.Printf("FIX Transmission settings update: %s not found...", internalIP)
 			remoteResult = executeRemoteCmd(cmd, structures.VPNPIRemoteConnectConfig)

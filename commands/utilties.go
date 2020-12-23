@@ -106,6 +106,7 @@ func getDeployFingerprint(deployCertFilePath string) string {
 	return string(out)
 }
 
+// TODO - refactor to k3s
 func wireguardAction(action string) string {
 	response := ":wireguard: "
 	cmd := fmt.Sprintf("sudo wg-quick %s wg0", action)
@@ -178,10 +179,9 @@ func initialDialOut(hostname string, remoteConfig *ssh.ClientConfig) *ssh.Client
 }
 
 // Slack gets excited when it recognizes a string that might be a URL
-// e.g. de-16.protonvpn.com or Terminator.Dark.Fate.2019.1080p.WEBRip.x264-[YTS.LT].mp4
+// e.g. de-16.protonvpn.com or Big.Buck.Bunny.2007.1080p.x264-[opensrc.org].mp4
 // are sent to Bender as <http://de-16.protonvpn.com|de-16.protonvpn.com> or
-// Terminator.Dark.Fate.2019.1080p.WEBRip.x264-\[<http://YTS.LT|YTS.LT>\].mp4
-// respectively
+// Big.Buck.Bunny.2007.1080p.x264-\[<http://opensrc.org|opensrc.org>\].mp4
 func scrubParamOfHTTPMagicCrap(sourceString string) string {
 	if strings.Contains(sourceString, "<http") {
 		// strip out url tags leaving just the text
@@ -195,7 +195,6 @@ func scrubParamOfHTTPMagicCrap(sourceString string) string {
 func raspberryPIChecks() string {
 	response := ""
 	hosts := []structures.RemoteConnectConfig{
-		*structures.BlondeBomberRemoteConnectConfig,
 		*structures.VPNPIRemoteConnectConfig,
 		*structures.PI4RemoteConnectConfig}
 

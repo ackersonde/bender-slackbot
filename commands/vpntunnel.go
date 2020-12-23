@@ -27,7 +27,7 @@ func homeAndInternetIPsDoNotMatch(tunnelIP string) bool {
 	ipCheckHost := "https://ipv4.icanhazip.com"
 
 	go func() {
-		cmd := "curl " + ipCheckHost
+		cmd := "sudo docker exec -it vpnission curl " + ipCheckHost
 		remoteResult := executeRemoteCmd(cmd, structures.VPNPIRemoteConnectConfig)
 
 		tunnelIdleSince = time.Now()
@@ -43,7 +43,7 @@ func homeAndInternetIPsDoNotMatch(tunnelIP string) bool {
 				timeoutDig := time.After(10 * time.Second)
 				// ensure home.ackerson.de is DIFFERENT than PI IP address!
 				go func() {
-					cmd := "dig " + vpnGateway + " A +short"
+					cmd := "sudo docker exec -it vpnission dig " + vpnGateway + " A +short"
 					remoteResult := executeRemoteCmd(cmd, structures.VPNPIRemoteConnectConfig)
 
 					tunnelIdleSince = time.Now()
@@ -75,7 +75,7 @@ func inspectVPNConnection() map[string]string {
 	results := make(chan string, 10)
 	timeout := time.After(10 * time.Second)
 	go func() {
-		cmd := "sudo ipsec status | grep -A 2 ESTABLISHED"
+		cmd := "sudo docker exec -it vpnission status | grep -A 2 ESTABLISHED"
 		remoteResult := executeRemoteCmd(cmd, structures.VPNPIRemoteConnectConfig)
 
 		tunnelIdleSince = time.Now()
@@ -97,12 +97,6 @@ func inspectVPNConnection() map[string]string {
 			m := map[string]string{}
 			for i, n := range matches[0] {
 				m[names[i]] = n
-			}
-
-			if len(m) < 1 {
-				cmd := "sudo ipsec restart"
-				remoteResult := executeRemoteCmd(cmd, structures.VPNPIRemoteConnectConfig)
-				Logger.Printf("restarting VPN %s", remoteResult.Stdout)
 			}
 
 			return m
@@ -200,10 +194,7 @@ func VpnPiTunnelChecks(vpnCountry string) {
 }
 
 func updateVpnPiTunnel(vpnServerDomain string) string {
-	if !strings.HasSuffix(vpnServerDomain, ".protonvpn.com") {
-		vpnServerDomain = vpnServerDomain + ".protonvpn.com"
-	}
-	response := "Failed changing :protonvpn: to " + vpnServerDomain
+	response := "Failed changing :protonvpn: to " + vpnServerDomain + ".protonvpn.com"
 
 	stopVPNCmd := `sudo docker rm -f vpnission && `
 	startVPNCmd := `sudo docker run --env-file .config/vpnission.env.list -d \
@@ -214,10 +205,18 @@ func updateVpnPiTunnel(vpnServerDomain string) string {
 	cmd := stopVPNCmd + startVPNCmd
 
 	remoteResult := executeRemoteCmd(cmd, structures.VPNPIRemoteConnectConfig)
-	if remoteResult.Err != nil || remoteResult.Stderr != "" {
-		log.Printf("Errors on updating protonvpn: %s \n%s", remoteResult.Err.Error(), remoteResult.Stderr)
+	if remoteResult.Stderr != "" || remoteResult.Err != nil {
+		errors := ""
+		if remoteResult.Err != nil {
+			errors = fmt.Sprintf("%s", remoteResult.Err)
+		}
+		if remoteResult.Stderr != "" {
+			errors = errors + fmt.Sprintf(" : %s", remoteResult.Err)
+		}
+		log.Printf("Errors on updating protonvpn: %s\n", errors)
 	} else {
-		response = "Updated :protonvpn: to " + vpnServerDomain
+		// TODO: double check against VpnPiTunnelChecks() -> may need sleep()
+		response = "Updated :protonvpn: to " + vpnServerDomain + ".protonvpn.com"
 	}
 
 	return response

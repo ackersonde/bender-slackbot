@@ -206,7 +206,7 @@ func pgpKeys() string {
 	keybasePGP := "<https://keybase.io/danackerson/pgp_keys.asc?fingerprint=" +
 		pgpKey + "|" + string(pgpKey[len(pgpKey)-16:]) + ">"
 
-	// TODO: check actual current PGP key value from keyserver.ubuntu.com against keybase PGP key value!
+	// TODO: time to delete keybase account?
 
 	return fmt.Sprintf(":ubuntu: %s & %s\n:keybase: %s & %s",
 		currentPGPKey, pastPGPKeys, keybasePGP, keybaseIdentify)

@@ -116,7 +116,6 @@ func CheckCommand(event *slackevents.MessageEvent, command string) {
 		dateString := ""
 
 		if len(args) > 1 {
-			// TODO: use https://github.com/olebedev/when for Natural Language processing
 			gameDate, err := time.Parse("2006-01-02", args[1])
 			dateString = gameDate.Format("2006/month_01/day_02")
 
