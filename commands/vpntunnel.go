@@ -75,7 +75,7 @@ func inspectVPNConnection() map[string]string {
 	results := make(chan string, 10)
 	timeout := time.After(10 * time.Second)
 	go func() {
-		cmd := "sudo docker exec -it vpnission status | grep -A 2 ESTABLISHED"
+		cmd := "sudo docker exec -it vpnission ipsec status | grep -A 2 ESTABLISHED"
 		remoteResult := executeRemoteCmd(cmd, structures.VPNPIRemoteConnectConfig)
 
 		tunnelIdleSince = time.Now()
