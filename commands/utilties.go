@@ -106,12 +106,13 @@ func getDeployFingerprint(deployCertFilePath string) string {
 	return string(out)
 }
 
-// TODO - refactor to k3s
+var baseWireGuardCmd = "sudo kubectl exec -it $(sudo kubectl get po | grep wireguard | awk '{print $1; exit}' | tr -d \\n) -- bash -c"
+
 func wireguardAction(action string) string {
 	response := ":wireguard: "
-	cmd := fmt.Sprintf("sudo wg-quick %s wg0", action)
+	cmd := fmt.Sprintf("%s 'wg-quick %s wg0'", baseWireGuardCmd, action)
 	Logger.Printf("cmd: %s", cmd)
-	remoteResult := executeRemoteCmd(cmd, structures.BlondeBomberRemoteConnectConfig)
+	remoteResult := executeRemoteCmd(cmd, structures.PI4RemoteConnectConfig)
 
 	if remoteResult.Stdout == "" && remoteResult.Stderr != "" {
 		response += remoteResult.Stderr
@@ -124,9 +125,9 @@ func wireguardAction(action string) string {
 
 func wireguardShow() string {
 	response := ":wireguard: "
-	cmd := fmt.Sprintf("sudo wg")
+	cmd := fmt.Sprintf("%s 'wg --version; wg'", baseWireGuardCmd)
 	Logger.Printf("cmd: %s", cmd)
-	remoteResult := executeRemoteCmd(cmd, structures.BlondeBomberRemoteConnectConfig)
+	remoteResult := executeRemoteCmd(cmd, structures.PI4RemoteConnectConfig)
 
 	if remoteResult.Stdout == "" && remoteResult.Stderr != "" {
 		response += remoteResult.Stderr
