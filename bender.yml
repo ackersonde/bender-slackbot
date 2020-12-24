@@ -32,8 +32,6 @@ spec:
       restartPolicy: Always
       imagePullSecrets:
         - name: dockerhub
-      nodeSelector:
-        traefik: proxy
       containers:
         - name: bender
           image: danackerson/slackbot:vg{{GITHUB_RUN_ID}}

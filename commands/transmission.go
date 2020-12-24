@@ -103,9 +103,9 @@ func torrentCommand(cmd []string) (result string) {
 	}
 	t, err := transmission.New(conf)
 	if err != nil {
-		Logger.Printf("\nNew err: %v", err)
+		Logger.Printf("\nUnable to instantiate Transmission RPC client: %v", err)
 	}
-	// TODO
+
 	if cmd[0] == "trans" {
 		result = getTorrents(t)
 	} else if cmd[0] == "tranc" {
@@ -133,39 +133,6 @@ func torrentCommand(cmd []string) (result string) {
 	tunnelIdleSince = time.Now()
 
 	return result
-}
-
-func checkTransmissionBindAddress() structures.RemoteResult {
-	cmd := "VPN_IP=`ip address | grep 'ipsec' | grep '10\\.' | awk '{print $2}' | cut -f1 -d/`; " +
-		`grep "\"bind-address-ipv4\": \"$VPN_IP\"" ` + transmissionSettingsPath +
-		" || echo $VPN_IP"
-	return executeRemoteCmd(cmd, structures.VPNPIRemoteConnectConfig)
-	// ^-- returns e.g. "bind-address-ipv4": "10.1.8.75", if found
-	// else 10.1.8.75 if *not* found
-}
-
-func ensureTransmissionBind(internalIP string) string {
-	response := "Unable to update :transmission: ipv4 bind"
-
-	if internalIP != "" &&
-		!strings.Contains(internalIP, "bind-address-ipv4") {
-		Logger.Printf("new internal VPN IP: %s - updating transmission", internalIP)
-
-		sedCmd := `sed -rie 's/"bind-address-ipv4": "(.*)"/"bind-address-ipv4": "` +
-			internalIP + `"/' `
-		cmd := `sudo service transmission-daemon stop && ` +
-			sedCmd + transmissionSettingsPath +
-			` && sudo service transmission-daemon start`
-
-		remoteResult := executeRemoteCmd(cmd, structures.VPNPIRemoteConnectConfig)
-		if remoteResult.Err == nil {
-			response = "Changed :transmission: ipv4 bind: " + internalIP
-		}
-	} else if strings.Contains(internalIP, "bind-address-ipv4") {
-		response = ":transmission: ipv4 bind already correct: " + internalIP
-	}
-
-	return response
 }
 
 func transmissionSettingsAreSane(internalIP string) bool {
