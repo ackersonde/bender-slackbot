@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"regexp"
 	"sort"
@@ -195,6 +194,10 @@ func VpnPiTunnelChecks(vpnCountry string) {
 			bestVPNServer.Score,
 			bestVPNServer.Domain)
 
+	if strings.HasPrefix(response, ":protonvpn: VPN: DOWN") {
+		response = updateVpnPiTunnel(bestVPNServer.Domain)
+	}
+
 	api.PostMessage(SlackReportChannel, slack.MsgOptionText(response, false),
 		slack.MsgOptionAsUser(true))
 }
@@ -212,9 +215,10 @@ func updateVpnPiTunnel(vpnServerDomain string) string {
 
 	remoteResult := executeRemoteCmd(cmd, structures.VPNPIRemoteConnectConfig)
 	if remoteResult.Err != nil {
-		log.Printf("Errors on updating protonvpn: %v\n", remoteResult)
+		response += fmt.Sprintf("\nErrors on updating protonvpn: %v\n", remoteResult)
+	} else {
+		response = "Updated :protonvpn: to " + vpnServerDomain + ".protonvpn.com"
 	}
-	response = "Updated :protonvpn: to " + vpnServerDomain + ".protonvpn.com"
 
 	return response
 }

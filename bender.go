@@ -27,8 +27,6 @@ func prepareScheduler() {
 	gocron.Every(1).Friday().At("09:05").Do(commands.CheckMediaDiskSpace, "")
 	gocron.Every(1).Friday().At("09:05").Do(commands.CheckServerDiskSpace, "")
 	//gocron.Every(1).Day().At("17:30").Do(commands.ShowBBGames, "")
-	//gocron.Every(1).Day().At("05:30").Do(common.UpdateFirewall)
-	//gocron.Every(1).Friday().At("09:03").Do(commands.ListDODroplets, false)
 	<-gocron.Start()
 
 	// more examples: https://github.com/jasonlvhit/gocron/blob/master/example/example.go#L19
