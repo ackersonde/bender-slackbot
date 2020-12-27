@@ -209,11 +209,16 @@ func getAppVersions(hosts *[]structures.RemoteConnectConfig) string {
 	result := "\n*APPs* :martial_arts_uniform:\n"
 	for _, host := range *hosts {
 		remoteResult := executeRemoteCmd("k3s --version | head -n 1", &host)
+
 		result += "_" + host.HostName + "_: "
 		if remoteResult.Stdout == "" && remoteResult.Stderr != "" {
 			result += remoteResult.Stderr
 		} else {
 			result += remoteResult.Stdout
+			if strings.HasPrefix(host.HostName, "vpnpi") {
+				remoteResult := executeRemoteCmd("sudo docker --version", &host)
+				result += ", " + strings.TrimRight(remoteResult.Stdout, "\n")
+			}
 		}
 	}
 	return result + "\n"
