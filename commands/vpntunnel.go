@@ -170,7 +170,10 @@ func ChangeToFastestVPNServer(vpnCountry string) {
 
 // VpnPiTunnelChecks ensures correct VPN connection
 func VpnPiTunnelChecks(vpnCountry string) {
-	response := ":protonvpn: VPN: DOWN :rotating_light:"
+	ipsecVersion := executeRemoteCmd(
+		"sudo docker exec vpnission ipsec --version | head -n 1",
+		structures.BlondeBomberRemoteConnectConfig)
+	response := ipsecVersion.Stdout + ":protonvpn: VPN: DOWN :rotating_light:"
 
 	vpnTunnelSpecs := inspectVPNConnection()
 	if len(vpnTunnelSpecs) > 0 {
@@ -180,7 +183,7 @@ func VpnPiTunnelChecks(vpnCountry string) {
 
 		if homeAndInternetIPsDoNotMatch(vpnTunnelSpecs["endpointIP"]) &&
 			transmissionSettingsAreSane(vpnTunnelSpecs["internalIP"]) {
-			response = ":protonvpn: VPN: UP @ " + vpnTunnelSpecs["internalIP"] +
+			response = ipsecVersion.Stdout + ":protonvpn: VPN: UP @ " + vpnTunnelSpecs["internalIP"] +
 				" for " + vpnTunnelSpecs["time"] + " (using " +
 				vpnTunnelSpecs["endpointDNS"] + ")"
 		}
@@ -194,8 +197,9 @@ func VpnPiTunnelChecks(vpnCountry string) {
 			bestVPNServer.Score,
 			bestVPNServer.Domain)
 
-	if strings.HasPrefix(response, ":protonvpn: VPN: DOWN") {
-		response = updateVpnPiTunnel(bestVPNServer.Domain)
+	if strings.Contains(response, ":protonvpn: VPN: DOWN") {
+		response = ipsecVersion.Stdout + "VPN was DOWN! Restarting...\n" +
+			updateVpnPiTunnel(bestVPNServer.Domain)
 	}
 
 	api.PostMessage(SlackReportChannel, slack.MsgOptionText(response, false),
