@@ -194,20 +194,20 @@ func scrubParamOfHTTPMagicCrap(sourceString string) string {
 }
 
 func raspberryPIChecks() string {
-	response := ""
-	hosts := []structures.RemoteConnectConfig{
-		*structures.VPNPIRemoteConnectConfig,
-		*structures.PI4RemoteConnectConfig}
-
-	response = measureCPUTemp(&hosts)
-	response += getAppVersions(&hosts)
+	response := measureCPUTemp()
+	response += getAppVersions()
 
 	return response
 }
 
-func getAppVersions(hosts *[]structures.RemoteConnectConfig) string {
+func getAppVersions() string {
 	result := "\n*APPs* :martial_arts_uniform:\n"
-	for _, host := range *hosts {
+
+	hosts := []structures.RemoteConnectConfig{
+		*structures.VPNPIRemoteConnectConfig,
+		*structures.PI4RemoteConnectConfig}
+
+	for _, host := range hosts {
 		remoteResult := executeRemoteCmd("k3s --version | head -n 1", &host)
 
 		result += "_" + host.HostName + "_: "
@@ -224,18 +224,23 @@ func getAppVersions(hosts *[]structures.RemoteConnectConfig) string {
 	return result + "\n"
 }
 
-func measureCPUTemp(hosts *[]structures.RemoteConnectConfig) string {
+func measureCPUTemp() string {
 	measureCPUTempCmd := "((TEMP=`cat /sys/class/thermal/thermal_zone0/temp`/1000)); echo \"$TEMP\"C"
 
+	hosts := []structures.RemoteConnectConfig{
+		*structures.BlondeBomberRemoteConnectConfig,
+		*structures.VPNPIRemoteConnectConfig,
+		*structures.PI4RemoteConnectConfig}
+
 	result := "*CPUs* :thermometer:\n"
-	for _, host := range *hosts {
+	for _, host := range hosts {
+		if strings.HasPrefix(host.HostName, "blonde") {
+			measureCPUTempCmd = "/usr/bin/sensors | grep Tctl | cut -d+ -f2"
+		}
 		remoteResult := executeRemoteCmd(measureCPUTempCmd, &host)
 		if remoteResult.Stdout == "" && remoteResult.Stderr != "" {
 			result += "_" + host.HostName + "_: " + remoteResult.Stderr + "\n"
 		} else {
-			if strings.TrimSpace(remoteResult.Stdout) == "C" {
-				remoteResult = executeRemoteCmd("sensors | grep Tctl | awk '{print $2}'", &host)
-			}
 			result += "_" + host.HostName + "_: *" + strings.TrimSuffix(remoteResult.Stdout, "\n") + "*\n"
 		}
 	}

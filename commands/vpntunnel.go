@@ -172,7 +172,7 @@ func ChangeToFastestVPNServer(vpnCountry string) {
 func VpnPiTunnelChecks(vpnCountry string) {
 	ipsecVersion := executeRemoteCmd(
 		"sudo docker exec vpnission ipsec --version | head -n 1",
-		structures.BlondeBomberRemoteConnectConfig)
+		structures.VPNPIRemoteConnectConfig)
 	response := ipsecVersion.Stdout + ":protonvpn: VPN: DOWN :rotating_light:"
 
 	vpnTunnelSpecs := inspectVPNConnection()
