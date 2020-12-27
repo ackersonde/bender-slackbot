@@ -216,8 +216,9 @@ func getAppVersions() string {
 		} else {
 			result += remoteResult.Stdout
 			if strings.HasPrefix(host.HostName, "vpnpi") {
+				result = strings.TrimRight(result, "\n") + ", "
 				remoteResult := executeRemoteCmd("sudo docker --version", &host)
-				result += ", " + strings.TrimRight(remoteResult.Stdout, "\n")
+				result += remoteResult.Stdout
 			}
 		}
 	}
@@ -225,8 +226,6 @@ func getAppVersions() string {
 }
 
 func measureCPUTemp() string {
-	measureCPUTempCmd := "((TEMP=`cat /sys/class/thermal/thermal_zone0/temp`/1000)); echo \"$TEMP\"C"
-
 	hosts := []structures.RemoteConnectConfig{
 		*structures.BlondeBomberRemoteConnectConfig,
 		*structures.VPNPIRemoteConnectConfig,
@@ -234,9 +233,11 @@ func measureCPUTemp() string {
 
 	result := "*CPUs* :thermometer:\n"
 	for _, host := range hosts {
+		measureCPUTempCmd := "((TEMP=`cat /sys/class/thermal/thermal_zone0/temp`/1000)); echo \"$TEMP\"C"
 		if strings.HasPrefix(host.HostName, "blonde") {
 			measureCPUTempCmd = "/usr/bin/sensors | grep Tctl | cut -d+ -f2"
 		}
+
 		remoteResult := executeRemoteCmd(measureCPUTempCmd, &host)
 		if remoteResult.Stdout == "" && remoteResult.Stderr != "" {
 			result += "_" + host.HostName + "_: " + remoteResult.Stderr + "\n"
