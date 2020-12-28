@@ -207,10 +207,11 @@ func VpnPiTunnelChecks(vpnCountry string) {
 		// check if we're already using the Best server
 		remoteResult := executeRemoteCmd("host "+bestVPNServer.Domain,
 			structures.VPNPIRemoteConnectConfig)
-		if remoteResult.Err == nil {
+		if remoteResult.Err != nil {
 			response += bestVPNServer.Domain
+		} else {
+			response += remoteResult.Stdout
 		}
-		response += remoteResult.Stdout
 	}
 
 	api.PostMessage(SlackReportChannel, slack.MsgOptionText(response, false),
