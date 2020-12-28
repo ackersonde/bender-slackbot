@@ -60,7 +60,7 @@ func homeAndInternetIPsDoNotMatch(tunnelIP string) bool {
 					Logger.Printf("Time out on dig %s", vpnGateway)
 				}
 			} else {
-				Logger.Printf("VPN addy's no match: %s != %s", res, tunnelIP)
+				Logger.Printf("VPN addy's don't match: %s != %s", res, tunnelIP)
 			}
 		}
 	case <-timeout:
@@ -100,14 +100,18 @@ func inspectVPNConnection() map[string]string {
 			names := re.SubexpNames()
 
 			m := map[string]string{}
-			for i, n := range matches[0] {
-				m[names[i]] = n
+			if len(m) > 0 {
+				for i, n := range matches[0] {
+					m[names[i]] = n
+				}
+			} else {
+				Logger.Printf("ERR: IPSec down")
 			}
 
 			return m
 		}
 	case <-timeout:
-		Logger.Printf("Timed out on ipsec status")
+		Logger.Printf("ERR: Timed out on IPSec status")
 	}
 	return map[string]string{}
 }
@@ -191,15 +195,22 @@ func VpnPiTunnelChecks(vpnCountry string) {
 
 	bestVPNServer := findBestVPNServer(vpnCountry)
 	response = response + "\n\nBest VPN server in " + vpnCountry + " => " +
-		fmt.Sprintf("Tier:%d Load:%d Score:%f %s\n",
+		fmt.Sprintf("Tier:%d Load:%d Score:%f ",
 			bestVPNServer.Tier,
 			bestVPNServer.Load,
-			bestVPNServer.Score,
-			bestVPNServer.Domain)
+			bestVPNServer.Score)
 
 	if strings.Contains(response, ":protonvpn: VPN: DOWN") {
 		response = ipsecVersion.Stdout + "VPN was DOWN! Restarting...\n" +
 			updateVpnPiTunnel(bestVPNServer.Domain)
+	} else {
+		// check if we're already using the Best server
+		remoteResult := executeRemoteCmd("host "+bestVPNServer.Domain,
+			structures.VPNPIRemoteConnectConfig)
+		if remoteResult.Err == nil {
+			response += bestVPNServer.Domain
+		}
+		response += remoteResult.Stdout
 	}
 
 	api.PostMessage(SlackReportChannel, slack.MsgOptionText(response, false),
