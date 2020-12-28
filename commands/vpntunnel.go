@@ -207,7 +207,7 @@ func VpnPiTunnelChecks(vpnCountry string) {
 }
 
 func updateVpnPiTunnel(vpnServerDomain string) string {
-	response := "Failed changing :protonvpn: to " + vpnServerDomain + ".protonvpn.com"
+	response := "Failed changing :protonvpn: to " + vpnServerDomain
 
 	stopVPNCmd := `sudo docker rm -f vpnission && `
 	startVPNCmd := `sudo docker run --env-file .config/vpnission.env.list -d \
@@ -221,7 +221,7 @@ func updateVpnPiTunnel(vpnServerDomain string) string {
 	if remoteResult.Err != nil {
 		response += fmt.Sprintf("\nErrors on updating protonvpn: %v\n", remoteResult)
 	} else {
-		response = "Updated :protonvpn: to " + vpnServerDomain + ".protonvpn.com"
+		response = "Updated :protonvpn: to " + vpnServerDomain
 	}
 
 	return response
