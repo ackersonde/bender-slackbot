@@ -100,7 +100,7 @@ func inspectVPNConnection() map[string]string {
 			names := re.SubexpNames()
 
 			m := map[string]string{}
-			if len(m) > 0 {
+			if len(matches) > 0 {
 				for i, n := range matches[0] {
 					m[names[i]] = n
 				}
