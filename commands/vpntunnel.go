@@ -195,7 +195,7 @@ func VpnPiTunnelChecks(vpnCountry string) {
 	
 	bestVPNServer := findBestVPNServer(vpnCountry)
 	response = response + "\n\nBest in " + vpnCountry +
-		fmt.Sprintf(" %d% ", bestVPNServer.Load)
+		fmt.Sprintf(" %d%% ", bestVPNServer.Load)
 
 	if strings.Contains(response, ":protonvpn: VPN: DOWN") {
 		response = ipsecVersion.Stdout + "VPN was DOWN! Restarting...\n" +
@@ -207,7 +207,7 @@ func VpnPiTunnelChecks(vpnCountry string) {
 		if remoteResult.Err != nil {
 			response += "Couldn't get IP of " + bestVPNServer.Domain
 		} else {
-			response +=  "(*" + remoteResult.Stdout + "*)"
+			response += remoteResult.Stdout
 		}
 	}
 
