@@ -187,18 +187,15 @@ func VpnPiTunnelChecks(vpnCountry string) {
 
 		if homeAndInternetIPsDoNotMatch(vpnTunnelSpecs["endpointIP"]) &&
 			transmissionSettingsAreSane(vpnTunnelSpecs["internalIP"]) {
-			response = ipsecVersion.Stdout + ":protonvpn: VPN: UP @ " + vpnTunnelSpecs["internalIP"] +
-				" for " + vpnTunnelSpecs["time"] + " (using " +
-				vpnTunnelSpecs["endpointDNS"] + ")"
+			response = ipsecVersion.Stdout + ":protonvpn: VPN: UP for " + 
+				vpnTunnelSpecs["time"] + " (*" +
+				vpnTunnelSpecs["endpointDNS"] + "*)"
 		}
 	}
-
+	
 	bestVPNServer := findBestVPNServer(vpnCountry)
-	response = response + "\n\nBest VPN server in " + vpnCountry + " => " +
-		fmt.Sprintf("Tier:%d Load:%d Score:%f ",
-			bestVPNServer.Tier,
-			bestVPNServer.Load,
-			bestVPNServer.Score)
+	response = response + "\n\nBest in " + vpnCountry +
+		fmt.Sprintf(" %d% ", bestVPNServer.Load)
 
 	if strings.Contains(response, ":protonvpn: VPN: DOWN") {
 		response = ipsecVersion.Stdout + "VPN was DOWN! Restarting...\n" +
@@ -208,9 +205,9 @@ func VpnPiTunnelChecks(vpnCountry string) {
 		remoteResult := executeRemoteCmd("host "+bestVPNServer.Domain,
 			structures.VPNPIRemoteConnectConfig)
 		if remoteResult.Err != nil {
-			response += bestVPNServer.Domain
+			response += "Couldn't get IP of " + bestVPNServer.Domain
 		} else {
-			response += remoteResult.Stdout
+			response +=  "(*" + remoteResult.Stdout + "*)"
 		}
 	}
 
