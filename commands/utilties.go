@@ -121,8 +121,10 @@ func wifiAction(action string) string {
 		out, err = exec.Command("/app/fritzBoxShell.sh", boxIP, boxUser, boxPass, "WLAN_5G", action).Output()
 	} else {
 		cmd := exec.Command("/app/fritzBoxShell.sh", boxIP, boxUser, boxPass, "WLAN", action)
-		printCommand(cmd)
-		out, err = cmd.Output()
+		Logger.Print("cmd as String: " + cmd.String())
+		cmd2 := exec.Command(fmt.Sprintf("%s", strings.Join(cmd.Args, " ")))
+		printCommand(cmd2)
+		out, err = cmd2.Output()
 	}
 	// TODO: implement `wgg` to enable guest wifi (""" WLAN_GUEST 1)
 
