@@ -120,7 +120,9 @@ func wifiAction(action string) string {
 		out, err = exec.Command("/app/fritzBoxShell.sh", boxIP, boxUser, boxPass, "WLAN_2G", action).Output()
 		out, err = exec.Command("/app/fritzBoxShell.sh", boxIP, boxUser, boxPass, "WLAN_5G", action).Output()
 	} else {
-		out, err = exec.Command("/app/fritzBoxShell.sh", boxIP, boxUser, boxPass, "WLAN", action).Output()
+		cmd := exec.Command("/app/fritzBoxShell.sh", boxIP, boxUser, boxPass, "WLAN", action)
+		printCommand(cmd)
+		out, err = cmd.Output()
 	}
 	// TODO: implement `wgg` to enable guest wifi (""" WLAN_GUEST 1)
 
@@ -132,6 +134,10 @@ func wifiAction(action string) string {
 	}
 
 	return response
+}
+
+func printCommand(cmd *exec.Cmd) {
+	fmt.Printf("==> Executing: %s\n", strings.Join(cmd.Args, " "))
 }
 
 var baseWireGuardCmd = "sudo kubectl exec -it $(sudo kubectl get po | grep wireguard | awk '{print $1; exit}' | tr -d \\n) -- bash -c"
