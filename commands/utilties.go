@@ -112,16 +112,17 @@ func wifiAction(action string) string {
 
 	boxIP := fmt.Sprintf("--boxip %s", os.Getenv("FRITZ_BOX_HOST"))
 	boxUser := fmt.Sprintf("--boxuser %s", os.Getenv("FRITZ_BOX_USER"))
-	boxPass := fmt.Sprintf("--boxpass %s", os.Getenv("FRITZ_BOX_PASS"))
+	boxPass := fmt.Sprintf("--boxpw %s", os.Getenv("FRITZ_BOX_PASS"))
 
 	var out []byte
 	var err error
-	if action == "1" {
+	if action == "1" { // only turn on 2G/5G bands (not Guest WLAN)
 		out, err = exec.Command("/app/fritzBoxShell.sh", boxIP, boxUser, boxPass, "WLAN_2G", action).Output()
 		out, err = exec.Command("/app/fritzBoxShell.sh", boxIP, boxUser, boxPass, "WLAN_5G", action).Output()
 	} else {
-		out, err = exec.Command("/app/fritzBoxShell.sh", boxIP, boxUser, boxPass, action).Output()
+		out, err = exec.Command("/app/fritzBoxShell.sh", boxIP, boxUser, boxPass, "WLAN", action).Output()
 	}
+	// TODO: implement `wgg` to enable guest wifi (""" WLAN_GUEST 1)
 
 	if err != nil {
 		Logger.Printf("ERR: %s", err.Error())

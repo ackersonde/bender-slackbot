@@ -249,7 +249,6 @@ func CheckCommand(event *slackevents.MessageEvent, command string) {
 				":sun_behind_rain_cloud: `sw`: Schwabhausen weather\n" +
 				":mvv: `mvv`: Status | Trip In | Trip Home\n" +
 				":baseball: `bb <YYYY-MM-DD>`: show baseball games from given date (default yesterday)\n" +
-				//":do_droplet: `do|dd <id>`: show|delete DigitalOcean droplet(s)\n" +
 				":wireguard: `wg[s|u|d]`: [S]how status, [U]p or [D]own wireguard tunnel\n" +
 				":protonvpn: `vpn[s|c]`: [S]how status of VPN on :raspberry_pi:, [C]hange VPN to best in given country or " + VPNCountry + "\n" +
 				":pirate_bay: `torq <search term>`\n" +
@@ -260,10 +259,12 @@ func CheckCommand(event *slackevents.MessageEvent, command string) {
 				":bar_chart: `pi`: Stats of various :raspberry_pi:s\n" +
 				":github: `version`: Which build/deploy is this Bender bot?\n" +
 				":earth_americas: `www`: Show various internal links\n" +
-				":copyright: `scpxl <URL>`: scp URL file to Pops4XL\n"
+				":copyright: `scpxl <URL>`: scp URL file to Pops4XL\n" +
+				":wifi: `wf[s|u|d]`: [S]how status, [U]p or [D]own fritzbox wifi\n"
+
 		api.PostMessage(event.Channel, slack.MsgOptionText(response, true), params)
 	} else if event.User != "" {
-		response := "whaddya say <@" + event.Message.Username + ">? Try `help` instead..."
+		response := "whaddya say <@" + event.User + ">? Try `help` instead..."
 		api.PostMessage(event.Channel, slack.MsgOptionText(response, false), params)
 	} else {
 		Logger.Printf("No Command found: %s", event.Text)
