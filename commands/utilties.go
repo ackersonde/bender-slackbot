@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"os"
 	"os/exec"
 	"regexp"
 	"strings"
@@ -100,10 +101,36 @@ func GetPublicCertificate(privateKeyPath string) ssh.Signer {
 func getDeployFingerprint(deployCertFilePath string) string {
 	out, err := exec.Command("/usr/bin/ssh-keygen", "-Lf", deployCertFilePath).Output()
 	if err != nil {
-		log.Println(err)
+		Logger.Printf("ERR: %s", err.Error())
 	}
 
 	return string(out)
+}
+
+func wifiAction(action string) string {
+	response := ":fritzbox: :wifi: "
+
+	boxIP := fmt.Sprintf("--boxip %s", os.Getenv("FRITZ_BOX_HOST"))
+	boxUser := fmt.Sprintf("--boxuser %s", os.Getenv("FRITZ_BOX_USER"))
+	boxPass := fmt.Sprintf("--boxpass %s", os.Getenv("FRITZ_BOX_PASS"))
+
+	var out []byte
+	var err error
+	if action == "1" {
+		out, err = exec.Command("/app/fritzBoxShell.sh", boxIP, boxUser, boxPass, "WLAN_2G", action).Output()
+		out, err = exec.Command("/app/fritzBoxShell.sh", boxIP, boxUser, boxPass, "WLAN_5G", action).Output()
+	} else {
+		out, err = exec.Command("/app/fritzBoxShell.sh", boxIP, boxUser, boxPass, action).Output()
+	}
+
+	if err != nil {
+		Logger.Printf("ERR: %s", err.Error())
+		response += "failed w/ " + err.Error()
+	} else {
+		response += string(out)
+	}
+
+	return response
 }
 
 var baseWireGuardCmd = "sudo kubectl exec -it $(sudo kubectl get po | grep wireguard | awk '{print $1; exit}' | tr -d \\n) -- bash -c"

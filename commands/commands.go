@@ -156,6 +156,12 @@ func CheckCommand(event *slackevents.MessageEvent, command string) {
 		api.PostMessage(event.Channel, slack.MsgOptionText(wireguardAction("up"), true), params)
 	} else if args[0] == "wgd" {
 		api.PostMessage(event.Channel, slack.MsgOptionText(wireguardAction("down"), true), params)
+	} else if args[0] == "wfs" {
+		api.PostMessage(event.Channel, slack.MsgOptionText(wifiAction("STATE"), true), params)
+	} else if args[0] == "wfu" {
+		api.PostMessage(event.Channel, slack.MsgOptionText(wifiAction("1"), true), params)
+	} else if args[0] == "wfd" {
+		api.PostMessage(event.Channel, slack.MsgOptionText(wifiAction("0"), true), params)
 	} else if args[0] == "mv" {
 		if len(args) == 3 &&
 			(strings.HasPrefix(args[2], "movies") ||
@@ -232,7 +238,7 @@ func CheckCommand(event *slackevents.MessageEvent, command string) {
 		pi4 := ":k8s: <https://dash.ackerson.de/#/overview?namespace=default|k8s>\n"
 		pi4 += ":pihole: <https://hole.ackerson.de/admin/|pi.hole> | "
 		vpnpi := ":transmission: <https://transmission.ackerson.de/transmission/web/|trans> | "
-		vpnpi += ":plex: <https://plex.ackerson.de/web/index.html#|plex>\n"
+		vpnpi += ":jelly: <http://192.168.178.59:8096/web/index.html#!/home.html|jelly>\n"
 
 		response := fritzBox + pi4 + vpnpi
 		api.PostMessage(event.Channel, slack.MsgOptionText(response, false), params)
@@ -257,7 +263,7 @@ func CheckCommand(event *slackevents.MessageEvent, command string) {
 				":copyright: `scpxl <URL>`: scp URL file to Pops4XL\n"
 		api.PostMessage(event.Channel, slack.MsgOptionText(response, true), params)
 	} else if event.User != "" {
-		response := "whaddya say <@" + event.Username + ">? Try `help` instead..."
+		response := "whaddya say <@" + event.Message.Username + ">? Try `help` instead..."
 		api.PostMessage(event.Channel, slack.MsgOptionText(response, false), params)
 	} else {
 		Logger.Printf("No Command found: %s", event.Text)

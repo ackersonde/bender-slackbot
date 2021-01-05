@@ -92,6 +92,15 @@ jobs:
 
           echo -n "${{ secrets.CTX_DROPBOX_ACCESS_TOKEN }}" | base64 | tr -d \\n > .base64_enc
           export CTX_DROPBOX_ACCESS_TOKEN_B64=`cat .base64_enc`
+
+          echo -n "${{ secrets.FRITZ_BOX_HOST" | base64 | tr -d \\n > .base64_enc
+          export FRITZ_BOX_HOST_B64=`cat .base64_enc`
+
+          echo -n "${{ secrets.FRITZ_BOX_USER" | base64 | tr -d \\n > .base64_enc
+          export FRITZ_BOX_USER_B64=`cat .base64_enc`
+
+          echo -n "${{ secrets.FRITZ_BOX_PASS" | base64 | tr -d \\n > .base64_enc
+          export FRITZ_BOX_PASS_B64=`cat .base64_enc`
           rm .base64_enc
 
           sed -i -e "s@{{CTX_DROPBOX_ACCESS_TOKEN_B64}}@$CTX_DROPBOX_ACCESS_TOKEN_B64@" bender.yml
@@ -103,6 +112,12 @@ jobs:
           sed -i -e "s@{{CTX_POPS4XL_SCP_KEY_SECRET_B64}}@${{ secrets.CTX_POPS4XL_SCP_KEY_SECRET_B64 }}@" bender.yml
 
           sed -i -e "s@{{BENDER_HOSTNAME}}@${{ secrets.BENDER_HOSTNAME }}@g" bender.yml
+
+          sed -i -e "s@{{FRITZ_BOX_HOST_B64}}@$FRITZ_BOX_HOST_B64@" bender.yml
+
+          sed -i -e "s@{{FRITZ_BOX_USER_B64}}@$FRITZ_BOX_USER_B64@" bender.yml
+
+          sed -i -e "s@{{FRITZ_BOX_PASS_B64}}@$FRITZ_BOX_PASS_B64@" bender.yml
 
 
       - name: Create wireguard tunnel configuration
