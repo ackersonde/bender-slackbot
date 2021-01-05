@@ -107,31 +107,17 @@ func getDeployFingerprint(deployCertFilePath string) string {
 	return string(out)
 }
 
-func wifiAction(action string) string {
-	response := ":fritzbox: :wifi: \n"
+func wifiAction(param string) string {
+	response := ":fritzbox: :wifi:\n"
 
 	var out []byte
 	var err error
-	if action == "1" { // only turn on 2G/5G bands (not Guest WLAN)
-		out, err = exec.Command("/app/fritzBoxShell.sh",
-			"--boxip", os.Getenv("FRITZ_BOX_HOST"),
-			"--boxuser", os.Getenv("FRITZ_BOX_USER"),
-			"--boxpw", os.Getenv("FRITZ_BOX_PASS"),
-			"WLAN_2G", action).Output()
-		out2, _ := exec.Command("/app/fritzBoxShell.sh",
-			"--boxip", os.Getenv("FRITZ_BOX_HOST"),
-			"--boxuser", os.Getenv("FRITZ_BOX_USER"),
-			"--boxpw", os.Getenv("FRITZ_BOX_PASS"),
-			"WLAN_5G", action).Output()
-
-		out = append(out, '\n')
-		out = append(out, out2...)
+	if param == "1" { // only turn on 2G/5G bands (not Guest WLAN)
+		out, err = createFritzCmd("WLAN_2G", param).Output()
+		response += string(out)
+		out, err = createFritzCmd("WLAN_5G", param).Output()
 	} else {
-		out, err = exec.Command("/app/fritzBoxShell.sh",
-			"--boxip", os.Getenv("FRITZ_BOX_HOST"),
-			"--boxuser", os.Getenv("FRITZ_BOX_USER"),
-			"--boxpw", os.Getenv("FRITZ_BOX_PASS"),
-			"WLAN", action).Output()
+		out, err = createFritzCmd("WLAN", param).Output()
 	}
 	// TODO: implement `wgg` to enable guest wifi (""" WLAN_GUEST 1)
 
@@ -145,8 +131,12 @@ func wifiAction(action string) string {
 	return response
 }
 
-func printCommand(cmd *exec.Cmd) {
-	fmt.Printf("==> Executing: %s\n", strings.Join(cmd.Args, " "))
+func createFritzCmd(action string, param string) *exec.Cmd {
+	return exec.Command("/app/fritzBoxShell.sh",
+		"--boxip", os.Getenv("FRITZ_BOX_HOST"),
+		"--boxuser", os.Getenv("FRITZ_BOX_USER"),
+		"--boxpw", os.Getenv("FRITZ_BOX_PASS"),
+		action, param)
 }
 
 var baseWireGuardCmd = "sudo kubectl exec -it $(sudo kubectl get po | grep wireguard | awk '{print $1; exit}' | tr -d \\n) -- bash -c"
