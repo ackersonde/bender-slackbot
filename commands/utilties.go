@@ -108,7 +108,7 @@ func getDeployFingerprint(deployCertFilePath string) string {
 }
 
 func wifiAction(action string) string {
-	response := ":fritzbox: :wifi: "
+	response := ":fritzbox: :wifi: \n"
 
 	var out []byte
 	var err error
@@ -118,11 +118,14 @@ func wifiAction(action string) string {
 			"--boxuser", os.Getenv("FRITZ_BOX_USER"),
 			"--boxpw", os.Getenv("FRITZ_BOX_PASS"),
 			"WLAN_2G", action).Output()
-		out, err = exec.Command("/app/fritzBoxShell.sh",
+		out2, _ := exec.Command("/app/fritzBoxShell.sh",
 			"--boxip", os.Getenv("FRITZ_BOX_HOST"),
 			"--boxuser", os.Getenv("FRITZ_BOX_USER"),
 			"--boxpw", os.Getenv("FRITZ_BOX_PASS"),
 			"WLAN_5G", action).Output()
+
+		out = append(out, '\n')
+		out = append(out, out2...)
 	} else {
 		out, err = exec.Command("/app/fritzBoxShell.sh",
 			"--boxip", os.Getenv("FRITZ_BOX_HOST"),
