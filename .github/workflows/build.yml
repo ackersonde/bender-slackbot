@@ -40,7 +40,6 @@ jobs:
           echo -n "${{ secrets.CTX_PLEX_TOKEN }}" | base64 | tr -d \\n > .base64_enc
           export CTX_PLEX_TOKEN_B64=`cat .base64_enc`
           sed -i -e "s@{{CTX_PLEX_TOKEN_B64}}@$CTX_PLEX_TOKEN_B64@" bender.yml
-          sed -i -e "s@{{CTX_PLEX_TOKEN}}@${{ secrets.CTX_PLEX_TOKEN }}@" finished_torrent.sh
 
           echo -n "${{ secrets.CTX_DIGITALOCEAN_TOKEN }}" | base64 | tr -d \\n > .base64_enc
           export CTX_DIGITALOCEAN_TOKEN_B64=`cat .base64_enc`
