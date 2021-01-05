@@ -110,21 +110,25 @@ func getDeployFingerprint(deployCertFilePath string) string {
 func wifiAction(action string) string {
 	response := ":fritzbox: :wifi: "
 
-	boxIP := fmt.Sprintf("--boxip %s", os.Getenv("FRITZ_BOX_HOST"))
-	boxUser := fmt.Sprintf("--boxuser %s", os.Getenv("FRITZ_BOX_USER"))
-	boxPass := fmt.Sprintf("--boxpw %s", os.Getenv("FRITZ_BOX_PASS"))
-
 	var out []byte
 	var err error
 	if action == "1" { // only turn on 2G/5G bands (not Guest WLAN)
-		out, err = exec.Command("/app/fritzBoxShell.sh", boxIP, boxUser, boxPass, "WLAN_2G", action).Output()
-		out, err = exec.Command("/app/fritzBoxShell.sh", boxIP, boxUser, boxPass, "WLAN_5G", action).Output()
+		out, err = exec.Command("/app/fritzBoxShell.sh",
+			"--boxip", os.Getenv("FRITZ_BOX_HOST"),
+			"--boxuser", os.Getenv("FRITZ_BOX_USER"),
+			"--boxpw", os.Getenv("FRITZ_BOX_PASS"),
+			"WLAN_2G", action).Output()
+		out, err = exec.Command("/app/fritzBoxShell.sh",
+			"--boxip", os.Getenv("FRITZ_BOX_HOST"),
+			"--boxuser", os.Getenv("FRITZ_BOX_USER"),
+			"--boxpw", os.Getenv("FRITZ_BOX_PASS"),
+			"WLAN_5G", action).Output()
 	} else {
-		cmd := exec.Command("/app/fritzBoxShell.sh", boxIP, boxUser, boxPass, "WLAN", action)
-		Logger.Print("cmd as String: " + cmd.String())
-		cmd2 := exec.Command(fmt.Sprintf("%s", strings.Join(cmd.Args, " ")))
-		printCommand(cmd2)
-		out, err = cmd2.Output()
+		out, err = exec.Command("/app/fritzBoxShell.sh",
+			"--boxip", os.Getenv("FRITZ_BOX_HOST"),
+			"--boxuser", os.Getenv("FRITZ_BOX_USER"),
+			"--boxpw", os.Getenv("FRITZ_BOX_PASS"),
+			"WLAN", action).Output()
 	}
 	// TODO: implement `wgg` to enable guest wifi (""" WLAN_GUEST 1)
 
