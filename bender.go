@@ -8,11 +8,12 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 	"unicode"
 	"unicode/utf8"
 
 	"github.com/ackersonde/bender-slackbot/commands"
-	"github.com/jasonlvhit/gocron"
+	"github.com/go-co-op/gocron"
 	"github.com/nlopes/slack/slackevents"
 	"github.com/slack-go/slack"
 )
@@ -20,14 +21,30 @@ import (
 var botID = os.Getenv("SLACK_BENDER_BOT_USERID")
 
 func prepareScheduler() {
-	gocron.Every(1).Day().At("08:04").Do(
-		commands.ChangeToFastestVPNServer, commands.VPNCountry)
-	gocron.Every(1).Friday().At("09:05").Do(commands.CheckMediaDiskSpace, "")
-	gocron.Every(1).Friday().At("09:05").Do(commands.CheckServerDiskSpace, "")
-	//gocron.Every(1).Day().At("17:30").Do(commands.ShowBBGames, "")
-	<-gocron.Start()
+	s := gocron.NewScheduler(time.Now().Local().Location())
 
-	// more examples: https://github.com/jasonlvhit/gocron/blob/master/example/example.go#L19
+	s.Every(1).Day().At("08:04").Do(
+		commands.ChangeToFastestVPNServer, commands.VPNCountry)
+	s.Every(1).Friday().At("09:05").Do(commands.CheckMediaDiskSpace, "")
+	s.Every(1).Friday().At("09:05").Do(commands.CheckServerDiskSpace, "")
+	//s.Every(1).Day().At("17:30").Do(commands.ShowBBGames, "")
+
+	ensureWiFiOffOvernight(s)
+
+	<-s.StartAsync()
+	// more examples: https://github.com/go-co-op/gocron/blob/master/README.md
+}
+
+func ensureWiFiOffOvernight(s *gocron.Scheduler) {
+	s.Every(1).Day().At("00:00").Do(commands.WifiAction, "0")
+	s.Every(1).Day().At("00:30").Do(commands.WifiAction, "0")
+	s.Every(1).Day().At("01:00").Do(commands.WifiAction, "0")
+	s.Every(1).Day().At("01:30").Do(commands.WifiAction, "0")
+	s.Every(1).Day().At("02:00").Do(commands.WifiAction, "0")
+	s.Every(1).Day().At("02:30").Do(commands.WifiAction, "0")
+	s.Every(1).Day().At("03:00").Do(commands.WifiAction, "0")
+	s.Every(1).Day().At("03:30").Do(commands.WifiAction, "0")
+	s.Every(1).Day().At("04:00").Do(commands.WifiAction, "0")
 }
 
 func verifiedSlackMessage(w http.ResponseWriter, r *http.Request) []byte {

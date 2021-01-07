@@ -157,11 +157,11 @@ func CheckCommand(event *slackevents.MessageEvent, command string) {
 	} else if args[0] == "wgd" {
 		api.PostMessage(event.Channel, slack.MsgOptionText(wireguardAction("down"), true), params)
 	} else if args[0] == "wfs" {
-		api.PostMessage(event.Channel, slack.MsgOptionText(wifiAction("STATE"), true), params)
+		api.PostMessage(event.Channel, slack.MsgOptionText(WifiAction("STATE"), true), params)
 	} else if args[0] == "wfu" {
-		api.PostMessage(event.Channel, slack.MsgOptionText(wifiAction("1"), true), params)
+		api.PostMessage(event.Channel, slack.MsgOptionText(WifiAction("1"), true), params)
 	} else if args[0] == "wfd" {
-		api.PostMessage(event.Channel, slack.MsgOptionText(wifiAction("0"), true), params)
+		api.PostMessage(event.Channel, slack.MsgOptionText(WifiAction("0"), true), params)
 	} else if args[0] == "mv" {
 		if len(args) == 3 &&
 			(strings.HasPrefix(args[2], "movies") ||

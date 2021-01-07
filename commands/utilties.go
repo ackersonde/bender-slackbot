@@ -107,7 +107,8 @@ func getDeployFingerprint(deployCertFilePath string) string {
 	return string(out)
 }
 
-func wifiAction(param string) string {
+// WifiAction controls Wifi radio signal toggling (protect your sleep)
+func WifiAction(param string) string {
 	response := ":fritzbox: :wifi:\n"
 
 	var out []byte
@@ -115,7 +116,7 @@ func wifiAction(param string) string {
 	if param == "1" { // only turn on 2G/5G bands (not Guest WLAN)
 		out, err = createFritzCmd("WLAN_2G", param).Output()
 		response += string(out)
-		out, err = createFritzCmd("WLAN_5G", param).Output()
+		out, err = createFritzCmd("WLAN_5G", "0").Output()
 	} else {
 		out, err = createFritzCmd("WLAN", param).Output()
 	}
