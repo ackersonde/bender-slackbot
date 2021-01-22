@@ -160,6 +160,8 @@ func CheckCommand(event *slackevents.MessageEvent, command string) {
 		api.PostMessage(event.Channel, slack.MsgOptionText(WifiAction("STATE"), true), params)
 	} else if args[0] == "wfu" {
 		api.PostMessage(event.Channel, slack.MsgOptionText(WifiAction("1"), true), params)
+	} else if args[0] == "wfu5" {
+		api.PostMessage(event.Channel, slack.MsgOptionText(WifiAction("5"), true), params)
 	} else if args[0] == "wfd" {
 		api.PostMessage(event.Channel, slack.MsgOptionText(WifiAction("0"), true), params)
 	} else if args[0] == "mv" {
@@ -260,7 +262,7 @@ func CheckCommand(event *slackevents.MessageEvent, command string) {
 				":github: `version`: Which build/deploy is this Bender bot?\n" +
 				":earth_americas: `www`: Show various internal links\n" +
 				":copyright: `scpxl <URL>`: scp URL file to Pops4XL\n" +
-				":wifi: `wf[s|u|d]`: [S]how status, [U]p or [D]own fritzbox wifi\n"
+				":wifi: `wf[s|u|u5|d]`: [S]how status, [U]p 2G, [U5]p 5G or [D]own fritzbox wifi\n"
 
 		api.PostMessage(event.Channel, slack.MsgOptionText(response, true), params)
 	} else if event.User != "" {

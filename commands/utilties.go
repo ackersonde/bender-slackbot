@@ -117,6 +117,9 @@ func WifiAction(param string) string {
 		out, err = createFritzCmd("WLAN_2G", param).Output()
 		response += string(out)
 		out, err = createFritzCmd("WLAN_5G", "0").Output()
+	} else if param == "5" {
+		out, err = createFritzCmd("WLAN_5G", "1").Output()
+		response += string(out)
 	} else {
 		out, err = createFritzCmd("WLAN", param).Output()
 	}
