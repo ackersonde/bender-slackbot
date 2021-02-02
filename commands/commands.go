@@ -17,8 +17,8 @@ import (
 	"github.com/ackersonde/bender-slackbot/structures"
 	"github.com/danackerson/digitalocean/common"
 	jsoniter "github.com/json-iterator/go"
-	"github.com/nlopes/slack/slackevents"
 	"github.com/slack-go/slack"
+	"github.com/slack-go/slack/slackevents"
 )
 
 var api *slack.Client

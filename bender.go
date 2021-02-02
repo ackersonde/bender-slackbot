@@ -14,8 +14,8 @@ import (
 
 	"github.com/ackersonde/bender-slackbot/commands"
 	"github.com/go-co-op/gocron"
-	"github.com/nlopes/slack/slackevents"
 	"github.com/slack-go/slack"
+	"github.com/slack-go/slack/slackevents"
 )
 
 var botID = os.Getenv("SLACK_BENDER_BOT_USERID")
@@ -31,7 +31,7 @@ func prepareScheduler() {
 
 	ensureWiFiOffOvernight(s)
 
-	<-s.StartAsync()
+	s.StartAsync()
 	// more examples: https://github.com/go-co-op/gocron/blob/master/README.md
 }
 
