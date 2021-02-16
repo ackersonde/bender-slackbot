@@ -29,7 +29,7 @@ var AndroidRCC = &RemoteConnectConfig{
 // VPNPIRemoteConnectConfig connects to vpnpi
 var VPNPIRemoteConnectConfig = &RemoteConnectConfig{
 	User:           "ubuntu",
-	PrivateKeyPath: "/Users/ackersond/.ssh/circleci_rsa",
+	PrivateKeyPath: "/root/.ssh/id_ed25519",
 	HostEndpoints:  []string{"192.168.178.59:22"},
 	HostSSHKey:     "ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBCfXJ+mvHXs+t0+nF8JATxgMEwNngy6JCOVn1bEjsjsMylZsMejouArUrNKcnyPZ+vTvljlR7CaC6X9fbUtdxs0=",
 	HostPath:       "/home/ubuntu/",

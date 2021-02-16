@@ -63,7 +63,7 @@ func getStellarPrice() string {
 		for i, n := range matches[0] {
 			m[names[i]] = n
 		}
-		Logger.Println(" @ $" + m["price"])
+		Logger.Println("1 Stellar Lumen = $" + m["price"])
 		response = m["price"]
 	}
 
@@ -177,7 +177,7 @@ func getEthereumTokens() string {
 	} else {
 		defer accountBalanceWeiResp.Body.Close()
 		accountBalanceWeiJSON, err2 := ioutil.ReadAll(accountBalanceWeiResp.Body)
-
+		Logger.Println("Wei response: " + string(accountBalanceWeiJSON))
 		if err2 == nil {
 			var result map[string]string
 			json.Unmarshal([]byte(accountBalanceWeiJSON), &result)

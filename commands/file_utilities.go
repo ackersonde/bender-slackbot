@@ -13,7 +13,6 @@ import (
 	"github.com/slack-go/slack"
 )
 
-var piTorrentsPath = "/home/ubuntu/torrents"
 var piPlexPath = "/mnt/usb4TB/DLNA"
 
 // CheckServerDiskSpace now exported
