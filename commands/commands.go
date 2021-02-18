@@ -292,7 +292,7 @@ func getBendersCurrentSSHCert() string {
 				response = text
 				continue
 			} else if strings.HasPrefix(text, "Valid:") {
-				valid := ""
+				valid := text
 				// Valid: from 2021-02-02T13:44:00 to 2021-03-09T13:45:01
 				re := regexp.MustCompile(`Valid: from (?P<start>.*) to (?P<expire>.*)`)
 				matches := re.FindAllStringSubmatch(text, -1)
