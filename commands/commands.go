@@ -287,15 +287,15 @@ func getBendersCurrentSSHCert() string {
 	} else {
 		scanner := bufio.NewScanner(strings.NewReader(string(out)))
 		for scanner.Scan() {
-			Logger.Printf("Scanning: %s\n", scanner.Text())
-			if strings.HasPrefix(scanner.Text(), "Serial:") {
-				response = strings.Trim(scanner.Text(), " ")
+			text := strings.Trim(scanner.Text(), " ")
+			if strings.HasPrefix(text, "Serial:") {
+				response = text
 				continue
-			} else if strings.HasPrefix(scanner.Text(), "Valid:") {
-				valid := strings.Trim(scanner.Text(), " ")
+			} else if strings.HasPrefix(text, "Valid:") {
+				valid := ""
 				// Valid: from 2021-02-02T13:44:00 to 2021-03-09T13:45:01
-				re := regexp.MustCompile(`\s+Valid: from (?P<start>.*) to (?P<expire>.*)`)
-				matches := re.FindAllStringSubmatch(valid, -1)
+				re := regexp.MustCompile(`Valid: from (?P<start>.*) to (?P<expire>.*)`)
+				matches := re.FindAllStringSubmatch(text, -1)
 				names := re.SubexpNames()
 
 				m := map[string]string{}
