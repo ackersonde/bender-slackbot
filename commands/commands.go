@@ -285,9 +285,9 @@ func getBendersCurrentSSHCert() string {
 	if err != nil {
 		response += err.Error()
 	} else {
-		response += string(out)
-		scanner := bufio.NewScanner(strings.NewReader(response))
+		scanner := bufio.NewScanner(strings.NewReader(string(out)))
 		for scanner.Scan() {
+			Logger.Printf("Scanning: %s\n", scanner.Text())
 			if strings.HasPrefix(scanner.Text(), "Serial:") {
 				response = strings.Trim(scanner.Text(), " ")
 				continue
@@ -327,7 +327,6 @@ func getBendersCurrentSSHCert() string {
 				response += "\n" + valid
 				break
 			}
-
 		}
 	}
 
