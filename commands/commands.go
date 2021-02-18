@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/json"
 	"fmt"
@@ -9,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"os/exec"
 	"regexp"
 	"strconv"
 	"strings"
@@ -244,6 +246,9 @@ func CheckCommand(event *slackevents.MessageEvent, command string) {
 
 		response := fritzBox + pi4 + vpnpi
 		api.PostMessage(event.Channel, slack.MsgOptionText(response, false), params)
+	} else if args[0] == "key" {
+		response := getBendersCurrentSSHCert()
+		api.PostMessage(event.Channel, slack.MsgOptionText(response, false), params)
 	} else if args[0] == "help" {
 		response :=
 			":ethereum: `crypto`: Current cryptocurrency stats :lumens:\n" +
@@ -262,7 +267,8 @@ func CheckCommand(event *slackevents.MessageEvent, command string) {
 				":github: `version`: Which build/deploy is this Bender bot?\n" +
 				":earth_americas: `www`: Show various internal links\n" +
 				":copyright: `scpxl <URL>`: scp URL file to Pops4XL\n" +
-				":wifi: `wf[s|u|u5|d]`: [S]how status, [U]p 2G, [U5]p 5G or [D]own fritzbox wifi\n"
+				":wifi: `wf[s|u|u5|d]`: [S]how status, [U]p 2G, [U5]p 5G or [D]own fritzbox wifi\n" +
+				":key: `key`: Check bender's ssh certificate file validity\n"
 
 		api.PostMessage(event.Channel, slack.MsgOptionText(response, true), params)
 	} else if event.User != "" {
@@ -271,6 +277,61 @@ func CheckCommand(event *slackevents.MessageEvent, command string) {
 	} else {
 		Logger.Printf("No Command found: %s", event.Text)
 	}
+}
+
+func getBendersCurrentSSHCert() string {
+	response := ""
+	out, err := exec.Command("ssh-keygen", "-L", "-f", "/root/.ssh/id_ed25519-cert.pub").Output()
+	if err != nil {
+		response += err.Error()
+	} else {
+		response += string(out)
+		scanner := bufio.NewScanner(strings.NewReader(response))
+		for scanner.Scan() {
+			if strings.HasPrefix(scanner.Text(), "Serial:") {
+				response = strings.Trim(scanner.Text(), " ")
+				continue
+			} else if strings.HasPrefix(scanner.Text(), "Valid:") {
+				valid := strings.Trim(scanner.Text(), " ")
+				// Valid: from 2021-02-02T13:44:00 to 2021-03-09T13:45:01
+				re := regexp.MustCompile(`\s+Valid: from (?P<start>.*) to (?P<expire>.*)`)
+				matches := re.FindAllStringSubmatch(valid, -1)
+				names := re.SubexpNames()
+
+				m := map[string]string{}
+				if len(matches) > 0 {
+					for i, n := range matches[0] {
+						m[names[i]] = n
+					}
+					if len(m) > 1 {
+						expiry, err := time.Parse("2006-01-02T15:04:05", m["expire"])
+						if err != nil {
+							Logger.Printf("Unable to parse expiry date: %s", m["expire"])
+						} else {
+							today := time.Now()
+							if expiry.Before(today) {
+								valid += "\n" + ":rotating_light: Cert is expired! Please check `/var/log/gen_new_deploy_keys.log` and possibly rerun `/home/ubuntu/my-ca/gen_new_deploy_keys.sh` on pi4." +
+									"\nOr just <https://github.com/ackersonde/bender-slackbot/actions|redeploy bender> ..."
+							} else {
+								daysValid := expiry.Sub(today).Hours() / 24
+								valid += "\nSSH Certificate valid for " + strconv.FormatFloat(daysValid, 'f', 0, 64) + " days"
+							}
+						}
+					} else {
+						Logger.Printf("Unable to parse validity: %s", valid)
+					}
+				} else {
+					Logger.Printf("ERR: PUB CERT invalid date: %s", valid)
+				}
+
+				response += "\n" + valid
+				break
+			}
+
+		}
+	}
+
+	return response
 }
 
 func fetchAktuelles() string {
