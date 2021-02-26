@@ -13,7 +13,7 @@ import (
 	"github.com/ackersonde/bender-slackbot/structures"
 )
 
-var proxies = []string{"tpb.cool", "piratebay.tech", "thepiratebay.fail", "piratebay.icu", "thepirate.host"}
+var proxies = []string{"tpb.cool", "piratebay.icu", "thepirate.host"}
 
 func searchProxy(url string) []byte {
 	var jsonResults []byte
