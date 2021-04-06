@@ -17,7 +17,7 @@ import (
 	"time"
 
 	"github.com/ackersonde/bender-slackbot/structures"
-	"github.com/danackerson/digitalocean/common"
+	"github.com/ackersonde/digitaloceans/common"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/slack-go/slack"
 	"github.com/slack-go/slack/slackevents"
@@ -118,6 +118,7 @@ func CheckCommand(event *slackevents.MessageEvent, command string) {
 		dateString := ""
 
 		if len(args) > 1 {
+			// TODO: use https://github.com/olebedev/when for Natural Language processing
 			gameDate, err := time.Parse("2006-01-02", args[1])
 			dateString = gameDate.Format("2006/month_01/day_02")
 
@@ -127,7 +128,8 @@ func CheckCommand(event *slackevents.MessageEvent, command string) {
 				return
 			}
 		}
-		ShowBBGames(dateString)
+		result = ShowBBGames(dateString)
+		api.PostMessage(event.Channel, slack.MsgOptionText(result, false), params)
 	} else if args[0] == "do" {
 		response := ListDODroplets()
 		api.PostMessage(event.Channel, slack.MsgOptionText(response, false), params)
@@ -144,14 +146,16 @@ func CheckCommand(event *slackevents.MessageEvent, command string) {
 			api.PostMessage(event.Channel, slack.MsgOptionText("Please provide Droplet ID from `do` cmd!", true), params)
 		}
 	} else if args[0] == "fsck" {
+		response := ""
 		if len(args) > 1 {
 			path := strings.Join(args[1:], " ")
-			CheckMediaDiskSpace(path)
-			CheckServerDiskSpace(path)
+			response += CheckMediaDiskSpace(path)
+			response += CheckServerDiskSpace(path)
 		} else {
-			CheckMediaDiskSpace("")
-			CheckServerDiskSpace("")
+			response += CheckMediaDiskSpace("")
+			response += CheckServerDiskSpace("")
 		}
+		api.PostMessage(event.Channel, slack.MsgOptionText(response, true), params)
 	} else if args[0] == "wgs" {
 		api.PostMessage(event.Channel, slack.MsgOptionText(wireguardShow(), true), params)
 	} else if args[0] == "wgu" {
@@ -201,18 +205,17 @@ func CheckCommand(event *slackevents.MessageEvent, command string) {
 		if len(args) > 1 {
 			VPNCountry = strings.ToUpper(args[1])
 		}
-		VpnPiTunnelChecks(VPNCountry)
+		response := VpnPiTunnelChecks(VPNCountry)
+		api.PostMessage(event.Channel, slack.MsgOptionText(response, false), params)
 	} else if args[0] == "vpnc" {
 		response := "Please provide a new VPN server (hint: output from `vpns`)"
 		if len(args) > 1 {
 			vpnServerDomain := strings.ToLower(scrubParamOfHTTPMagicCrap(args[1]))
 			// ensure vpnServerDomain has format e.g. DE-19
-			if !strings.HasSuffix(vpnServerDomain, ".protonvpn.com") {
-				vpnServerDomain += ".protonvpn.com"
-			}
-			var rxPat = regexp.MustCompile(`^[A-Za-z]{2}-[0-9]{2}\.protonvpn\.com`)
+			var rxPat = regexp.MustCompile(`^[A-Za-z]{2}-[0-9]{2}`)
 			if !rxPat.MatchString(vpnServerDomain) {
 				response = "Provide a validly formatted VPN server (hint: output from `vpns`)"
+
 			} else {
 				response = updateVpnPiTunnel(vpnServerDomain)
 			}
@@ -242,7 +245,7 @@ func CheckCommand(event *slackevents.MessageEvent, command string) {
 		pi4 := ":k8s: <https://dash.ackerson.de/#/overview?namespace=default|k8s>\n"
 		pi4 += ":pihole: <https://hole.ackerson.de/admin/|pi.hole> | "
 		vpnpi := ":transmission: <https://transmission.ackerson.de/transmission/web/|trans> | "
-		vpnpi += ":jelly: <http://192.168.178.59:8096/web/index.html#!/home.html|jelly>\n"
+		vpnpi += ":plex: <https://plex.ackerson.de/web/index.html#|plex>\n"
 
 		response := fritzBox + pi4 + vpnpi
 		api.PostMessage(event.Channel, slack.MsgOptionText(response, false), params)
@@ -256,6 +259,7 @@ func CheckCommand(event *slackevents.MessageEvent, command string) {
 				":sun_behind_rain_cloud: `sw`: Schwabhausen weather\n" +
 				":mvv: `mvv`: Status | Trip In | Trip Home\n" +
 				":baseball: `bb <YYYY-MM-DD>`: show baseball games from given date (default yesterday)\n" +
+				//":do_droplet: `do|dd <id>`: show|delete DigitalOcean droplet(s)\n" +
 				":wireguard: `wg[s|u|d]`: [S]how status, [U]p or [D]own wireguard tunnel\n" +
 				":protonvpn: `vpn[s|c]`: [S]how status of VPN on :raspberry_pi:, [C]hange VPN to best in given country or " + VPNCountry + "\n" +
 				":pirate_bay: `torq <search term>`\n" +
@@ -266,13 +270,10 @@ func CheckCommand(event *slackevents.MessageEvent, command string) {
 				":bar_chart: `pi`: Stats of various :raspberry_pi:s\n" +
 				":github: `version`: Which build/deploy is this Bender bot?\n" +
 				":earth_americas: `www`: Show various internal links\n" +
-				":copyright: `scpxl <URL>`: scp URL file to Pops4XL\n" +
-				":wifi: `wf[s|u|u5|d]`: [S]how status, [U]p 2G, [U5]p 5G or [D]own fritzbox wifi\n" +
-				":key: `key`: Check bender's ssh certificate file validity\n"
-
+				":copyright: `scpxl <URL>`: scp URL file to Pops4XL\n"
 		api.PostMessage(event.Channel, slack.MsgOptionText(response, true), params)
 	} else if event.User != "" {
-		response := "whaddya say <@" + event.User + ">? Try `help` instead..."
+		response := "whaddya say <@" + event.Username + ">? Try `help` instead..."
 		api.PostMessage(event.Channel, slack.MsgOptionText(response, false), params)
 	} else {
 		Logger.Printf("No Command found: %s", event.Text)

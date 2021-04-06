@@ -16,9 +16,6 @@ import (
 
 var vpnLogicalsURI = "https://api.protonmail.ch/vpn/logicals"
 var maxVPNServerLoad = 80
-var tunnelOnTime time.Time
-var tunnelIdleSince time.Time
-var maxTunnelIdleTime = float64(5 * 60) // 5 mins in seconds
 
 func homeAndInternetIPsDoNotMatch(tunnelIP string) bool {
 	results := make(chan string, 10)
@@ -29,7 +26,6 @@ func homeAndInternetIPsDoNotMatch(tunnelIP string) bool {
 		cmd := "sudo docker exec vpnission curl " + ipCheckHost
 		remoteResult := executeRemoteCmd(cmd, structures.VPNPIRemoteConnectConfig)
 
-		tunnelIdleSince = time.Now()
 		results <- strings.TrimSuffix(remoteResult.Stdout, "\n")
 	}()
 
@@ -45,7 +41,6 @@ func homeAndInternetIPsDoNotMatch(tunnelIP string) bool {
 					cmd := "sudo docker exec vpnission dig " + vpnGateway + " A +short"
 					remoteResult := executeRemoteCmd(cmd, structures.VPNPIRemoteConnectConfig)
 
-					tunnelIdleSince = time.Now()
 					resultsDig <- remoteResult.Stdout
 				}()
 				select {
@@ -76,7 +71,6 @@ func inspectVPNConnection() map[string]string {
 	go func() {
 		cmd := "sudo docker exec vpnission ipsec status | grep -A 2 ESTABLISHED"
 		remoteResult := executeRemoteCmd(cmd, structures.VPNPIRemoteConnectConfig)
-		tunnelIdleSince = time.Now()
 
 		result := ""
 		if remoteResult.Stdout == "" && remoteResult.Stderr != "" {
@@ -173,7 +167,7 @@ func ChangeToFastestVPNServer(vpnCountry string) {
 }
 
 // VpnPiTunnelChecks ensures correct VPN connection
-func VpnPiTunnelChecks(vpnCountry string) {
+func VpnPiTunnelChecks(vpnCountry string) string {
 	ipsecVersion := executeRemoteCmd(
 		"sudo docker exec vpnission ipsec --version | head -n 1",
 		structures.VPNPIRemoteConnectConfig)
@@ -187,12 +181,12 @@ func VpnPiTunnelChecks(vpnCountry string) {
 
 		if homeAndInternetIPsDoNotMatch(vpnTunnelSpecs["endpointIP"]) &&
 			transmissionSettingsAreSane(vpnTunnelSpecs["internalIP"]) {
-			response = ipsecVersion.Stdout + ":protonvpn: VPN: UP for " + 
+			response = ipsecVersion.Stdout + ":protonvpn: VPN: UP for " +
 				vpnTunnelSpecs["time"] + " (*" +
 				vpnTunnelSpecs["endpointDNS"] + "*)"
 		}
 	}
-	
+
 	bestVPNServer := findBestVPNServer(vpnCountry)
 	response = response + "\n\nBest in " + vpnCountry +
 		fmt.Sprintf(" %d%% ", bestVPNServer.Load)
@@ -211,8 +205,7 @@ func VpnPiTunnelChecks(vpnCountry string) {
 		}
 	}
 
-	api.PostMessage(SlackReportChannel, slack.MsgOptionText(response, false),
-		slack.MsgOptionAsUser(true))
+	return response
 }
 
 func updateVpnPiTunnel(vpnServerDomain string) string {

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/ackersonde/bender-slackbot/structures"
 	"github.com/odwrtw/transmission"
@@ -129,8 +128,6 @@ func torrentCommand(cmd []string) (result string) {
 			result = deleteTorrents(t, cmd[1])
 		}
 	}
-
-	tunnelIdleSince = time.Now()
 
 	return result
 }

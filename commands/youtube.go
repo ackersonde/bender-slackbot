@@ -6,8 +6,8 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/Andreychik32/ytdl"
 	"github.com/ackersonde/bender-slackbot/filemanager"
-	"github.com/rylio/ytdl"
 )
 
 func downloadYoutubeVideo(origURL string) bool {

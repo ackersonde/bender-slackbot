@@ -16,7 +16,7 @@ import (
 var piPlexPath = "/mnt/usb4TB/DLNA"
 
 // CheckServerDiskSpace now exported
-func CheckServerDiskSpace(path string) {
+func CheckServerDiskSpace(path string) string {
 	if path != "" {
 		path = strings.TrimSuffix(path, "/")
 		if !strings.HasPrefix(path, "/") {
@@ -25,20 +25,18 @@ func CheckServerDiskSpace(path string) {
 	}
 
 	response := ""
-	out2, err2 := exec.Command("/bin/df", "-h", "/").Output()
+	out2, err2 := exec.Command("/bin/df", "-h", path).Output()
 	if err2 != nil {
 		response += err2.Error()
 	} else {
 		response += string(out2)
 	}
 
-	response = ":k8s: *SD Card Disk Usage* `pi4`\n" + response
-	api.PostMessage(SlackReportChannel, slack.MsgOptionText(response, false),
-		slack.MsgOptionAsUser(true))
+	return ":k8s: *SD Card Disk Usage* `pi4`\n" + response
 }
 
 // CheckMediaDiskSpace now exported
-func CheckMediaDiskSpace(path string) {
+func CheckMediaDiskSpace(path string) string {
 	if path != "" {
 		path = strings.TrimSuffix(path, "/")
 		if !strings.HasPrefix(path, "/") {
@@ -73,8 +71,7 @@ func CheckMediaDiskSpace(path string) {
 	}
 	response += "\n=============================\n"
 
-	api.PostMessage(SlackReportChannel, slack.MsgOptionText(response, false),
-		slack.MsgOptionAsUser(true))
+	return response
 }
 
 type basePlexRefreshCmdString struct {
@@ -134,7 +131,7 @@ func MoveTorrentFile(sourceFile string, destinationDir string) {
 }
 
 func scpFileBetweenHosts(remoteClient scp.Client, sourceURI string, hostPath string) bool {
-	fetchURL, err := url.Parse(sourceURI)
+	fetchURL, _ := url.Parse(sourceURI)
 	destination := ""
 	success := false
 

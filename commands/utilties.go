@@ -82,7 +82,7 @@ func GetPublicCertificate(privateKeyPath string) ssh.Signer {
 		log.Printf("Unable to parse private key: %v", err)
 	}
 
-	cert, err := ioutil.ReadFile(privateKeyPath + "-cert.pub")
+	cert, _ := ioutil.ReadFile(privateKeyPath + "-cert.pub")
 	pk, _, _, _, err := ssh.ParseAuthorizedKey(cert)
 	if err != nil {
 		log.Printf("unable to parse CA public key: %v", err)
@@ -114,7 +114,7 @@ func WifiAction(param string) string {
 	var out []byte
 	var err error
 	if param == "1" { // only turn on 2G/5G bands (not Guest WLAN)
-		out, err = createFritzCmd("WLAN_2G", param).Output()
+		out, _ = createFritzCmd("WLAN_2G", param).Output()
 		response += string(out)
 		out, err = createFritzCmd("WLAN_5G", "0").Output()
 	} else if param == "5" {

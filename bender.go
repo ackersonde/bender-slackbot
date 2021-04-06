@@ -29,7 +29,7 @@ func prepareScheduler() {
 	s.Every(1).Friday().At("09:05").Do(commands.CheckServerDiskSpace, "")
 	//s.Every(1).Day().At("17:30").Do(commands.ShowBBGames, "")
 
-	ensureWiFiOffOvernight(s)
+	//ensureWiFiOffOvernight(s)
 
 	s.StartAsync()
 	// more examples: https://github.com/go-co-op/gocron/blob/master/README.md

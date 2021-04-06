@@ -12,12 +12,19 @@ on:
 jobs:
   build:
     runs-on: ubuntu-20.04
+    env:
+      CTX_DIGITALOCEAN_DROPLET_PROXY_TOKEN: ${{ secrets.CTX_DIGITALOCEAN_DROPLET_PROXY_TOKEN }}
+      CTX_DIGITALOCEAN_FIREWALL: ${{ secrets.CTX_DIGITALOCEAN_FIREWALL }}
+      CTX_SSH_DEPLOY_FINGERPRINT: ${{ secrets.CTX_SSH_DEPLOY_FINGERPRINT }}
+      CTX_RASPBERRYPI_SSH_PRIVKEY: "${{ secrets.CTX_RASPBERRYPI_SSH_PRIVKEY }}"
+      SSH_CXN: ${{ secrets.CTX_IPV6_MASTER_HOME }}
+      MY_CA: /home/ubuntu/my-ca
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-go@v2
       - name: Build application and docker image
         run: |
-          go get -t -d -v ./...
+          go mod tidy
           env GOOS=linux GOARCH=arm GOARM=7 go build bender.go
 
           docker run --rm --privileged multiarch/qemu-user-static:register
@@ -28,124 +35,78 @@ jobs:
           docker push danackerson/slackbot:vg$GITHUB_RUN_ID
           docker push danackerson/slackbot:latest
 
-      - name: Prepare K8S bundle config
+      - name: Deploy to Pi
         run: |
-          export GITHUB_RUN_ID_B64=`echo -n $GITHUB_RUN_ID | base64`
-          sed -i -e "s@{{GITHUB_RUN_ID_B64}}@$GITHUB_RUN_ID_B64@" bender.yml
-          sed -i -e "s@{{GITHUB_RUN_ID}}@$GITHUB_RUN_ID@" bender.yml
+          git clone https://github.com/ackersonde/digitaloceans.git
+          cd digitaloceans
+          go get -t -d -v ./...
+          go build do.go
+          cd ../
 
-          export CTX_SLACK_CHANNEL_B64=`echo -n ${{ secrets.CTX_SLACK_CHANNEL }} | base64`
-          sed -i -e "s@{{CTX_SLACK_CHANNEL_B64}}@$CTX_SLACK_CHANNEL_B64@" bender.yml
+          cat <<DEPLOY_EOF >deploy.sh
+          #!/usr/bin/bash
+          ssh -o StrictHostKeyChecking=no ubuntu@$SSH_CXN "\
+            echo "${{ secrets.CTX_SERVER_DEPLOY_SECRET_B64 }}" | base64 --decode > $MY_CA/id_ed25519 && \
+            chmod 600 $MY_CA/id_ed25519 && \
+            echo "${{ secrets.CTX_SERVER_DEPLOY_CACERT_B64 }}" | base64 --decode > $MY_CA/id_ed25519-cert.pub && \
+            chmod 600 $MY_CA/id_ed25519-cert.pub && \
+            echo "${{ secrets.CTX_POPS4XL_SCP_KEY_SECRET_B64 }}" | base64 --decode > $MY_CA/id_rsa_pix4x && \
+            chmod 600 $MY_CA/id_rsa_pix4x && \
+            docker rm -f bender || true && \
+            docker run -d --restart=always --network='web' \
+              -e DARKSKY_API_KEY=${{ secrets.CTX_DARKSKY_API_KEY }} \
+              -e GITHUB_RUN_ID=$GITHUB_RUN_ID \
+              -e COOKIE_SECRET=${{ secrets.COOKIE_SECRET }} \
+              -e CTX_JOIN_API_KEY=${{ secrets.CTX_JOIN_API_KEY }} \
+              -e CTX_PLEX_TOKEN=${{ secrets.CTX_PLEX_TOKEN }} \
+              -e CTX_DIGITALOCEAN_TOKEN=${{ secrets.CTX_DIGITALOCEAN_TOKEN }} \
+              -e CTX_JOIN_API_KEY=${{ secrets.CTX_JOIN_API_KEY }} \
+              -e CTX_DROPBOX_ACCESS_TOKEN=${{ secrets.CTX_DROPBOX_ACCESS_TOKEN }} \
+              -e CTX_ETHERSCAN_API_KEY=${{ secrets.CTX_ETHERSCAN_API_KEY }} \
+              -e CTX_ETHEREUM_ADDRESS_METAMASK=${{ secrets.CTX_ETHEREUM_ADDRESS_METAMASK }} \
+              -e CTX_CURRENT_PGP_FINGERPRINT=${{ secrets.CTX_CURRENT_PGP_FINGERPRINT }} \
+              -e CTX_STELLAR_LUMENS_ADDRESS=${{ secrets.CTX_STELLAR_LUMENS_ADDRESS }} \
+              -e CTX_VPNC_GATEWAY=${{ secrets.CTX_VPNC_GATEWAY }} \
+              -e CTX_SLACK_CHANNEL=${{ secrets.CTX_SLACK_CHANNEL }} \
+              -e CTX_SLACK_NEW_API_TOKEN=${{ secrets.CTX_SLACK_NEW_API_TOKEN }} \
+              -e SLACK_EVENTSAPI_ENDPOINT=${{ secrets.SLACK_EVENTSAPI_ENDPOINT }} \
+              -e SLACK_VERIFICATION_TOKEN=${{ secrets.SLACK_VERIFICATION_TOKEN }} \
+              -e SLACK_SIGNING_SECRET=${{ secrets.SLACK_SIGNING_SECRET }} \
+              -e SLACK_BENDER_BOT_USERID=${{ secrets.SLACK_BENDER_BOT_USERID }} \
+              -e FRITZ_BOX_HOST=${{ secrets.FRITZ_BOX_HOST }} \
+              -e FRITZ_BOX_USER=${{ secrets.FRITZ_BOX_USER }} \
+              -e FRITZ_BOX_PASS=${{ secrets.FRITZ_BOX_PASS }} \
+              -v $MY_CA/id_ed25519:/root/.ssh/id_ed25519:ro \
+              -v $MY_CA/id_ed25519-cert.pub:/root/.ssh/id_ed25519-cert.pub:ro \
+              -v $MY_CA/id_rsa_pix4x:/root/.ssh/id_rsa_pix4x:ro \
+              --label='traefik.docker.network=web' \
+              --label='traefik.enable=true' \
+              --label='traefik.http.routers.bender.tls.certResolver=letsencrypt' \
+              --label='traefik.http.routers.bender.tls.domains=${{ secrets.BENDER_HOSTNAME }}' \
+              --label='traefik.http.routers.bender.rule=Host(\\\`${{ secrets.BENDER_HOSTNAME }}\\\`)' \
+              --name bender danackerson/slackbot:vg$GITHUB_RUN_ID"
+          DEPLOY_EOF
+          chmod u+x deploy.sh
 
-          echo -n "${{ secrets.CTX_PLEX_TOKEN }}" | base64 | tr -d \\n > .base64_enc
-          export CTX_PLEX_TOKEN_B64=`cat .base64_enc`
-          sed -i -e "s@{{CTX_PLEX_TOKEN_B64}}@$CTX_PLEX_TOKEN_B64@" bender.yml
+          envsubst < digitaloceans/do_ubuntu_userdata.sh > digitalocean_ubuntu_userdata.sh
+          mkdir ~/.ssh
+          ./digitaloceans/do -fn=createNewServer
 
-          echo -n "${{ secrets.CTX_DIGITALOCEAN_TOKEN }}" | base64 | tr -d \\n > .base64_enc
-          export CTX_DIGITALOCEAN_TOKEN_B64=`cat .base64_enc`
-          sed -i -e "s@{{CTX_DIGITALOCEAN_TOKEN_B64}}@$CTX_DIGITALOCEAN_TOKEN_B64@" bender.yml
+          public_ip_address=$(curl -s https://checkip.amazonaws.com)
+          echo PUBLIC_IP=${public_ip_address} >> /tmp/new_digital_ocean_droplet_params
+          source /tmp/new_digital_ocean_droplet_params
 
-          echo -n "${{ secrets.CTX_STELLAR_LUMENS_ADDRESS }}" | base64 | tr -d \\n > .base64_enc
-          export CTX_STELLAR_LUMENS_ADDRESS_B64=`cat .base64_enc`
-          sed -i -e "s@{{CTX_STELLAR_LUMENS_ADDRESS_B64}}@$CTX_STELLAR_LUMENS_ADDRESS_B64@" bender.yml
+          ./digitaloceans/do -fn=firewallSSH -allow=true -ip=$public_ip_address
+          sleep 30
 
-          echo -n "${{ secrets.CTX_CURRENT_PGP_FINGERPRINT }}" | base64 | tr -d \\n > .base64_enc
-          export CTX_CURRENT_PGP_FINGERPRINT_B64=`cat .base64_enc`
-          sed -i -e "s@{{CTX_CURRENT_PGP_FINGERPRINT_B64}}@$CTX_CURRENT_PGP_FINGERPRINT_B64@" bender.yml
+          scp -q -o StrictHostKeyChecking=no deploy.sh root@$NEW_SERVER_IPV4:~/
 
-          echo -n "${{ secrets.CTX_ETHEREUM_ADDRESS_METAMASK }}" | base64 | tr -d \\n > .base64_enc
-          export CTX_ETHEREUM_ADDRESS_METAMASK_B64=`cat .base64_enc`
-          sed -i -e "s@{{CTX_ETHEREUM_ADDRESS_METAMASK_B64}}@$CTX_ETHEREUM_ADDRESS_METAMASK_B64@" bender.yml
-
-          echo -n "${{ secrets.CTX_ETHERSCAN_API_KEY }}" | base64 | tr -d \\n > .base64_enc
-          export CTX_ETHERSCAN_API_KEY_B64=`cat .base64_enc`
-          sed -i -e "s@{{CTX_ETHERSCAN_API_KEY_B64}}@$CTX_ETHERSCAN_API_KEY_B64@" bender.yml
-
-          echo -n "${{ secrets.CTX_SLACK_NEW_API_TOKEN }}" | base64 | tr -d \\n > .base64_enc
-          export CTX_SLACK_NEW_API_TOKEN_B64=`cat .base64_enc`
-          sed -i -e "s@{{CTX_SLACK_NEW_API_TOKEN_B64}}@$CTX_SLACK_NEW_API_TOKEN_B64@" bender.yml
-
-          echo -n "${{ secrets.SLACK_EVENTSAPI_ENDPOINT }}" | base64 | tr -d \\n > .base64_enc
-          export SLACK_EVENTSAPI_ENDPOINT_B64=`cat .base64_enc`
-          sed -i -e "s@{{SLACK_EVENTSAPI_ENDPOINT_B64}}@$SLACK_EVENTSAPI_ENDPOINT_B64@" bender.yml
-
-          echo -n "${{ secrets.SLACK_VERIFICATION_TOKEN }}" | base64 | tr -d \\n > .base64_enc
-          export SLACK_VERIFICATION_TOKEN_B64=`cat .base64_enc`
-          sed -i -e "s@{{SLACK_VERIFICATION_TOKEN_B64}}@$SLACK_VERIFICATION_TOKEN_B64@" bender.yml
-
-          echo -n "${{ secrets.SLACK_SIGNING_SECRET }}" | base64 | tr -d \\n > .base64_enc
-          export SLACK_SIGNING_SECRET_B64=`cat .base64_enc`
-          sed -i -e "s@{{SLACK_SIGNING_SECRET_B64}}@$SLACK_SIGNING_SECRET_B64@" bender.yml
-
-          echo -n "${{ secrets.SLACK_BENDER_BOT_USERID }}" | base64 | tr -d \\n > .base64_enc
-          export SLACK_BENDER_BOT_USERID_B64=`cat .base64_enc`
-          sed -i -e "s@{{SLACK_BENDER_BOT_USERID_B64}}@$SLACK_BENDER_BOT_USERID_B64@" bender.yml
-
-          echo -n "${{ secrets.CTX_JOIN_API_KEY }}" | base64 | tr -d \\n > .base64_enc
-          export CTX_JOIN_API_KEY_B64=`cat .base64_enc`
-          sed -i -e "s@{{CTX_JOIN_API_KEY_B64}}@$CTX_JOIN_API_KEY_B64@" bender.yml
-
-          echo -n "${{ secrets.CTX_VPNC_GATEWAY }}" | base64 | tr -d \\n > .base64_enc
-          export CTX_VPNC_GATEWAY_B64=`cat .base64_enc`
-          sed -i -e "s@{{CTX_VPNC_GATEWAY_B64}}@$CTX_VPNC_GATEWAY_B64@" bender.yml
-
-          echo -n "${{ secrets.CTX_DROPBOX_ACCESS_TOKEN }}" | base64 | tr -d \\n > .base64_enc
-          export CTX_DROPBOX_ACCESS_TOKEN_B64=`cat .base64_enc`
-
-          echo -n "${{ secrets.FRITZ_BOX_HOST }}" | base64 | tr -d \\n > .base64_enc
-          export FRITZ_BOX_HOST_B64=`cat .base64_enc`
-
-          echo -n "${{ secrets.FRITZ_BOX_USER }}" | base64 | tr -d \\n > .base64_enc
-          export FRITZ_BOX_USER_B64=`cat .base64_enc`
-
-          echo -n "${{ secrets.FRITZ_BOX_PASS }}" | base64 | tr -d \\n > .base64_enc
-          export FRITZ_BOX_PASS_B64=`cat .base64_enc`
-          rm .base64_enc
-
-          sed -i -e "s@{{CTX_DROPBOX_ACCESS_TOKEN_B64}}@$CTX_DROPBOX_ACCESS_TOKEN_B64@" bender.yml
-
-          sed -i -e "s@{{CTX_SERVER_DEPLOY_SECRET_B64}}@${{ secrets.CTX_SERVER_DEPLOY_SECRET_B64 }}@" bender.yml
-
-          sed -i -e "s@{{CTX_SERVER_DEPLOY_CACERT_B64}}@${{ secrets.CTX_SERVER_DEPLOY_CACERT_B64 }}@" bender.yml
-
-          sed -i -e "s@{{CTX_POPS4XL_SCP_KEY_SECRET_B64}}@${{ secrets.CTX_POPS4XL_SCP_KEY_SECRET_B64 }}@" bender.yml
-
-          sed -i -e "s@{{BENDER_HOSTNAME}}@${{ secrets.BENDER_HOSTNAME }}@g" bender.yml
-
-          sed -i -e "s@{{FRITZ_BOX_HOST_B64}}@$FRITZ_BOX_HOST_B64@" bender.yml
-
-          sed -i -e "s@{{FRITZ_BOX_USER_B64}}@$FRITZ_BOX_USER_B64@" bender.yml
-
-          sed -i -e "s@{{FRITZ_BOX_PASS_B64}}@$FRITZ_BOX_PASS_B64@" bender.yml
-
-
-      - name: Create wireguard tunnel configuration
-        run: |
-          sudo apt-get install wireguard resolvconf
-          echo "${{ secrets.CTX_WIREGUARD_GITHUB_ACTIONS_CLIENT_CONFIG }}" | sudo tee /etc/wireguard/tunnel.conf
-
-      - name: Prepare ssh key for remote login
-        run: |
-          mkdir ~/.ssh/
-          echo "${{ secrets.CTX_SERVER_DEPLOY_SECRET_B64 }}" | base64 -d > ~/.ssh/id_ed25519
-          chmod 600 ~/.ssh/id_ed25519
-          echo "${{ secrets.CTX_SERVER_DEPLOY_CACERT_B64 }}" | base64 -d > ~/.ssh/id_ed25519-cert.pub
-
-      - name: Deploy to K8S
-        env:
-          SSH_CXN: ${{ secrets.CTX_K8S_SSH_USER }}@${{ secrets.CTX_K8S_SSH_HOST }}
-        run: |
-          ssh-keygen -L -f ~/.ssh/id_ed25519-cert.pub
-          wg-quick up tunnel
-
-          scp -o StrictHostKeyChecking=no bender.yml $SSH_CXN:~/k3s/
-          # TODO: `k delete -f k3s/bender.yaml` forces SECRETS update
-          ssh $SSH_CXN -- "sudo kubectl apply -f k3s/bender.yml"
-
-          wg-quick down tunnel
-
-          rm -Rf ~/.ssh
+          ssh root@$NEW_SERVER_IPV4 ./deploy.sh
 
           curl -s -o /dev/null -X POST -d token=${{ secrets.CTX_SLACK_NOTIFICATIONS_TOKEN }} -d channel=C092UE0H4 \
             -d text="<https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID | $GITHUB_REPOSITORY @ $GITHUB_RUN_ID>" \
             https://slack.com/api/chat.postMessage
+
+          rm -Rf ~/.ssh/id_rsa digitalocean_ubuntu_userdata.sh /tmp/new_digital_ocean_droplet_params
+          ./digitaloceans/do -fn=firewallSSH -allow=false -ip=$PUBLIC_IP
+          ./digitaloceans/do -fn=deleteServer -dropletID=$NEW_DROPLET_ID -keyID=$NEW_SSH_KEY_ID

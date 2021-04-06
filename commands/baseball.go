@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/ackersonde/ackerson.de-go/baseball"
-	"github.com/slack-go/slack"
 )
 
 // FavGames is now commented
@@ -28,7 +27,7 @@ func GetBaseBallGame(gameID string) string {
 }
 
 // ShowBBGames is now commented
-func ShowBBGames(fromDate string) {
+func ShowBBGames(fromDate string) string {
 	if fromDate == "" {
 		yesterday := time.Now().AddDate(0, 0, -1)
 		fromDate = yesterday.Format("2006/month_01/day_02")
@@ -43,8 +42,7 @@ func ShowBBGames(fromDate string) {
 		result += downloadURL + watchURL + "\n"
 	}
 
-	api.PostMessage(SlackReportChannel, slack.MsgOptionText(result, false),
-		slack.MsgOptionAsUser(true))
+	return result
 }
 
 // ShowBaseBallGames now commented
