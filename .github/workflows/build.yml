@@ -52,6 +52,7 @@ jobs:
             chmod 600 $MY_CA/id_ed25519-cert.pub && \
             echo "${{ secrets.CTX_POPS4XL_SCP_KEY_SECRET_B64 }}" | base64 --decode > $MY_CA/id_rsa_pix4x && \
             chmod 600 $MY_CA/id_rsa_pix4x && \
+            docker login -u ${{ secrets.CTX_DOCKER_USER }} -p ${{ secrets.CTX_DOCKER_PASS }} && \
             docker rm -f bender || true && \
             docker run -d --restart=always --network='web' \
               -e DARKSKY_API_KEY=${{ secrets.CTX_DARKSKY_API_KEY }} \
