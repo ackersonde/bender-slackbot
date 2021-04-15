@@ -1,4 +1,4 @@
-FROM multiarch/alpine:arm64-latest-stable
+FROM alpine:latest
 EXPOSE 3000
 
 RUN apk --no-cache add bash curl openssh-client ca-certificates tzdata
