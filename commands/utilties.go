@@ -244,19 +244,10 @@ func getAppVersions() string {
 		*structures.PI4RemoteConnectConfig}
 
 	for _, host := range hosts {
-		remoteResult := executeRemoteCmd("k3s --version | head -n 1", &host)
-
 		result += "_" + host.HostName + "_: "
-		if remoteResult.Stdout == "" && remoteResult.Stderr != "" {
-			result += remoteResult.Stderr
-		} else {
-			result += remoteResult.Stdout
-			if strings.HasPrefix(host.HostName, "vpnpi") {
-				result = strings.TrimRight(result, "\n") + ", "
-				remoteResult := executeRemoteCmd("sudo docker --version", &host)
-				result += remoteResult.Stdout
-			}
-		}
+		result = strings.TrimRight(result, "\n") + ", "
+		remoteResult := executeRemoteCmd("sudo docker --version", &host)
+		result += remoteResult.Stdout
 	}
 	return result + "\n"
 }
@@ -270,7 +261,7 @@ func measureCPUTemp() string {
 	result := "*CPUs* :thermometer:\n"
 	for _, host := range hosts {
 		measureCPUTempCmd := "((TEMP=`cat /sys/class/thermal/thermal_zone0/temp`/1000)); echo \"$TEMP\"C"
-		if strings.HasPrefix(host.HostName, "blonde") {
+		if strings.HasPrefix(host.HostName, "build") {
 			measureCPUTempCmd = "/usr/bin/sensors | grep Tctl | cut -d+ -f2"
 		}
 

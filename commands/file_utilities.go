@@ -25,11 +25,12 @@ func CheckServerDiskSpace(path string) string {
 	}
 
 	response := ""
-	out2, err2 := exec.Command("/bin/df", "-h", path).Output()
-	if err2 != nil {
-		response += err2.Error()
+	cmd := fmt.Sprintf("/bin/df -h %s", path)
+	remoteResult := executeRemoteCmd(cmd, structures.PI4RemoteConnectConfig)
+	if remoteResult.Stdout == "" && remoteResult.Stderr != "" {
+		response = remoteResult.Stderr
 	} else {
-		response += string(out2)
+		response = remoteResult.Stdout
 	}
 
 	return ":k8s: *SD Card Disk Usage* `pi4`\n" + response
