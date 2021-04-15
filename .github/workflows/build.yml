@@ -80,9 +80,9 @@ jobs:
               -e SLACK_VERIFICATION_TOKEN=${{ secrets.SLACK_VERIFICATION_TOKEN }} \
               -e SLACK_SIGNING_SECRET=${{ secrets.SLACK_SIGNING_SECRET }} \
               -e SLACK_BENDER_BOT_USERID=${{ secrets.SLACK_BENDER_BOT_USERID }} \
-              -e MASTER_HOSTNAME=${{ secrets.CTX_IPV6_MASTER_HOME }}
-              -e SLAVE_HOSTNAME=${{ secrets.CTX_IPV6_SLAVE_HOME }}
-              -e BUILD_HOSTNAME=${{ secrets.CTX_IPV6_BUILD_HOME }}
+              -e MASTER_HOSTNAME=${{ secrets.CTX_IPV6_MASTER_HOME }} \
+              -e SLAVE_HOSTNAME=${{ secrets.CTX_IPV6_SLAVE_HOME }} \
+              -e BUILD_HOSTNAME=${{ secrets.CTX_IPV6_BUILD_HOME }} \
               -e FRITZ_BOX_HOST=${{ secrets.FRITZ_BOX_HOST }} \
               -e FRITZ_BOX_USER=${{ secrets.FRITZ_BOX_USER }} \
               -e FRITZ_BOX_PASS=${{ secrets.FRITZ_BOX_PASS }} \
