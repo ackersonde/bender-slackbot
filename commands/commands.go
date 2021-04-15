@@ -24,7 +24,6 @@ import (
 )
 
 var api *slack.Client
-var joinAPIKey = os.Getenv("CTX_JOIN_API_KEY")
 var vpnGateway = os.Getenv("CTX_VPNC_GATEWAY")
 var githubRunID = os.Getenv("GITHUB_RUN_ID")
 
@@ -156,20 +155,6 @@ func CheckCommand(event *slackevents.MessageEvent, command string) {
 			response += CheckServerDiskSpace("")
 		}
 		api.PostMessage(event.Channel, slack.MsgOptionText(response, true), params)
-	} else if args[0] == "wgs" {
-		api.PostMessage(event.Channel, slack.MsgOptionText(wireguardShow(), true), params)
-	} else if args[0] == "wgu" {
-		api.PostMessage(event.Channel, slack.MsgOptionText(wireguardAction("up"), true), params)
-	} else if args[0] == "wgd" {
-		api.PostMessage(event.Channel, slack.MsgOptionText(wireguardAction("down"), true), params)
-	} else if args[0] == "wfs" {
-		api.PostMessage(event.Channel, slack.MsgOptionText(WifiAction("STATE"), true), params)
-	} else if args[0] == "wfu" {
-		api.PostMessage(event.Channel, slack.MsgOptionText(WifiAction("1"), true), params)
-	} else if args[0] == "wfu5" {
-		api.PostMessage(event.Channel, slack.MsgOptionText(WifiAction("5"), true), params)
-	} else if args[0] == "wfd" {
-		api.PostMessage(event.Channel, slack.MsgOptionText(WifiAction("0"), true), params)
 	} else if args[0] == "mv" {
 		if len(args) == 3 &&
 			(strings.HasPrefix(args[2], "movies") ||
@@ -242,12 +227,10 @@ func CheckCommand(event *slackevents.MessageEvent, command string) {
 	} else if args[0] == "www" {
 		fritzBox := ":fritzbox: <https://fritz.ackerson.de/|fritz.box> | "
 		fritzBox += ":traefik: <https://monitor.ackerson.de/dashboard/#/ | traefik> | "
-		pi4 := ":k8s: <https://dash.ackerson.de/#/overview?namespace=default|k8s>\n"
-		pi4 += ":pihole: <https://hole.ackerson.de/admin/|pi.hole> | "
-		vpnpi := ":transmission: <https://transmission.ackerson.de/transmission/web/|trans> | "
-		vpnpi += ":plex: <https://plex.ackerson.de/web/index.html#|plex>\n"
+		vpnpi := ":transmission: <http://vpnpi.fritz.box:9091/transmission/web/|trans> | "
+		vpnpi += ":jelly: <http://vpnpi:8096/web/index.html#!/home.html|jelly>\n"
 
-		response := fritzBox + pi4 + vpnpi
+		response := fritzBox + vpnpi
 		api.PostMessage(event.Channel, slack.MsgOptionText(response, false), params)
 	} else if args[0] == "key" {
 		response := getBendersCurrentSSHCert()

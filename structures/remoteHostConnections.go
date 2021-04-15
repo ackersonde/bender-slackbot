@@ -1,5 +1,7 @@
 package structures
 
+import "os"
+
 // RemoteConnectConfig provides structure for remote connections
 type RemoteConnectConfig struct {
 	User           string
@@ -33,17 +35,17 @@ var VPNPIRemoteConnectConfig = &RemoteConnectConfig{
 	HostEndpoints:  []string{"192.168.178.28:22"},
 	HostSSHKey:     "ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBCfXJ+mvHXs+t0+nF8JATxgMEwNngy6JCOVn1bEjsjsMylZsMejouArUrNKcnyPZ+vTvljlR7CaC6X9fbUtdxs0=",
 	HostPath:       "/home/ubuntu/",
-	HostName:       "vpnpi.fritz.box",
+	HostName:       os.Getenv("SLAVE_HOSTNAME"),
 }
 
 // BlondeBomberRemoteConnectConfig connects to blonde-bomber
 var BlondeBomberRemoteConnectConfig = &RemoteConnectConfig{
 	User:           "ackersond",
-	PrivateKeyPath: "/Users/ackersond/.ssh/circleci_rsa",
+	PrivateKeyPath: "/root/.ssh/id_ed25519",
 	HostEndpoints:  []string{"192.168.178.20:26"},
 	HostSSHKey:     "ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBJBLGv3gAVIH2iM1I52Ckb2vnBKJtF+w1q3vVHxLY/J71v5edHrdr+ZpmegnpYdltJDsoJoVCD26MTXjWfJQbFg=",
 	HostPath:       "/home/ackersond/",
-	HostName:       "blonde-bomber.fritz.box",
+	HostName:       os.Getenv("BUILD_HOSTNAME"),
 }
 
 // PI4RemoteConnectConfig connects to pi4
@@ -53,5 +55,5 @@ var PI4RemoteConnectConfig = &RemoteConnectConfig{
 	HostEndpoints:  []string{"192.168.178.27:22"},
 	HostSSHKey:     "ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBC9wGQXT5zifmoWRaLeDrf/j98ShzZ29CilfVUVtSeKJp1k2uh8pMM/NTiG9FQQmitEIZXdwlcl2+Uj8YD21sAI=",
 	HostPath:       "/home/ubuntu/",
-	HostName:       "pi4.fritz.box",
+	HostName:       os.Getenv("MASTER_HOSTNAME"),
 }
