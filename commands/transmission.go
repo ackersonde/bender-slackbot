@@ -95,6 +95,9 @@ func torrentCommand(cmd []string) (result string) {
 		}
 	}
 
+	result = strings.Replace(result,
+		"localhost:9091/transmission/rpc/",
+		"http://vpnpi.fritz.box:9091/transmission/web/", 1)
 	return result
 }
 
