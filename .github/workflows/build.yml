@@ -96,7 +96,7 @@ jobs:
               --name bender danackerson/slackbot:vg$GITHUB_RUN_ID"
 
           rm -Rf ~/.ssh/id_rsa /tmp/new_digital_ocean_droplet_params ~/.docker/config.json
-          ./digitaloceans/do -fn=firewallSSH -allow=false -ip=$PUBLIC_IP
+          ./digitaloceans/do -fn=firewallSSH -allow=false -ip=$public_ip_address
 
           curl -s -o /dev/null -X POST -d token=${{ secrets.CTX_SLACK_NOTIFICATIONS_TOKEN }} -d channel=C092UE0H4 \
             -d text="<https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID | $GITHUB_REPOSITORY @ $GITHUB_RUN_ID>" \

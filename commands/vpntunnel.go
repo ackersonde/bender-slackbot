@@ -20,7 +20,7 @@ var maxVPNServerLoad = 80
 func homeAndInternetIPsDoNotMatch(tunnelIP string) bool {
 	results := make(chan string, 10)
 	timeout := time.After(10 * time.Second)
-	ipCheckHost := "https://ipv4.icanhazip.com"
+	ipCheckHost := "https://ipv4.icanhazip.com" // TODO: update to ipv6 once VPN supports it
 
 	go func() {
 		cmd := "sudo docker exec vpnission curl " + ipCheckHost
@@ -38,7 +38,7 @@ func homeAndInternetIPsDoNotMatch(tunnelIP string) bool {
 				timeoutDig := time.After(10 * time.Second)
 				// ensure home.ackerson.de is DIFFERENT than PI IP address!
 				go func() {
-					cmd := "sudo docker exec vpnission dig " + vpnGateway + " A +short"
+					cmd := "sudo docker exec vpnission dig " + vpnGateway + " AAAA +short"
 					remoteResult := executeRemoteCmd(cmd, structures.VPNPIRemoteConnectConfig)
 
 					resultsDig <- remoteResult.Stdout

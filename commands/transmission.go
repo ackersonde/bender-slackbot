@@ -2,51 +2,31 @@ package commands
 
 import (
 	"fmt"
-	"strconv"
 	"strings"
 
 	"github.com/ackersonde/bender-slackbot/structures"
-	"github.com/odwrtw/transmission"
 )
 
 var transmissionSettingsPath = "/root/.config/transmission-daemon/settings.json"
 
-func getTorrents(t *transmission.Client) (result string) {
-	// Get all torrents
-	torrents, err := t.GetTorrents()
-	if err == nil {
-		result = ":transmission: <http://" +
-			structures.VPNPIRemoteConnectConfig.HostName +
-			":9091/transmission/web/|Running RaspberryPI Torrent(s)>\n"
-
-		for _, listTorrent := range torrents {
-			status := ":arrows_counterclockwise:"
-			info := "[S: " + strconv.Itoa(listTorrent.PeersSendingToUs) + "]\n"
-
-			switch listTorrent.Status {
-			case transmission.StatusStopped:
-				status = ":black_square_for_stop:"
-			case transmission.StatusDownloading:
-				status = ":arrow_double_down:"
-			case transmission.StatusSeeding:
-				status = ":cinema:"
-				seedRatio := fmt.Sprintf("%.1f", listTorrent.UploadRatio)
-				info = "[L: " + strconv.Itoa(listTorrent.PeersGettingFromUs) +
-					"] (Ratio: " + seedRatio + ")\n"
-			}
-
-			percentComplete := strconv.FormatFloat(listTorrent.PercentDone*100, 'f', 0, 64)
-			result += status + " *" + strconv.Itoa(listTorrent.ID) + "*: " +
-				listTorrent.Name + " *" + percentComplete + "%* " + info
-		}
+func execRemoteTorrentCmd(cmd string) (response string) {
+	remoteResult := executeRemoteCmd(cmd, structures.VPNPIRemoteConnectConfig)
+	if remoteResult.Stdout == "" && remoteResult.Stderr != "" {
+		response = remoteResult.Stderr
 	} else {
-		Logger.Printf("\nGetTorrents err: %v", err)
+		response = remoteResult.Stdout
 	}
 
-	return result
+	return response
 }
 
-func addTorrents(t *transmission.Client, torrentLink string, paused bool) string {
+func getTorrents() (response string) {
+	cmd := "docker exec vpnission transmission-remote --list"
+
+	return execRemoteTorrentCmd(cmd)
+}
+
+func addTorrents(torrentLink string, paused bool) (response string) {
 	// slack 'markdown's URLs with '<link|text>' so clip these off
 	if strings.HasPrefix(torrentLink, "<") {
 		torrentLink = strings.TrimLeft(torrentLink, "<http://")
@@ -59,73 +39,59 @@ func addTorrents(t *transmission.Client, torrentLink string, paused bool) string
 	}
 
 	torrentLink = strings.Replace(torrentLink, "magnet/", "magnet:", -1)
-	result := fmt.Sprintf(":star2: adding %s\n", torrentLink)
+	response = fmt.Sprintf(":star2: adding %s\n", torrentLink)
 
 	// Add a torrent
-
-	args := transmission.AddTorrentArg{Filename: torrentLink, Paused: paused}
-	_, err := t.AddTorrent(args)
-	if err != nil {
-		Logger.Printf("\nAdd err: %v", err)
+	pausedParam := "--no-start-paused"
+	if paused {
+		pausedParam = "--start-paused"
 	}
+	cmd := fmt.Sprintf("docker exec vpnission transmission-remote %s -a \"%s\"",
+		pausedParam, torrentLink)
 
-	result += getTorrents(t)
-
-	return result
+	return response + execRemoteTorrentCmd(cmd) + getTorrents()
 }
 
-func deleteTorrents(t *transmission.Client, torrentIDStr string) (result string) {
-	torrentID, err := strconv.Atoi(torrentIDStr)
-	if err != nil {
-		Logger.Printf("\nRemove err: %v", err)
-		return fmt.Sprintf("Unable to remove torrent ID #%s. Is it a valid ID?", torrentIDStr)
+func deleteTorrents(torrentIDStr string) (result string) {
+	result = fmt.Sprintf(":x: deleting torrent #%s\n", torrentIDStr)
+
+	cmd := fmt.Sprintf("docker exec vpnission transmission-remote -t %s -r",
+		torrentIDStr)
+
+	remoteResult := executeRemoteCmd(cmd, structures.VPNPIRemoteConnectConfig)
+	if remoteResult.Stdout == "" && remoteResult.Stderr != "" {
+		result += remoteResult.Stderr
+	} else {
+		result += remoteResult.Stdout
 	}
 
-	result = fmt.Sprintf(":x: deleting torrent #%d\n", torrentID)
-	torrentToDelete := &transmission.Torrent{ID: torrentID}
-	removeErr := t.RemoveTorrents([]*transmission.Torrent{torrentToDelete}, false)
-	if removeErr != nil {
-		Logger.Printf("\nRemove err: %v", removeErr)
-	}
-
-	result += getTorrents(t)
-	return result
+	return execRemoteTorrentCmd(cmd) + getTorrents()
 }
 
 func torrentCommand(cmd []string) (result string) {
 	result = ":closed_lock_with_key: unable to talk to raspberrypi..."
 
-	// Connect to Transmission RPC daemon
-	endpoint := structures.VPNPIRemoteConnectConfig.HostEndpoints[0]
-	conf := transmission.Config{
-		Address: "http://" + strings.TrimSuffix(endpoint, ":22") + ":9091/transmission/rpc",
-	}
-	t, err := transmission.New(conf)
-	if err != nil {
-		Logger.Printf("\nUnable to instantiate Transmission RPC client: %v", err)
-	}
-
 	if cmd[0] == "trans" {
-		result = getTorrents(t)
+		result = getTorrents()
 	} else if cmd[0] == "tranc" {
 		if len(cmd) == 1 {
 			result = "Usage: `tranc <Torrent link>`"
 		} else {
 			paused := false
-			result = addTorrents(t, cmd[1], paused)
+			result = addTorrents(cmd[1], paused)
 		}
 	} else if cmd[0] == "tranp" {
 		if len(cmd) == 1 {
 			result = "Usage: `tranp <Torrent link>`"
 		} else {
 			paused := true
-			result = addTorrents(t, cmd[1], paused)
+			result = addTorrents(cmd[1], paused)
 		}
 	} else if cmd[0] == "trand" {
 		if len(cmd) == 1 {
 			result = "Usage: `trand <Torrent ID>`"
 		} else {
-			result = deleteTorrents(t, cmd[1])
+			result = deleteTorrents(cmd[1])
 		}
 	}
 

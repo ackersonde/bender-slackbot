@@ -227,8 +227,9 @@ func CheckCommand(event *slackevents.MessageEvent, command string) {
 	} else if args[0] == "www" {
 		fritzBox := ":fritzbox: <https://fritz.ackerson.de/|fritz.box> | "
 		fritzBox += ":traefik: <https://monitor.ackerson.de/dashboard/#/ | traefik> | "
-		vpnpi := ":transmission: <http://vpnpi.fritz.box:9091/transmission/web/|trans> | "
-		vpnpi += ":jelly: <http://vpnpi:8096/web/index.html#!/home.html|jelly>\n"
+		fritzBox += ":afraid: <https://freedns.afraid.org/dynamic/v2/ | DynDNS> | "
+		vpnpi := ":transmission: <http://vpnpi.fritz.box:9091/transmission/web/ | trans> | "
+		vpnpi += ":jelly: <http://vpnpi:8096/web/index.html#!/home.html | jelly>\n"
 
 		response := fritzBox + vpnpi
 		api.PostMessage(event.Channel, slack.MsgOptionText(response, false), params)
@@ -242,8 +243,8 @@ func CheckCommand(event *slackevents.MessageEvent, command string) {
 				":sun_behind_rain_cloud: `sw`: Schwabhausen weather\n" +
 				":mvv: `mvv`: Status | Trip In | Trip Home\n" +
 				":baseball: `bb <YYYY-MM-DD>`: show baseball games from given date (default yesterday)\n" +
-				//":do_droplet: `do|dd <id>`: show|delete DigitalOcean droplet(s)\n" +
-				":wireguard: `wg[s|u|d]`: [S]how status, [U]p or [D]own wireguard tunnel\n" +
+				":do_droplet: `do|dd <id>`: show|delete DigitalOcean droplet(s)\n" +
+				//":wireguard: `wg[s|u|d]`: [S]how status, [U]p or [D]own wireguard tunnel\n" +
 				":protonvpn: `vpn[s|c]`: [S]how status of VPN on :raspberry_pi:, [C]hange VPN to best in given country or " + VPNCountry + "\n" +
 				":pirate_bay: `torq <search term>`\n" +
 				":transmission: `tran[c|p|s|d]`: [C]reate <URL>, [P]aused <URL>, [S]tatus, [D]elete <ID> torrents on :raspberry_pi:\n" +
@@ -254,6 +255,9 @@ func CheckCommand(event *slackevents.MessageEvent, command string) {
 				":github: `version`: Which build/deploy is this Bender bot?\n" +
 				":earth_americas: `www`: Show various internal links\n" +
 				":copyright: `scpxl <URL>`: scp URL file to Pops4XL\n"
+		// TODO: "security" -> overview of SSH key(s) and UFW rules
+		// TODO: "logs <container>" -> grab `docker logs <container>` from root@ackerson.de (hard to setup access here)
+
 		api.PostMessage(event.Channel, slack.MsgOptionText(response, true), params)
 	} else if event.User != "" {
 		response := "whaddya say <@" + event.Username + ">? Try `help` instead..."
