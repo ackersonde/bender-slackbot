@@ -10,7 +10,6 @@ require (
 	github.com/dropbox/dropbox-sdk-go-unofficial v5.6.0+incompatible
 	github.com/go-co-op/gocron v1.2.0
 	github.com/json-iterator/go v1.1.10
-	github.com/odwrtw/transmission v0.0.0-20201126103959-294af39dc919
 	github.com/slack-go/slack v0.8.2
 	golang.org/x/crypto v0.0.0-20210322153248-0c34fe9e7dc2
 )

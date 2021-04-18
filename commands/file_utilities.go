@@ -13,7 +13,7 @@ import (
 	"github.com/slack-go/slack"
 )
 
-var piPlexPath = "/mnt/usb4TB/DLNA"
+var mediaPath = "/mnt/usb4TB/DLNA"
 
 // CheckServerDiskSpace now exported
 func CheckServerDiskSpace(path string) string {
@@ -46,7 +46,7 @@ func CheckMediaDiskSpace(path string) string {
 	}
 
 	response := ""
-	cmd := fmt.Sprintf("du -hd 1 %s | sort -k 1", piPlexPath+path)
+	cmd := fmt.Sprintf("du -hd 1 %s | sort -k 1", mediaPath+path)
 	if !strings.HasSuffix(path, "/*") {
 		cmd += " | sed '1d'"
 	}
@@ -59,10 +59,10 @@ func CheckMediaDiskSpace(path string) string {
 		response = remoteResult.Stdout
 	}
 
-	response = ":plex: USB *Disk Usage* `vpnpi@" + piPlexPath + path +
+	response = ":plex: USB *Disk Usage* `vpnpi@" + mediaPath + path +
 		"`\n" + response + "\n"
 
-	cmd = fmt.Sprintf("/bin/df -h %s /", piPlexPath+path)
+	cmd = fmt.Sprintf("/bin/df -h %s /", mediaPath+path)
 	remoteResult = executeRemoteCmd(cmd, structures.VPNPIRemoteConnectConfig)
 
 	if remoteResult.Stdout == "" && remoteResult.Stderr != "" {
@@ -91,7 +91,7 @@ func MoveTorrentFile(sourceFile string, destinationDir string) {
 	params := slack.MsgOptionAsUser(true)
 	response := ""
 
-	cmd := fmt.Sprintf("mv %s/%s %s/%s", piPlexPath, sourceFile, piPlexPath, destinationDir)
+	cmd := fmt.Sprintf("mv %s/%s %s/%s", mediaPath, sourceFile, mediaPath, destinationDir)
 	remoteResult := executeRemoteCmd(cmd, structures.VPNPIRemoteConnectConfig)
 
 	if remoteResult.Stdout == "" && remoteResult.Stderr != "" {

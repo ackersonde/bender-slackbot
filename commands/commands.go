@@ -149,7 +149,7 @@ func CheckCommand(event *slackevents.MessageEvent, command string) {
 		if len(args) > 1 {
 			path := strings.Join(args[1:], " ")
 			response += CheckMediaDiskSpace(path)
-			response += CheckServerDiskSpace(path)
+			response += CheckServerDiskSpace("")
 		} else {
 			response += CheckMediaDiskSpace("")
 			response += CheckServerDiskSpace("")
@@ -165,7 +165,7 @@ func CheckCommand(event *slackevents.MessageEvent, command string) {
 				msg := fmt.Sprintln("Please prefix destination w/ either `[movies|tv]`")
 				api.PostMessage(event.Channel, slack.MsgOptionText(msg, true), params)
 			} else if strings.Contains(sourceFile, "..") || strings.HasPrefix(sourceFile, "/") {
-				msg := fmt.Sprintf("Please specify file to move relative to `%s/torrents/`\n", piPlexPath)
+				msg := fmt.Sprintf("Please specify file to move relative to `%s/torrents/`\n", mediaPath)
 				api.PostMessage(event.Channel, slack.MsgOptionText(msg, true), params)
 			} else {
 				MoveTorrentFile(sourceFile, destinationDir)
@@ -248,7 +248,7 @@ func CheckCommand(event *slackevents.MessageEvent, command string) {
 				":protonvpn: `vpn[s|c]`: [S]how status of VPN on :raspberry_pi:, [C]hange VPN to best in given country or " + VPNCountry + "\n" +
 				":pirate_bay: `torq <search term>`\n" +
 				":transmission: `tran[c|p|s|d]`: [C]reate <URL>, [P]aused <URL>, [S]tatus, [D]elete <ID> torrents on :raspberry_pi:\n" +
-				":movie_camera: `mv " + piPlexPath + "/torrents/<filename> [movies|tv/(<path>)]`\n" +
+				":movie_camera: `mv " + mediaPath + "/torrents/<filename> [movies|tv/(<path>)]`\n" +
 				":youtube: `yt <video url>`: Download Youtube video to Papa's handy\n" +
 				":floppy_disk: `fsck`: show disk space on :raspberry_pi:\n" +
 				":bar_chart: `pi`: Stats of various :raspberry_pi:s\n" +
