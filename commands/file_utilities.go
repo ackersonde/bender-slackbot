@@ -34,7 +34,7 @@ func CheckServerDiskSpace(path string) string {
 				strings.Contains(line, "tmpfs") {
 				continue
 			} else {
-				response += line
+				response += "\n" + line
 			}
 		}
 	}
