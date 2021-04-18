@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"os"
-	"os/exec"
 	"strings"
 
 	"github.com/ackersonde/bender-slackbot/structures"
@@ -30,10 +28,18 @@ func CheckServerDiskSpace(path string) string {
 	if remoteResult.Stdout == "" && remoteResult.Stderr != "" {
 		response = remoteResult.Stderr
 	} else {
-		response = remoteResult.Stdout
+		for _, line := range strings.Split(
+			strings.TrimSuffix(remoteResult.Stdout, "\n"), "\n") {
+			if strings.Contains(line, "loop") ||
+				strings.Contains(line, "tmpfs") {
+				continue
+			} else {
+				response += line
+			}
+		}
 	}
 
-	return ":k8s: *SD Card Disk Usage* `pi4`\n" + response
+	return ":raspberry_pi: *SD Card Disk Usage* `pi4`\n" + response
 }
 
 // CheckMediaDiskSpace now exported
@@ -59,31 +65,20 @@ func CheckMediaDiskSpace(path string) string {
 		response = remoteResult.Stdout
 	}
 
-	response = ":plex: USB *Disk Usage* `vpnpi@" + mediaPath + path +
-		"`\n" + response + "\n"
+	response = ":jelly: USB *Disk Usage* `vpnpi@" + mediaPath + path +
+		"`\n" + response
 
 	cmd = fmt.Sprintf("/bin/df -h %s /", mediaPath+path)
 	remoteResult = executeRemoteCmd(cmd, structures.VPNPIRemoteConnectConfig)
 
 	if remoteResult.Stdout == "" && remoteResult.Stderr != "" {
-		response = response + "\n" + remoteResult.Stderr
+		response += "\n" + remoteResult.Stderr
 	} else {
-		response = response + "\n" + remoteResult.Stdout
+		response += "\n" + remoteResult.Stdout
 	}
-	response += "\n=============================\n"
+	response += "\n==========================\n"
 
 	return response
-}
-
-type basePlexRefreshCmdString struct {
-	HostName string
-	Section  string
-	Token    string
-}
-
-func (i basePlexRefreshCmdString) String() string {
-	return fmt.Sprintf("http://%s:32400/library/sections/%s/refresh?X-Plex-Token=%s",
-		i.HostName, i.Section, i.Token)
 }
 
 // MoveTorrentFile now exported
@@ -99,33 +94,6 @@ func MoveTorrentFile(sourceFile string, destinationDir string) {
 		response = ":x: ERR: `" + cmd + "` => " + response
 	} else {
 		response += fmt.Sprintf("moved: %s to %s\n", sourceFile, destinationDir)
-		librarySection := "1"
-		plexToken := os.Getenv("CTX_PLEX_TOKEN")
-		if strings.HasPrefix(destinationDir, "tv") {
-			librarySection = "2"
-		}
-
-		refreshPlexTorrents := fmt.Sprintf(
-			"curl %s",
-			basePlexRefreshCmdString{
-				HostName: structures.VPNPIRemoteConnectConfig.HostName,
-				Section:  "1", Token: plexToken})
-		refreshPlexSection := fmt.Sprintf(
-			"curl %s",
-			basePlexRefreshCmdString{
-				HostName: structures.VPNPIRemoteConnectConfig.HostName,
-				Section:  librarySection, Token: plexToken})
-		refreshCmd := fmt.Sprintf("%s && %s", refreshPlexTorrents, refreshPlexSection)
-
-		out, err := exec.Command("ash", "-c", refreshCmd).Output()
-		if err != nil {
-			response += fmt.Sprintf(fmt.Sprint(err) + ": " + string(out))
-			response = ":x: ERR: `" + refreshCmd + "` => " + response
-		} else {
-			response += fmt.Sprintf(
-				"refreshed <http://%s:32400/web/index.html|Plex library %s>\n",
-				structures.VPNPIRemoteConnectConfig.HostName, librarySection)
-		}
 	}
 
 	api.PostMessage(SlackReportChannel, slack.MsgOptionText(response, false), params)
