@@ -16,8 +16,6 @@ jobs:
       CTX_DIGITALOCEAN_DROPLET_PROXY_TOKEN: ${{ secrets.CTX_DIGITALOCEAN_DROPLET_PROXY_TOKEN }}
       CTX_DIGITALOCEAN_FIREWALL: ${{ secrets.CTX_DIGITALOCEAN_FIREWALL }}
       CTX_SSH_DEPLOY_FINGERPRINT: ${{ secrets.CTX_SSH_DEPLOY_FINGERPRINT }}
-      CTX_RASPBERRYPI_SSH_PRIVKEY: "${{ secrets.CTX_RASPBERRYPI_SSH_PRIVKEY }}"
-      SSH_CXN: ${{ secrets.CTX_IPV6_MASTER_HOME }}
       MY_CA: /root/my-ca
     steps:
       - uses: actions/checkout@v2
@@ -51,7 +49,7 @@ jobs:
           chmod 400 ~/.ssh/id_rsa
 
           ssh -o StrictHostKeyChecking=no root@ackerson.de "\
-            mkdir my-ca || true && \
+            mkdir $MY_CA || true && \
             echo "${{ secrets.CTX_SERVER_DEPLOY_SECRET_B64 }}" | base64 --decode > $MY_CA/id_ed25519 && \
             chmod 600 $MY_CA/id_ed25519 && \
             echo "${{ secrets.CTX_SERVER_DEPLOY_CACERT_B64 }}" | base64 --decode > $MY_CA/id_ed25519-cert.pub && \
