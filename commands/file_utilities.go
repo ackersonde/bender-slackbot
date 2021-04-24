@@ -42,6 +42,12 @@ func CheckServerDiskSpace(path string) string {
 	return ":raspberry_pi: *SD Card Disk Usage* `pi4`\n" + response
 }
 
+// CheckServerDiskSpaceCron called by scheduler
+func CheckServerDiskSpaceCron(path string) {
+	api.PostMessage(SlackReportChannel, slack.MsgOptionText(
+		CheckServerDiskSpace(path), false), slack.MsgOptionAsUser(true))
+}
+
 // CheckMediaDiskSpace now exported
 func CheckMediaDiskSpace(path string) string {
 	if path != "" {
@@ -79,6 +85,12 @@ func CheckMediaDiskSpace(path string) string {
 	response += "\n==========================\n"
 
 	return response
+}
+
+// CheckMediaDiskSpaceCron called by scheduler
+func CheckMediaDiskSpaceCron(path string) {
+	api.PostMessage(SlackReportChannel, slack.MsgOptionText(
+		CheckMediaDiskSpace(path), false), slack.MsgOptionAsUser(true))
 }
 
 // MoveTorrentFile now exported

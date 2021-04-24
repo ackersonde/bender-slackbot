@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/ackersonde/ackerson.de-go/baseball"
+	"github.com/slack-go/slack"
 )
 
 // FavGames is now commented
@@ -43,6 +44,12 @@ func ShowBBGames(fromDate string) string {
 	}
 
 	return result
+}
+
+// ShowBBGamesCron called from scheduler
+func ShowBBGamesCron(fromDate string) {
+	api.PostMessage(SlackReportChannel, slack.MsgOptionText(
+		ShowBBGames(fromDate), false), slack.MsgOptionAsUser(true))
 }
 
 // ShowBaseBallGames now commented
