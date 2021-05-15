@@ -44,7 +44,7 @@ jobs:
 
           mkdir ~/.ssh
           cat <<EOF >~/.ssh/id_rsa
-          {{ secrets.CTX_DIGITALOCEAN_SSH_PRIVKEY }}
+          ${{ secrets.CTX_DIGITALOCEAN_SSH_PRIVKEY }}
           EOF
           chmod 400 ~/.ssh/id_rsa
 
