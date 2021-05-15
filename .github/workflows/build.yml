@@ -43,7 +43,7 @@ jobs:
           ./digitaloceans/do -fn=firewallSSH -allow=true -ip=$public_ip_address -tag=traefik
 
           mkdir ~/.ssh
-          at <<EOF >~/.ssh/id_rsa
+          cat <<EOF >~/.ssh/id_rsa
           {{ secrets.CTX_DIGITALOCEAN_SSH_PRIVKEY }}
           EOF
           chmod 400 ~/.ssh/id_rsa
