@@ -142,7 +142,7 @@ func checkFirewallRules() string {
 func fetchHomeIPv6Prefix() string {
 	response := ""
 
-	cmd := []string{"/app/fritzBoxShell.sh",
+	cmd := []string{"/home/ubuntu/fritzBoxShell.sh",
 		"--boxip", os.Getenv("FRITZ_BOX_HOST"),
 		"--boxuser", os.Getenv("FRITZ_BOX_USER"),
 		"--boxpw", os.Getenv("FRITZ_BOX_PASS"),
@@ -172,7 +172,7 @@ func fetchHomeIPv6Prefix() string {
 }
 
 func createFritzCmd(action string, param string) *exec.Cmd {
-	return exec.Command("/app/fritzBoxShell.sh",
+	return exec.Command("/home/ubuntu/fritzBoxShell.sh",
 		"--boxip", os.Getenv("FRITZ_BOX_HOST"),
 		"--boxuser", os.Getenv("FRITZ_BOX_USER"),
 		"--boxpw", os.Getenv("FRITZ_BOX_PASS"),
