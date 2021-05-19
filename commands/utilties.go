@@ -136,7 +136,16 @@ func WifiAction(param string) string {
 
 func checkFirewallRules() string {
 	homeIPv6Prefix := fetchHomeIPv6Prefix()
-	return strings.Join(fetchExtraDOsshFirewallRules(homeIPv6Prefix), ", ")
+	extras := strings.Join(fetchExtraDOsshFirewallRules(homeIPv6Prefix), ", ")
+
+	response := ":fritzbox: <-> :digitalocean::"
+	if extras != "" {
+		response += " insecure -> " + extras
+	} else {
+		response += " secured for " + homeIPv6Prefix
+	}
+
+	return response
 }
 
 func fetchHomeIPv6Prefix() string {
@@ -153,7 +162,6 @@ func fetchHomeIPv6Prefix() string {
 		response = remoteResult.Stderr
 		Logger.Printf("ERR: %s", response)
 	} else {
-		Logger.Printf("RES: %s", remoteResult.Stdout)
 		re := regexp.MustCompile(`(.*)NewIPv6Prefix (?P<prefix>.*)\nNewPrefixLength (?P<length>.*)\n(.*)`)
 		matches := re.FindAllStringSubmatch(remoteResult.Stdout, -1)
 		names := re.SubexpNames()
@@ -164,7 +172,7 @@ func fetchHomeIPv6Prefix() string {
 				m[names[i]] = n
 			}
 			if len(m) > 1 {
-				response = ":fritzbox: IPv6 Prefix" + m["prefix"] + "/" + m["length"]
+				response = m["prefix"] + "/" + m["length"]
 			}
 		}
 	}
