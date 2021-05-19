@@ -136,11 +136,11 @@ func WifiAction(param string) string {
 
 func checkFirewallRules() string {
 	homeIPv6Prefix := fetchHomeIPv6Prefix()
-	extras := strings.Join(fetchExtraDOsshFirewallRules(homeIPv6Prefix), ", ")
+	extras := fetchExtraDOsshFirewallRules(homeIPv6Prefix)
 
 	response := ":do_droplet:"
-	if extras != "" {
-		response += " open to -> " + extras + " :rotating_light:"
+	if len(extras) > 0 {
+		response += " open to -> " + strings.Join(extras, ", ") + " :rotating_light:"
 	} else {
 		response += " secured for " + homeIPv6Prefix + " :white_check_mark:"
 	}
