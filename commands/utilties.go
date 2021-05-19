@@ -134,6 +134,43 @@ func WifiAction(param string) string {
 	return response
 }
 
+func checkFirewallRules() string {
+	homeIPv6Prefix := fetchHomeIPv6Prefix()
+	return strings.Join(fetchExtraDOsshFirewallRules(homeIPv6Prefix), ", ")
+}
+
+func fetchHomeIPv6Prefix() string {
+	response := ""
+
+	cmd := []string{"/app/fritzBoxShell.sh",
+		"--boxip", os.Getenv("FRITZ_BOX_HOST"),
+		"--boxuser", os.Getenv("FRITZ_BOX_USER"),
+		"--boxpw", os.Getenv("FRITZ_BOX_PASS"),
+		"IGDIP", "STATE"}
+
+	remoteResult := executeRemoteCmd(strings.Join(cmd, " "), structures.PI4RemoteConnectConfig)
+	if remoteResult.Stdout == "" && remoteResult.Stderr != "" {
+		response = remoteResult.Stderr
+		Logger.Printf("ERR: %s", response)
+	} else {
+		re := regexp.MustCompile(`(.*)NewIPv6Prefix (?P<prefix>.*)\nNewPrefixLength (?P<length>.*)\n(.*)`)
+		matches := re.FindAllStringSubmatch(remoteResult.Stdout, -1)
+		names := re.SubexpNames()
+
+		m := map[string]string{}
+		if len(matches) > 0 {
+			for i, n := range matches[0] {
+				m[names[i]] = n
+			}
+			if len(m) > 1 {
+				response = ":fritzbox: IPv6 Prefix" + m["prefix"] + "/" + m["length"]
+			}
+		}
+	}
+
+	return response
+}
+
 func createFritzCmd(action string, param string) *exec.Cmd {
 	return exec.Command("/app/fritzBoxShell.sh",
 		"--boxip", os.Getenv("FRITZ_BOX_HOST"),

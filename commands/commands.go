@@ -236,6 +236,9 @@ func CheckCommand(event *slackevents.MessageEvent, command string) {
 	} else if args[0] == "key" {
 		response := getBendersCurrentSSHCert()
 		api.PostMessage(event.Channel, slack.MsgOptionText(response, false), params)
+	} else if args[0] == "security" {
+		response := checkFirewallRules()
+		api.PostMessage(event.Channel, slack.MsgOptionText(response, false), params)
 	} else if args[0] == "help" {
 		response :=
 			":ethereum: `crypto`: Current cryptocurrency stats :lumens:\n" +
@@ -254,10 +257,9 @@ func CheckCommand(event *slackevents.MessageEvent, command string) {
 				":bar_chart: `pi`: Stats of various :raspberry_pi:s\n" +
 				":github: `version`: Which build/deploy is this Bender bot?\n" +
 				":earth_americas: `www`: Show various internal links\n" +
-				":copyright: `scpxl <URL>`: scp URL file to Pops4XL\n"
-		// TODO: "security" -> overview of SSH key(s) and UFW rules
-		// TODO: "logs <container>" -> grab `docker logs <container>` from root@ackerson.de (hard to setup access here)
-
+				":copyright: `scpxl <URL>`: scp URL file to Pops4XL\n" +
+				":closed_lock_with_key: `security`: overview of SSH key(s) and UFW rules\n"
+		// TODO: "logs <container>" -> grab `docker logs <container>` from root@ackerson.de
 		api.PostMessage(event.Channel, slack.MsgOptionText(response, true), params)
 	} else if event.User != "" {
 		response := "whaddya say <@" + event.Username + ">? Try `help` instead..."

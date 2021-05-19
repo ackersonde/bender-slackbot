@@ -7,6 +7,21 @@ import (
 	"github.com/ackersonde/digitaloceans/common"
 )
 
+func fetchExtraDOsshFirewallRules(homeIPv6Prefix string) []string {
+	var extraRules []string
+
+	sshFWRules := common.GetSSHFirewallRules()
+	for _, rule := range sshFWRules {
+		if rule == homeIPv6Prefix {
+			break
+		} else {
+			extraRules = append(extraRules, rule)
+		}
+	}
+
+	return extraRules
+}
+
 // ListDODroplets is now commented
 func ListDODroplets() string {
 	doDropletInfoSite := "https://cloud.digitalocean.com/droplets/"
