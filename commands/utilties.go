@@ -138,11 +138,11 @@ func checkFirewallRules() string {
 	homeIPv6Prefix := fetchHomeIPv6Prefix()
 	extras := strings.Join(fetchExtraDOsshFirewallRules(homeIPv6Prefix), ", ")
 
-	response := ":fritzbox: <-> :digitalocean::"
+	response := ":do_droplet:"
 	if extras != "" {
-		response += " insecure -> " + extras
+		response += " open to -> " + extras + " :rotating_light:"
 	} else {
-		response += " secured for " + homeIPv6Prefix
+		response += " secured for " + homeIPv6Prefix + " :white_check_mark:"
 	}
 
 	return response
