@@ -153,6 +153,7 @@ func fetchHomeIPv6Prefix() string {
 		response = remoteResult.Stderr
 		Logger.Printf("ERR: %s", response)
 	} else {
+		Logger.Printf("RES: %s", remoteResult.Stdout)
 		re := regexp.MustCompile(`(.*)NewIPv6Prefix (?P<prefix>.*)\nNewPrefixLength (?P<length>.*)\n(.*)`)
 		matches := re.FindAllStringSubmatch(remoteResult.Stdout, -1)
 		names := re.SubexpNames()
