@@ -43,6 +43,8 @@ github.com/ackersonde/digitaloceans v0.0.0-20210519172809-bde5febb0ffb h1:tyON23
 github.com/ackersonde/digitaloceans v0.0.0-20210519172809-bde5febb0ffb/go.mod h1:FxUvP0dsuitCDPzO6m5aGjLDNEQSWUY2NyANS/0q/Hc=
 github.com/ackersonde/digitaloceans v0.0.0-20210519174312-287526484967 h1:WoiWGBE7BLFG+5J5zreK7or97YsUGe0NOlB7ojgDGJY=
 github.com/ackersonde/digitaloceans v0.0.0-20210519174312-287526484967/go.mod h1:FxUvP0dsuitCDPzO6m5aGjLDNEQSWUY2NyANS/0q/Hc=
+github.com/ackersonde/digitaloceans v0.0.0-20210520072223-a0d897153f3b h1:s68F0YV7dknvcZJRqVMx01yS8W0X0gz2GtEGllj4D4M=
+github.com/ackersonde/digitaloceans v0.0.0-20210520072223-a0d897153f3b/go.mod h1:FxUvP0dsuitCDPzO6m5aGjLDNEQSWUY2NyANS/0q/Hc=
 github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc/go.mod h1:LOuyumcjzFXgccqObfd/Ljyb9UuFJ6TxHnclSeseNhc=
 github.com/alecthomas/units v0.0.0-20151022065526-2efee857e7cf/go.mod h1:ybxpYRFXyAe+OPACYpWeL0wqObRcbAqCMya13uyzqw0=
 github.com/antchfx/jsonquery v1.1.4 h1:+OlFO3QS9wjU0MKx9MgHm5f6o6hdd4e9mUTp0wTjxlM=

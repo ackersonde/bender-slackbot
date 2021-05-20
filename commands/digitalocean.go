@@ -12,7 +12,7 @@ func fetchExtraDOsshFirewallRules(homeIPv6Prefix string) []string {
 
 	sshFWRules := common.GetSSHFirewallRules()
 	Logger.Printf("SSH RULES: %v", sshFWRules)
-	for _, rule := range sshFWRules.Addresses {
+	for _, rule := range sshFWRules {
 		if rule != homeIPv6Prefix {
 			extraRules = append(extraRules, rule)
 		}
