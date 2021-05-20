@@ -39,10 +39,10 @@ github.com/OneOfOne/xxhash v1.2.2/go.mod h1:HSdplMjZKSmBqAxg5vPj2TmRDmfkzw+cTzAE
 github.com/ackersonde/ackerson.de-go v0.0.0-20210517084641-42bbd407f6d6 h1:6XrChw5YxO4MR0OrZc+8tI1VkUCZUvolkqelt4JrwqA=
 github.com/ackersonde/ackerson.de-go v0.0.0-20210517084641-42bbd407f6d6/go.mod h1:FtOdGhJ09HGRRVKP8nylBfkTLB10JdVaYtaXcBMeOu0=
 github.com/ackersonde/bender-slackbot v0.0.0-20210305115003-b94bc1aca2db/go.mod h1:Fxqt0Fs4o5tqi4Z/EtgvV172BCVB6v0WCBm+r0ocSUc=
-github.com/ackersonde/digitaloceans v0.0.0-20210519135450-bfc7dff08b59 h1:cP/n11OQHhH448UW93hNLb7w9A70GGOVuJ5Yy1g/yVo=
-github.com/ackersonde/digitaloceans v0.0.0-20210519135450-bfc7dff08b59/go.mod h1:FxUvP0dsuitCDPzO6m5aGjLDNEQSWUY2NyANS/0q/Hc=
 github.com/ackersonde/digitaloceans v0.0.0-20210519172809-bde5febb0ffb h1:tyON23kt1c8y/MzJJgh+YwVxiRpvkFc+TpLr/C2ysZI=
 github.com/ackersonde/digitaloceans v0.0.0-20210519172809-bde5febb0ffb/go.mod h1:FxUvP0dsuitCDPzO6m5aGjLDNEQSWUY2NyANS/0q/Hc=
+github.com/ackersonde/digitaloceans v0.0.0-20210519174312-287526484967 h1:WoiWGBE7BLFG+5J5zreK7or97YsUGe0NOlB7ojgDGJY=
+github.com/ackersonde/digitaloceans v0.0.0-20210519174312-287526484967/go.mod h1:FxUvP0dsuitCDPzO6m5aGjLDNEQSWUY2NyANS/0q/Hc=
 github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc/go.mod h1:LOuyumcjzFXgccqObfd/Ljyb9UuFJ6TxHnclSeseNhc=
 github.com/alecthomas/units v0.0.0-20151022065526-2efee857e7cf/go.mod h1:ybxpYRFXyAe+OPACYpWeL0wqObRcbAqCMya13uyzqw0=
 github.com/antchfx/jsonquery v1.1.4 h1:+OlFO3QS9wjU0MKx9MgHm5f6o6hdd4e9mUTp0wTjxlM=
@@ -79,8 +79,6 @@ github.com/digitalocean/godo v1.61.0 h1:PChvUn5+Ajwvl7caOJoFbcM9r+y91ssQbM0W0k3p
 github.com/digitalocean/godo v1.61.0/go.mod h1:p7dOjjtSBqCTUksqtA5Fd3uaKs9kyTq2xcz76ulEJRU=
 github.com/dropbox/dropbox-sdk-go-unofficial v5.6.0+incompatible h1:DtumzkLk2zZ2SeElEr+VNz+zV7l+BTe509cV4sKPXbM=
 github.com/dropbox/dropbox-sdk-go-unofficial v5.6.0+incompatible/go.mod h1:lr+LhMM3F6Y3lW1T9j2U5l7QeuWm87N9+PPXo3yH4qY=
-github.com/dropbox/dropbox-sdk-go-unofficial v6.0.1+incompatible h1:olP4cBIXjJVqOXEswOpbJDK7LwWRQMNELLM+wXzZmDA=
-github.com/dropbox/dropbox-sdk-go-unofficial v6.0.1+incompatible/go.mod h1:lr+LhMM3F6Y3lW1T9j2U5l7QeuWm87N9+PPXo3yH4qY=
 github.com/envoyproxy/go-control-plane v0.9.0/go.mod h1:YTl/9mNaCwkRvm6d1a2C3ymFceY/DCBVvsKhRF0iEA4=
 github.com/envoyproxy/go-control-plane v0.9.1-0.20191026205805-5f8ba28d4473/go.mod h1:YTl/9mNaCwkRvm6d1a2C3ymFceY/DCBVvsKhRF0iEA4=
 github.com/envoyproxy/go-control-plane v0.9.4/go.mod h1:6rpuAdCZL397s3pYoYcLgu1mIlRU8Am5FuJP05cCM98=
