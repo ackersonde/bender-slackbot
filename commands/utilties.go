@@ -368,12 +368,16 @@ func retrieveHomeFirewallRules(authorizedIPs [2]string) []string {
 		res := executeRemoteCmd(cmd, &host)
 		if res.Stdout == "" {
 			result = append(result, "Firewall is NOT enabled for "+host.HostName+"!")
-		}
-
-		scanner := bufio.NewScanner(strings.NewReader(res.Stdout))
-		for scanner.Scan() {
-			if !contains(authorizedIPs, scanner.Text()) {
-				result = append(result, scanner.Text())
+		} else {
+			scanner := bufio.NewScanner(strings.NewReader(res.Stdout))
+			interim := ""
+			for scanner.Scan() {
+				if !contains(authorizedIPs, scanner.Text()) {
+					interim += scanner.Text() + "\t"
+				}
+			}
+			if interim != "" {
+				result = append(result, host.HostName+": "+interim+"\n")
 			}
 		}
 	}
