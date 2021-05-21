@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"bufio"
 	"bytes"
 	"fmt"
 	"io/ioutil"
@@ -134,7 +135,9 @@ func WifiAction(param string) string {
 	return response
 }
 
-func checkFirewallRules() string {
+// CheckFirewallRules does a cross check of SSH access between
+// digital ocean instance and home networks, ensuring minimal connectivity
+func CheckFirewallRules() string {
 	homeIPv6Prefix := fetchHomeIPv6Prefix()
 	extras := fetchExtraDOsshFirewallRules(homeIPv6Prefix)
 
@@ -145,7 +148,38 @@ func checkFirewallRules() string {
 		response += " secured for " + homeIPv6Prefix + " :white_check_mark:"
 	}
 
+	response += "\n\n:firewall: "
+
+	homeFirewallRules := checkHomeFirewallSettings()
+	if len(homeFirewallRules) > 0 {
+		response += "open to -> " + strings.Join(homeFirewallRules, ", ") + " :rotating_light:"
+	} else {
+		response += " secured for " + homeIPv6Prefix + " :white_check_mark:"
+	}
+
 	return response
+}
+
+func contains(arr [2]string, str string) bool {
+	for _, a := range arr {
+		if a == str {
+			return true
+		}
+	}
+	return false
+}
+
+// checkHomeFirewallSettings returns addresses of ackerson.de
+// and internal network has inbound SSH access
+func checkHomeFirewallSettings() []string {
+	cmd := "nslookup -type=aaaa ackerson.de | grep Address | tail -n +2"
+	domainIPv6Bytes, _ := exec.Command("/bin/sh", "-c", cmd).Output()
+
+	domainIPv6 := string(bytes.Trim(domainIPv6Bytes, "\n"))
+	domainIPv6 = strings.TrimPrefix(domainIPv6, "Address: ")
+	authorizedIPs := [2]string{domainIPv6, "192.168.178.0/24"}
+
+	return retrieveHomeFirewallRules(authorizedIPs)
 }
 
 func fetchHomeIPv6Prefix() string {
@@ -316,6 +350,31 @@ func measureCPUTemp() string {
 			result += "_" + host.HostName + "_: " + remoteResult.Stderr + "\n"
 		} else {
 			result += "_" + host.HostName + "_: *" + strings.TrimSuffix(remoteResult.Stdout, "\n") + "*\n"
+		}
+	}
+
+	return result
+}
+
+func retrieveHomeFirewallRules(authorizedIPs [2]string) []string {
+	hosts := []structures.RemoteConnectConfig{
+		*structures.BlondeBomberRemoteConnectConfig,
+		*structures.VPNPIRemoteConnectConfig,
+		*structures.PI4RemoteConnectConfig}
+
+	var result []string
+	for _, host := range hosts {
+		cmd := "sudo ufw status | grep 22 | awk '{print $3}'"
+		res := executeRemoteCmd(cmd, &host)
+		if res.Stdout == "" {
+			result = append(result, "Firewall is NOT enabled for "+host.HostName+"!")
+		}
+
+		scanner := bufio.NewScanner(strings.NewReader(res.Stdout))
+		for scanner.Scan() {
+			if !contains(authorizedIPs, scanner.Text()) {
+				result = append(result, scanner.Text())
+			}
 		}
 	}
 

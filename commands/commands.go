@@ -237,7 +237,7 @@ func CheckCommand(event *slackevents.MessageEvent, command string) {
 		response := getBendersCurrentSSHCert()
 		api.PostMessage(event.Channel, slack.MsgOptionText(response, false), params)
 	} else if args[0] == "security" {
-		response := checkFirewallRules()
+		response := CheckFirewallRules()
 		api.PostMessage(event.Channel, slack.MsgOptionText(response, false), params)
 	} else if args[0] == "help" {
 		response :=
