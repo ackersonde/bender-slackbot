@@ -141,20 +141,25 @@ func CheckFirewallRules() string {
 	homeIPv6Prefix := fetchHomeIPv6Prefix()
 	extras := fetchExtraDOsshFirewallRules(homeIPv6Prefix)
 
-	response := ":do_droplet:"
+	response := ":do_droplet: "
 	if len(extras) > 0 {
-		response += " open to -> " + strings.Join(extras, ", ") + " :rotating_light:"
+		response += "open to -> " + strings.Join(extras, ", ") + " :rotating_light:"
 	} else {
-		response += " secured for " + homeIPv6Prefix + " :white_check_mark:"
+		response += "secured for " + homeIPv6Prefix + " :white_check_mark:"
 	}
 
-	response += "\n\n:firewall: "
+	response += "\n\n:house: "
 
-	homeFirewallRules := checkHomeFirewallSettings()
+	cmd := "nslookup -type=aaaa ackerson.de | grep Address | tail -n +2"
+	domainIPv6Bytes, _ := exec.Command("/bin/sh", "-c", cmd).Output()
+
+	domainIPv6 := string(bytes.Trim(domainIPv6Bytes, "\n"))
+	domainIPv6 = strings.TrimPrefix(domainIPv6, "Address: ")
+	homeFirewallRules := checkHomeFirewallSettings(domainIPv6)
 	if len(homeFirewallRules) > 0 {
-		response += "open to -> " + strings.Join(homeFirewallRules, ", ") + " :rotating_light:"
+		response += "opened on -> " + strings.Join(homeFirewallRules, "\n") + " :rotating_light:"
 	} else {
-		response += " secured for " + homeIPv6Prefix + " :white_check_mark:"
+		response += "secured for " + domainIPv6 + " :white_check_mark:"
 	}
 
 	return response
@@ -171,12 +176,7 @@ func contains(arr [2]string, str string) bool {
 
 // checkHomeFirewallSettings returns addresses of ackerson.de
 // and internal network has inbound SSH access
-func checkHomeFirewallSettings() []string {
-	cmd := "nslookup -type=aaaa ackerson.de | grep Address | tail -n +2"
-	domainIPv6Bytes, _ := exec.Command("/bin/sh", "-c", cmd).Output()
-
-	domainIPv6 := string(bytes.Trim(domainIPv6Bytes, "\n"))
-	domainIPv6 = strings.TrimPrefix(domainIPv6, "Address: ")
+func checkHomeFirewallSettings(domainIPv6 string) []string {
 	authorizedIPs := [2]string{domainIPv6, "192.168.178.0/24"}
 
 	return retrieveHomeFirewallRules(authorizedIPs)
@@ -377,7 +377,7 @@ func retrieveHomeFirewallRules(authorizedIPs [2]string) []string {
 				}
 			}
 			if interim != "" {
-				result = append(result, host.HostName+": "+interim+"\n")
+				result = append(result, host.HostName+": "+interim)
 			}
 		}
 	}
