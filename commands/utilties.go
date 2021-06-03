@@ -143,7 +143,9 @@ func CheckFirewallRules() string {
 
 	response := ":do_droplet: "
 	if len(extras) > 0 {
-		response += "open to -> " + strings.Join(extras, ", ") + " :rotating_light:"
+		response += "<https://cloud.digitalocean.com/networking/firewalls/" +
+			os.Getenv("CTX_DIGITALOCEAN_FIREWALL") + "/rules|open to> -> " +
+			strings.Join(extras, ", ") + " :rotating_light:"
 	} else {
 		response += "secured for " + homeIPv6Prefix + " :white_check_mark:"
 	}
