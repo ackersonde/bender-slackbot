@@ -211,8 +211,8 @@ func CheckCommand(event *slackevents.MessageEvent, command string) {
 		response := ":github: <https://github.com/ackersonde/bender-slackbot/actions/runs/" +
 			githubRunID + "|" + githubRunID + "> using :key: " + fingerprint
 		api.PostMessage(event.Channel, slack.MsgOptionText(response, false), params)
-	} else if args[0] == "sw" {
-		response := ":partly_sunny_rain: <https://darksky.net/forecast/48.3028,11.3591/ca24/en#week|7-day forecast Schwabhausen>"
+	} else if args[0] == "rw" {
+		response := ":partly_sunny_rain: <https://openweathermap.org/city/2860447|8d forecast Oberhatzkofen>"
 		api.PostMessage(event.Channel, slack.MsgOptionText(response, false), params)
 	} else if args[0] == "trans" || args[0] == "trand" || args[0] == "tranc" || args[0] == "tranp" {
 		response := torrentCommand(args)
@@ -243,7 +243,7 @@ func CheckCommand(event *slackevents.MessageEvent, command string) {
 		response :=
 			":ethereum: `crypto`: Current cryptocurrency stats :lumens:\n" +
 				":sleuth_or_spy: `pgp`: PGP keys\n" +
-				":sun_behind_rain_cloud: `sw`: Schwabhausen weather\n" +
+				":sun_behind_rain_cloud: `rw`: Oberhatzkofen weather\n" +
 				":mvv: `mvv`: Status | Trip In | Trip Home\n" +
 				":baseball: `bb <YYYY-MM-DD>`: show baseball games from given date (default yesterday)\n" +
 				":do_droplet: `do|dd <id>`: show|delete DigitalOcean droplet(s)\n" +

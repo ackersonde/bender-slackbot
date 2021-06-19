@@ -213,7 +213,7 @@ func updateVpnPiTunnel(vpnServerDomain string) string {
 
 	stopVPNCmd := `sudo docker rm -f vpnission && `
 	startVPNCmd := `sudo docker run --env-file .config/vpnission.env.list -d \
-        --name vpnission --cap-add NET_ADMIN -p9091:9091 -p51413:51413 \
+        --restart=always --name vpnission --cap-add NET_ADMIN -p9091:9091 -p51413:51413 \
         -v /mnt/usb4TB/DLNA/torrents:/mnt/torrents \
         danackerson/vpnission ` + vpnServerDomain
 
