@@ -2,17 +2,20 @@ package commands
 
 import (
 	"fmt"
+	"log"
 	"strconv"
+	"strings"
 
 	"github.com/ackersonde/digitaloceans/common"
 )
 
 func fetchExtraDOsshFirewallRules(homeIPv6Prefix string) []string {
 	var extraRules []string
+	log.Printf("HomeIPv6Prefix: %s\n", homeIPv6Prefix)
 
 	sshFWRules := common.GetSSHFirewallRules()
 	for _, rule := range sshFWRules {
-		if rule != homeIPv6Prefix {
+		if strings.TrimSpace(rule) != homeIPv6Prefix {
 			extraRules = append(extraRules, rule)
 		}
 	}
