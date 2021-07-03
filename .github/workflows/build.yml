@@ -90,6 +90,7 @@ jobs:
               -v $MY_CA/id_ed25519:/root/.ssh/id_ed25519:ro \
               -v $MY_CA/id_ed25519-cert.pub:/root/.ssh/id_ed25519-cert.pub:ro \
               -v $MY_CA/id_rsa_pix4x:/root/.ssh/id_rsa_pix4x:ro \
+              -v /root/syncthing/Sync:/app/sync \
               --label='traefik.enable=true' \
               --label='traefik.http.routers.bender.tls.certResolver=letsencrypt' \
               --label='traefik.http.routers.bender.tls.domains=${{ secrets.BENDER_HOSTNAME }}' \
