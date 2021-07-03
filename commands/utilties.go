@@ -322,6 +322,7 @@ func getAppVersions() string {
 	result := "\n*APPs* :martial_arts_uniform:\n"
 
 	hosts := []structures.RemoteConnectConfig{
+		*structures.BlondeBomberRemoteConnectConfig,
 		*structures.VPNPIRemoteConnectConfig,
 		*structures.PI4RemoteConnectConfig}
 
