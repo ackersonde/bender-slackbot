@@ -42,7 +42,7 @@ var VPNPIRemoteConnectConfig = &RemoteConnectConfig{
 var BlondeBomberRemoteConnectConfig = &RemoteConnectConfig{
 	User:           "ackersond",
 	PrivateKeyPath: "/root/.ssh/id_ed25519",
-	HostEndpoints:  []string{"192.168.178.20:26"},
+	HostEndpoints:  []string{"192.168.178.26:22"},
 	HostSSHKey:     "ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBJBLGv3gAVIH2iM1I52Ckb2vnBKJtF+w1q3vVHxLY/J71v5edHrdr+ZpmegnpYdltJDsoJoVCD26MTXjWfJQbFg=",
 	HostPath:       "/home/ackersond/",
 	HostName:       os.Getenv("BUILD_HOSTNAME"),

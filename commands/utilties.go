@@ -328,7 +328,6 @@ func getAppVersions() string {
 
 	for _, host := range hosts {
 		result += "_" + host.HostName + "_: "
-		result = strings.TrimRight(result, "\n") + ", "
 		remoteResult := executeRemoteCmd("sudo docker --version", &host)
 		result += remoteResult.Stdout
 	}
@@ -343,8 +342,10 @@ func measureCPUTemp() string {
 
 	result := "*CPUs* :thermometer:\n"
 	for _, host := range hosts {
+		// raspberryPIs
 		measureCPUTempCmd := "((TEMP=`cat /sys/class/thermal/thermal_zone0/temp`/1000)); echo \"$TEMP\"C"
 		if strings.HasPrefix(host.HostName, "build") {
+			// AMD desktop
 			measureCPUTempCmd = "/usr/bin/sensors | grep Tctl | cut -d+ -f2"
 		}
 
