@@ -9,7 +9,7 @@ import (
 
 var videoDownloader = func() (dl downloader.Downloader) {
 	dl.OutputDir = syncthing
-	dl.Debug = false
+	dl.Debug = true
 	return
 }()
 
