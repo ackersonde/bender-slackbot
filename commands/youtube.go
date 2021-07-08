@@ -2,61 +2,31 @@ package commands
 
 import (
 	"context"
-	"net/http"
-	"net/url"
-	"os"
-	"strings"
 
-	"github.com/Andreychik32/ytdl"
+	"github.com/kkdai/youtube/v2"
+	"github.com/kkdai/youtube/v2/downloader"
 )
 
-func downloadYoutubeVideo(origURL string) bool {
+var videoDownloader = func() (dl downloader.Downloader) {
+	dl.OutputDir = syncthing
+	dl.Debug = true
+	return
+}()
+
+func downloadYoutubeVideo(videoID string) bool {
 	downloaded := false
 
-	vid, err := ytdl.GetVideoInfo(context.Background(), origURL)
-	if err == nil {
-		client := ytdl.Client{
-			HTTPClient: http.DefaultClient,
-		}
+	client := youtube.Client{}
 
-		filepath := syncthing + vid.Title + "." + vid.Formats[0].Extension
-		f, err := os.OpenFile(filepath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
-		if err != nil {
-			Logger.Printf("ERR: unable to write %s\n", filepath)
-		} else {
-			defer f.Close()
-			err := client.Download(context.Background(), vid, vid.Formats[0], f)
-			if err != nil {
-				Logger.Printf("ERR: %s\n", err.Error())
-			} else {
-				downloaded = true
-			}
-		}
-	} else {
-		Logger.Printf("ERR: %s\n", err.Error())
+	video, err := client.GetVideo(videoID)
+	if err != nil {
+		panic(err)
+	}
+
+	err = videoDownloader.Download(context.Background(), video, &video.Formats[0], video.Title)
+	if err == nil {
+		downloaded = true
 	}
 
 	return downloaded
-}
-
-func findVideoOnYoutube(fetchURL *url.URL) (*url.URL, string) {
-	vid, err := ytdl.GetVideoInfo(context.Background(), fetchURL)
-	if err != nil {
-		Logger.Printf("ERR: ytdl GetVideoInfo: %s", err.Error())
-	}
-	youtubeClient := ytdl.Client{
-		HTTPClient: http.DefaultClient,
-	}
-	foundURL, errB := youtubeClient.GetDownloadURL(context.Background(), vid, vid.Formats[0])
-	if errB != nil {
-		Logger.Printf("ERR: ytdl GetDownloadURL %s", errB.Error())
-	}
-
-	destination := strings.ReplaceAll(vid.Title+"."+vid.Formats[0].Extension, " ", "_")
-	destination = strings.Replace(destination, "(", "", -1)
-	destination = strings.Replace(destination, ")", "", -1)
-	destination = strings.Replace(destination, ",", "", -1)
-	destination = strings.Replace(destination, "..", ".", -1)
-
-	return foundURL, destination
 }

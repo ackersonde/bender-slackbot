@@ -2,12 +2,9 @@ package commands
 
 import (
 	"fmt"
-	"net/http"
-	"net/url"
 	"strings"
 
 	"github.com/ackersonde/bender-slackbot/structures"
-	"github.com/bramvdbogaerde/go-scp"
 	"github.com/slack-go/slack"
 )
 
@@ -109,43 +106,4 @@ func MoveTorrentFile(sourceFile string, destinationDir string) {
 	}
 
 	api.PostMessage(SlackReportChannel, slack.MsgOptionText(response, false), params)
-}
-
-func scpFileBetweenHosts(remoteClient scp.Client, sourceURI string, hostPath string) bool {
-	fetchURL, _ := url.Parse(sourceURI)
-	destination := ""
-	success := false
-
-	if strings.Contains(fetchURL.Hostname(), "youtu.be") ||
-		strings.Contains(fetchURL.Hostname(), "youtube.com") {
-		fetchURL, destination = findVideoOnYoutube(fetchURL)
-	} else {
-		// get filename from URL end "/<filename.ext>"
-		path := fetchURL.Path
-		segments := strings.Split(path, "/")
-
-		destination = strings.ReplaceAll(segments[len(segments)-1], " ", "_")
-	}
-
-	response, err := http.Get(fetchURL.String())
-	if err != nil {
-		Logger.Printf(err.Error())
-		return success
-	}
-
-	// Close http connection after copying
-	defer response.Body.Close()
-	defer remoteClient.Close()
-
-	destination = strings.TrimLeft(destination, "-.") // remove leading '.'s & '-'s
-	Logger.Printf("scp %s %s@%s\n", sourceURI, remoteClient.Host, hostPath+destination)
-
-	err = remoteClient.CopyFile(response.Body, hostPath+destination, "0644")
-	if err != nil {
-		Logger.Printf("Error while copying file %s", err)
-	} else {
-		success = true
-	}
-
-	return success
 }
