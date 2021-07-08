@@ -4,10 +4,10 @@ import (
 	"context"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 
 	"github.com/Andreychik32/ytdl"
-	"github.com/ackersonde/bender-slackbot/filemanager"
 )
 
 func downloadYoutubeVideo(origURL string) bool {
@@ -18,25 +18,19 @@ func downloadYoutubeVideo(origURL string) bool {
 		client := ytdl.Client{
 			HTTPClient: http.DefaultClient,
 		}
-		URI, err := client.GetDownloadURL(context.Background(), vid, vid.Formats[0])
-		if err == nil {
-			//Logger.Printf("preparing to download: %s\n", URI.String())
 
-			uploadToPath := "/youtube/" + vid.Title + "." + vid.Formats[0].Extension
-			tempPublicURL, err := filemanager.UploadInternetFileToDropbox(URI.String(), uploadToPath)
+		filepath := syncthing + vid.Title + "." + vid.Formats[0].Extension
+		f, err := os.OpenFile(filepath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+		if err != nil {
+			Logger.Printf("ERR: unable to write %s\n", filepath)
+		} else {
+			defer f.Close()
+			err := client.Download(context.Background(), vid, vid.Formats[0], f)
 			if err != nil {
-				Logger.Printf("%s %s\n", tempPublicURL, err.Error())
+				Logger.Printf("ERR: %s\n", err.Error())
 			} else {
-				//Logger.Printf("Uploaded %s\n", tempPublicURL)
-				tempPublicURL = strings.Replace(tempPublicURL, "dl=0", "dl=1", 1)
-				icon := "https://emoji.slack-edge.com/T092UA8PR/youtube/a9a89483b7536f8a.png"
-				smallIcon := "http://icons.iconarchive.com/icons/iconsmind/outline/16/Youtube-icon.png"
-
-				filemanager.SendPayloadToJoinAPI(tempPublicURL, vid.Title, icon, smallIcon)
 				downloaded = true
 			}
-		} else {
-			Logger.Printf("ERR: %s\n", err.Error())
 		}
 	} else {
 		Logger.Printf("ERR: %s\n", err.Error())

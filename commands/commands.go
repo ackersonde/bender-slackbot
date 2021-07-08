@@ -33,6 +33,9 @@ var Logger = log.New(os.Stdout, "", log.LstdFlags)
 // VPNCountry as default connection
 var VPNCountry = "NL"
 
+// Syncthing directory
+var syncthing = "/app/sync/"
+
 // SlackReportChannel default reporting channel for bot crons
 var SlackReportChannel = os.Getenv("CTX_SLACK_CHANNEL")
 
@@ -95,13 +98,12 @@ func CheckCommand(event *slackevents.MessageEvent, command string) {
 			if err != nil {
 				api.PostMessage(event.Channel,
 					slack.MsgOptionText(
-						"Invalid URL for downloading! ("+err.Error()+
-							")", true), params)
+						"Invalid URL for downloading! ("+err.Error()+")", true), params)
 			} else {
 				if downloadYoutubeVideo(uri.String()) {
 					api.PostMessage(event.Channel,
 						slack.MsgOptionText(
-							"Requested YouTube video...", true), params)
+							"Requested YouTube video. Check Syncthing in a few minutes...", true), params)
 				} else {
 					api.PostMessage(event.Channel,
 						slack.MsgOptionText(
