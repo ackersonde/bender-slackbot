@@ -16,7 +16,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ackersonde/bender-slackbot/structures"
 	"github.com/ackersonde/digitaloceans/common"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/slack-go/slack"
@@ -49,37 +48,7 @@ func CheckCommand(event *slackevents.MessageEvent, command string) {
 	args := strings.Fields(command)
 	params := slack.MsgOptionAsUser(true)
 
-	if args[0] == "scpxl" {
-		if len(args) > 1 {
-			// strip '<>' off url
-			downloadURL := strings.Trim(args[1], "<>")
-			uri, err := url.ParseRequestURI(downloadURL)
-			Logger.Printf("parsed %s from %s", uri.RequestURI(), downloadURL)
-			if err != nil {
-				api.PostMessage(event.Channel,
-					slack.MsgOptionText(
-						"Invalid URL for downloading! ("+err.Error()+
-							")", true), params)
-			} else {
-				remoteClient := scpRemoteConnectionConfiguration(structures.AndroidRCC)
-				if scpFileBetweenHosts(
-					remoteClient,
-					downloadURL,
-					structures.AndroidRCC.HostPath) {
-					api.PostMessage(event.Channel,
-						slack.MsgOptionText(
-							"Requested URL...", true), params)
-				} else {
-					api.PostMessage(event.Channel,
-						slack.MsgOptionText(
-							"Unable to download URL...", true), params)
-				}
-			}
-		} else {
-			api.PostMessage(event.Channel,
-				slack.MsgOptionText("Please provide source file URL!", true), params)
-		}
-	} else if args[0] == "crypto" {
+	if args[0] == "crypto" {
 		response := checkEthereumValue() + "\n" + checkStellarLumensValue()
 		api.PostMessage(event.Channel,
 			slack.MsgOptionText(response, false), params)
