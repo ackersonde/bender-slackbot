@@ -1,7 +1,7 @@
 FROM alpine:latest
 EXPOSE 3000
 
-RUN apk --no-cache add bash curl openssh-client ca-certificates tzdata
+RUN apk --no-cache add youtube-dl ffmpeg bash curl openssh-client ca-certificates tzdata
 WORKDIR /app
 
 # Set local time (for cronjob sense)

@@ -69,14 +69,16 @@ func CheckCommand(event *slackevents.MessageEvent, command string) {
 					slack.MsgOptionText(
 						"Invalid URL for downloading! ("+err.Error()+")", true), params)
 			} else {
-				if downloadYoutubeVideo(uri.String()) {
+				_, err := exec.Command("/usr/bin/youtube-dl", uri.String(),
+					"-o", syncthing+"%(title)s.%(ext)s").Output()
+				if err == nil {
 					api.PostMessage(event.Channel,
 						slack.MsgOptionText(
 							"Requested YouTube video. Check Syncthing in a few minutes...", true), params)
 				} else {
 					api.PostMessage(event.Channel,
 						slack.MsgOptionText(
-							"Unable to download YouTube video...", true), params)
+							"Unable to download YouTube video..."+err.Error(), true), params)
 				}
 			}
 		} else {
