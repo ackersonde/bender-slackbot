@@ -90,7 +90,6 @@ func CheckCommand(event *slackevents.MessageEvent, command string) {
 		dateString := ""
 
 		if len(args) > 1 {
-			// TODO: use https://github.com/olebedev/when for Natural Language processing
 			gameDate, err := time.Parse("2006-01-02", args[1])
 			dateString = gameDate.Format("2006/month_01/day_02")
 
@@ -101,6 +100,14 @@ func CheckCommand(event *slackevents.MessageEvent, command string) {
 			}
 		}
 		result = ShowBBGames(dateString)
+		api.PostMessage(event.Channel, slack.MsgOptionText(result, false), params)
+	} else if args[0] == "logs" {
+		result := "Unable to query docker..."
+		if len(args) > 1 {
+			result = dockerInfo(args[1])
+		} else {
+			result = dockerInfo("")
+		}
 		api.PostMessage(event.Channel, slack.MsgOptionText(result, false), params)
 	} else if args[0] == "do" {
 		response := ListDODroplets()
@@ -231,8 +238,8 @@ func CheckCommand(event *slackevents.MessageEvent, command string) {
 				":github: `version`: Which build/deploy is this Bender bot?\n" +
 				":earth_americas: `www`: Show various internal links\n" +
 				":copyright: `scpxl <URL>`: scp URL file to Pops4XL\n" +
-				":closed_lock_with_key: `security`: overview of SSH key(s) and UFW rules\n"
-		// TODO: "logs <container>" -> grab `docker logs <container>` from root@ackerson.de
+				":closed_lock_with_key: `security`: overview of SSH key(s) and UFW rules\n" +
+				":logs: `logs <container>`: grab `docker logs <container>` from ackerson.de\n"
 		api.PostMessage(event.Channel, slack.MsgOptionText(response, true), params)
 	} else if event.User != "" {
 		response := "whaddya say <@" + event.Username + ">? Try `help` instead..."

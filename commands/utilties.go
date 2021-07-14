@@ -10,51 +10,10 @@ import (
 	"os/exec"
 	"regexp"
 	"strings"
-	"time"
 
 	"github.com/ackersonde/bender-slackbot/structures"
-	"github.com/bramvdbogaerde/go-scp"
-	"github.com/bramvdbogaerde/go-scp/auth"
 	"golang.org/x/crypto/ssh"
 )
-
-func scpRemoteConnectionConfiguration(config *structures.RemoteConnectConfig) scp.Client {
-	var client scp.Client
-
-	clientConfig := retrieveClientConfig(config)
-	if clientConfig != nil {
-		// loop thru hostEndpoints until successful SCP connection
-		for _, hostEndpoint := range config.HostEndpoints {
-			client = scp.NewClient(hostEndpoint, clientConfig)
-			// Connect to the remote server
-			err := client.Connect()
-			if err != nil {
-				Logger.Printf("Couldn't establish a connection: %s", err)
-			} else {
-				break
-			}
-		}
-	}
-	return client
-}
-
-func retrieveClientConfig(config *structures.RemoteConnectConfig) *ssh.ClientConfig {
-	var clientConfig ssh.ClientConfig
-	hostKey, _, _, _, err := ssh.ParseAuthorizedKey(
-		[]byte(config.HostSSHKey))
-	if err != nil {
-		Logger.Printf("ERR: unable to parse HostKey -> %s", err)
-		return &clientConfig
-	}
-
-	clientConfig, _ = auth.PrivateKey(
-		config.User,
-		config.PrivateKeyPath,
-		ssh.FixedHostKey(hostKey))
-	clientConfig.Timeout = 10 * time.Second // time to find SSH endpoint
-
-	return &clientConfig
-}
 
 func remoteConnectionConfiguration(unparsedHostKey string, username string) *ssh.ClientConfig {
 	hostKey, _, _, _, err := ssh.ParseAuthorizedKey([]byte(unparsedHostKey))
@@ -211,6 +170,23 @@ func fetchHomeIPv6Prefix() string {
 				response = m["prefix"] + "/" + m["length"]
 			}
 		}
+	}
+
+	return response
+}
+
+func dockerInfo(application string) string {
+	response := ""
+	cmd := "docker logs -n 100 " + application
+	if application == "" {
+		cmd = "docker ps -a --format 'table {{.Names}}\t{{.Status}}'"
+	}
+
+	remoteResult := executeRemoteCmd(cmd, structures.ACKDERemoteConnectConfig)
+	if remoteResult.Stdout == "" && remoteResult.Stderr != "" {
+		response += remoteResult.Stderr
+	} else {
+		response += remoteResult.Stdout
 	}
 
 	return response
