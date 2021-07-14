@@ -56,8 +56,6 @@ jobs:
             chmod 600 $MY_CA/id_ed25519 && \
             echo "${{ secrets.CTX_SERVER_DEPLOY_CACERT_B64 }}" | base64 --decode > $MY_CA/id_ed25519-cert.pub && \
             chmod 600 $MY_CA/id_ed25519-cert.pub && \
-            echo "${{ secrets.CTX_POPS4XL_SCP_KEY_SECRET_B64 }}" | base64 --decode > $MY_CA/id_rsa_pix4x && \
-            chmod 600 $MY_CA/id_rsa_pix4x && \
             docker login -u ${{ secrets.CTX_DOCKER_USER }} -p ${{ secrets.CTX_DOCKER_PASS }} && \
             docker rm -f bender || true && \
             docker run -d --restart=always \
@@ -81,7 +79,7 @@ jobs:
               -e SLACK_VERIFICATION_TOKEN=${{ secrets.SLACK_VERIFICATION_TOKEN }} \
               -e SLACK_SIGNING_SECRET=${{ secrets.SLACK_SIGNING_SECRET }} \
               -e SLACK_BENDER_BOT_USERID=${{ secrets.SLACK_BENDER_BOT_USERID }} \
-              -e ACKDE_HOST_SSH_KEY=${{ secrets.CTX_ACKDE_HOST_SSH_KEY_PUB }} \
+              -e ACKDE_HOST_SSH_KEY="${{ secrets.CTX_ACKDE_HOST_SSH_KEY_PUB }}" \
               -e MASTER_HOSTNAME=${{ secrets.CTX_IPV6_MASTER_HOME }} \
               -e SLAVE_HOSTNAME=${{ secrets.CTX_IPV6_SLAVE_HOME }} \
               -e BUILD_HOSTNAME=${{ secrets.CTX_IPV6_BUILD_HOME }} \
@@ -90,7 +88,6 @@ jobs:
               -e FRITZ_BOX_PASS=${{ secrets.FRITZ_BOX_PASS }} \
               -v $MY_CA/id_ed25519:/root/.ssh/id_ed25519:ro \
               -v $MY_CA/id_ed25519-cert.pub:/root/.ssh/id_ed25519-cert.pub:ro \
-              -v $MY_CA/id_rsa_pix4x:/root/.ssh/id_rsa_pix4x:ro \
               -v /root/syncthing/2086h-4d0t2:/app/sync \
               --label='traefik.enable=true' \
               --label='traefik.http.routers.bender.tls.certResolver=letsencrypt' \
