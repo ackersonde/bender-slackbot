@@ -1,6 +1,9 @@
 package structures
 
-import "os"
+import (
+	"encoding/base64"
+	"os"
+)
 
 // RemoteConnectConfig provides structure for remote connections
 type RemoteConnectConfig struct {
@@ -45,11 +48,13 @@ var PI4RemoteConnectConfig = &RemoteConnectConfig{
 	HostName:       os.Getenv("MASTER_HOSTNAME"),
 }
 
+var ackdeHostSSHKey, _ = base64.StdEncoding.DecodeString(os.Getenv("ACKDE_HOST_SSH_KEY_B64"))
+
 // ACKDERemoteConnectConfig connects to ackerson.de
 var ACKDERemoteConnectConfig = &RemoteConnectConfig{
 	User:           "root",
 	PrivateKeyPath: "/root/.ssh/id_ed25519",
-	HostSSHKey:     os.Getenv("ACKDE_HOST_SSH_KEY"),
+	HostSSHKey:     string(ackdeHostSSHKey),
 	HostPath:       "/root",
 	HostName:       "ackerson.de",
 }
