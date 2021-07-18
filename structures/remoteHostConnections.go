@@ -56,7 +56,7 @@ var ackdeHostSSHKey, _ = base64.StdEncoding.DecodeString(os.Getenv("ACKDE_HOST_S
 var ACKDERemoteConnectConfig = &RemoteConnectConfig{
 	User:           "root",
 	PrivateKeyPath: "/root/.ssh/id_ed25519",
-	HostSSHKey:     "ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBD4x8upKbzB81e9wtuv5vlHsC+jfzArRDRnhLTE6lCYXwq2Vfwo5Z/6iQe7bbfznfc+dLQ5pHImcTf4oON3SQ+s=",
+	HostSSHKey:     string(ackdeHostSSHKey),
 	HostPath:       "/root",
 	HostName:       "ackerson.de",
 }

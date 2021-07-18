@@ -16,38 +16,32 @@ import (
 )
 
 func remoteConnectionConfiguration(unparsedHostKey string, username string) *ssh.ClientConfig {
+	privateKeyPath := "/root/.ssh/id_ed25519"
 	hostKey, _, _, _, err := ssh.ParseAuthorizedKey([]byte(unparsedHostKey))
 	if err != nil {
 		Logger.Printf("error parsing: %v", err)
 	}
 
+	signer := GetPublicCertificate(privateKeyPath)
+
 	if username == "root" { // TODO : figure out a better way to distinguish
-		key, err := ioutil.ReadFile("/root/.ssh/id_ed25519")
+		key, err := ioutil.ReadFile(privateKeyPath)
 		if err != nil {
 			log.Printf("ROOT: unable to read private key: %v", err)
 			return nil
 		}
 
 		// Create the Signer for this private key.
-		signer, err := ssh.ParsePrivateKey(key)
+		signer, err = ssh.ParsePrivateKey(key)
 		if err != nil {
 			log.Printf("unable to parse private key: %v", err)
 			return nil
 		}
-
-		return &ssh.ClientConfig{
-			User:            username,
-			Auth:            []ssh.AuthMethod{ssh.PublicKeys(signer)},
-			HostKeyCallback: ssh.FixedHostKey(hostKey),
-		}
 	}
-
-	certSigner := GetPublicCertificate("/root/.ssh/id_ed25519")
-	//certSigner := GetPublicCertificate("/home/ackersond/go/src/github.com/ackersonde/bender-slackbot/tmp/id_ed25519_github_deploy")
 
 	return &ssh.ClientConfig{
 		User:            username,
-		Auth:            []ssh.AuthMethod{ssh.PublicKeys(certSigner)},
+		Auth:            []ssh.AuthMethod{ssh.PublicKeys(signer)},
 		HostKeyCallback: ssh.FixedHostKey(hostKey),
 	}
 }
@@ -197,16 +191,12 @@ func fetchHomeIPv6Prefix() string {
 	return response
 }
 
-func DockerInfo(application string) string {
+func dockerInfo(application string) string {
 	response := ""
 	cmd := "docker logs -n 100 " + application
 	if application == "" {
 		cmd = "docker ps -a --format 'table {{.Names}}\t{{.Status}}'"
 	}
-
-	//ackdeKey, _ := base64.StdEncoding.DecodeString(os.Getenv("ACKDE_HOST_SSH_KEY_B64"))
-	//log.Printf("ACKDE_HOST_SSH_KEY: %s", structures.ACKDERemoteConnectConfig.HostSSHKey)
-	//log.Printf("decoded: %s", ackdeKey)
 
 	remoteResult := executeRemoteCmd(cmd, structures.ACKDERemoteConnectConfig)
 	if remoteResult.Stdout == "" && remoteResult.Stderr != "" {

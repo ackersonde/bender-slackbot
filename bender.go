@@ -116,10 +116,6 @@ func processMessage(ev *slackevents.MessageEvent) {
 	}
 }
 
-func main2() {
-	commands.DockerInfo("bender")
-}
-
 func main() {
 	api := slack.New(
 		os.Getenv("CTX_SLACK_NEW_API_TOKEN"),

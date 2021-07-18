@@ -104,9 +104,9 @@ func CheckCommand(event *slackevents.MessageEvent, command string) {
 	} else if args[0] == "logs" {
 		result := "Unable to query docker..."
 		if len(args) > 1 {
-			result = DockerInfo(args[1])
+			result = dockerInfo(args[1])
 		} else {
-			result = DockerInfo("")
+			result = dockerInfo("")
 		}
 		api.PostMessage(event.Channel, slack.MsgOptionText(result, false), params)
 	} else if args[0] == "do" {
