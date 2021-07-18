@@ -22,6 +22,7 @@ func remoteConnectionConfiguration(unparsedHostKey string, username string) *ssh
 	}
 
 	certSigner := GetPublicCertificate("/root/.ssh/id_ed25519")
+	//certSigner := GetPublicCertificate("/home/ackersond/go/src/github.com/ackersonde/bender-slackbot/tmp/id_ed25519_github_deploy")
 
 	return &ssh.ClientConfig{
 		User:            username,
@@ -175,12 +176,16 @@ func fetchHomeIPv6Prefix() string {
 	return response
 }
 
-func dockerInfo(application string) string {
+func DockerInfo(application string) string {
 	response := ""
 	cmd := "docker logs -n 100 " + application
 	if application == "" {
 		cmd = "docker ps -a --format 'table {{.Names}}\t{{.Status}}'"
 	}
+
+	//ackdeKey, _ := base64.StdEncoding.DecodeString(os.Getenv("ACKDE_HOST_SSH_KEY_B64"))
+	//log.Printf("ACKDE_HOST_SSH_KEY: %s", structures.ACKDERemoteConnectConfig.HostSSHKey)
+	//log.Printf("decoded: %s", ackdeKey)
 
 	remoteResult := executeRemoteCmd(cmd, structures.ACKDERemoteConnectConfig)
 	if remoteResult.Stdout == "" && remoteResult.Stderr != "" {

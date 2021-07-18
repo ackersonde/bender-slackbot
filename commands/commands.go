@@ -104,9 +104,9 @@ func CheckCommand(event *slackevents.MessageEvent, command string) {
 	} else if args[0] == "logs" {
 		result := "Unable to query docker..."
 		if len(args) > 1 {
-			result = dockerInfo(args[1])
+			result = DockerInfo(args[1])
 		} else {
-			result = dockerInfo("")
+			result = DockerInfo("")
 		}
 		api.PostMessage(event.Channel, slack.MsgOptionText(result, false), params)
 	} else if args[0] == "do" {
@@ -239,7 +239,7 @@ func CheckCommand(event *slackevents.MessageEvent, command string) {
 				":earth_americas: `www`: Show various internal links\n" +
 				":copyright: `scpxl <URL>`: scp URL file to Pops4XL\n" +
 				":closed_lock_with_key: `security`: overview of SSH key(s) and UFW rules\n" +
-				":logs: `logs <container>`: grab `docker logs <container>` from ackerson.de\n"
+				":whale2: `logs <container>`: last 100 lines of docker logs from <container> on ackerson.de\n"
 		api.PostMessage(event.Channel, slack.MsgOptionText(response, true), params)
 	} else if event.User != "" {
 		response := "whaddya say <@" + event.Username + ">? Try `help` instead..."
