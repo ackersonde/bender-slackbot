@@ -21,6 +21,27 @@ func remoteConnectionConfiguration(unparsedHostKey string, username string) *ssh
 		Logger.Printf("error parsing: %v", err)
 	}
 
+	if username == "root" { // TODO : figure out a better way to distinguish
+		key, err := ioutil.ReadFile("/root/.ssh/id_ed25519")
+		if err != nil {
+			log.Printf("ROOT: unable to read private key: %v", err)
+			return nil
+		}
+
+		// Create the Signer for this private key.
+		signer, err := ssh.ParsePrivateKey(key)
+		if err != nil {
+			log.Printf("unable to parse private key: %v", err)
+			return nil
+		}
+
+		return &ssh.ClientConfig{
+			User:            username,
+			Auth:            []ssh.AuthMethod{ssh.PublicKeys(signer)},
+			HostKeyCallback: ssh.FixedHostKey(hostKey),
+		}
+	}
+
 	certSigner := GetPublicCertificate("/root/.ssh/id_ed25519")
 	//certSigner := GetPublicCertificate("/home/ackersond/go/src/github.com/ackersonde/bender-slackbot/tmp/id_ed25519_github_deploy")
 
