@@ -23,7 +23,7 @@ func homeAndInternetIPsDoNotMatch(tunnelIP string) bool {
 	ipCheckHost := "https://ipv4.icanhazip.com" // TODO: update to ipv6 once VPN supports it
 
 	go func() {
-		cmd := "sudo docker exec vpnission curl " + ipCheckHost
+		cmd := "docker exec vpnission curl -s " + ipCheckHost
 		remoteResult := executeRemoteCmd(cmd, structures.VPNPIRemoteConnectConfig)
 
 		results <- strings.TrimSuffix(remoteResult.Stdout, "\n")
@@ -33,29 +33,25 @@ func homeAndInternetIPsDoNotMatch(tunnelIP string) bool {
 	case res := <-results:
 		if res != "" {
 			// We're not in Kansas anymore + using tunnel IP for Internet
-			if res == tunnelIP {
-				resultsDig := make(chan string, 10)
-				timeoutDig := time.After(10 * time.Second)
-				// ensure home.ackerson.de is DIFFERENT than PI IP address!
-				go func() {
-					cmd := "sudo docker exec vpnission dig " + vpnGateway + " AAAA +short"
-					remoteResult := executeRemoteCmd(cmd, structures.VPNPIRemoteConnectConfig)
+			resultsDig := make(chan string, 10)
+			timeoutDig := time.After(10 * time.Second)
+			// ensure home.ackerson.de is DIFFERENT than PI IP address!
+			go func() {
+				cmd := "docker exec vpnission dig " + vpnGateway + " AAAA +short"
+				remoteResult := executeRemoteCmd(cmd, structures.VPNPIRemoteConnectConfig)
 
-					resultsDig <- remoteResult.Stdout
-				}()
-				select {
-				case resComp := <-resultsDig:
-					Logger.Printf("dig %s : %s", vpnGateway, resComp)
-					lines := strings.Split(resComp, "\n")
-					// IPv4 address of home.ackerson.de doesn't match Pi's
-					if lines[1] != res {
-						return true
-					}
-				case <-timeoutDig:
-					Logger.Printf("Time out on dig %s", vpnGateway)
+				resultsDig <- remoteResult.Stdout
+			}()
+			select {
+			case resComp := <-resultsDig:
+				Logger.Printf("dig %s : %s", vpnGateway, resComp)
+				lines := strings.Split(resComp, "\n")
+				// IPv4 address of home.ackerson.de doesn't match Pi's
+				if lines[1] != res {
+					return true
 				}
-			} else {
-				Logger.Printf("VPN addy's don't match: %s != %s", res, tunnelIP)
+			case <-timeoutDig:
+				Logger.Printf("Time out on dig %s", vpnGateway)
 			}
 		}
 	case <-timeout:
@@ -69,7 +65,7 @@ func inspectVPNConnection() map[string]string {
 	resultsChannel := make(chan string, 10)
 	timeout := time.After(10 * time.Second)
 	go func() {
-		cmd := "sudo docker exec vpnission ipsec status | grep -A 2 ESTABLISHED"
+		cmd := "docker exec vpnission ipsec status | grep -A 2 ESTABLISHED"
 		remoteResult := executeRemoteCmd(cmd, structures.VPNPIRemoteConnectConfig)
 
 		result := ""
@@ -169,7 +165,7 @@ func ChangeToFastestVPNServer(vpnCountry string) {
 // VpnPiTunnelChecks ensures correct VPN connection
 func VpnPiTunnelChecks(vpnCountry string) string {
 	ipsecVersion := executeRemoteCmd(
-		"sudo docker exec vpnission ipsec --version | head -n 1",
+		"docker exec vpnission ipsec --version | head -n 1",
 		structures.VPNPIRemoteConnectConfig)
 	response := ipsecVersion.Stdout + ":protonvpn: VPN: DOWN :rotating_light:"
 
@@ -211,8 +207,8 @@ func VpnPiTunnelChecks(vpnCountry string) string {
 func updateVpnPiTunnel(vpnServerDomain string) string {
 	response := "Failed changing :protonvpn: to " + vpnServerDomain
 
-	stopVPNCmd := `sudo docker rm -f vpnission && `
-	startVPNCmd := `sudo docker run --env-file .config/vpnission.env.list -d \
+	stopVPNCmd := `docker rm -f vpnission && `
+	startVPNCmd := `docker run --env-file .config/vpnission.env.list -d \
         --restart=always --name vpnission --cap-add NET_ADMIN -p9091:9091 -p51413:51413 \
         -v /mnt/usb4TB/DLNA/torrents:/mnt/torrents \
         danackerson/vpnission ` + vpnServerDomain

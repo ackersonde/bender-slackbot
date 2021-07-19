@@ -320,7 +320,7 @@ func getAppVersions() string {
 
 	for _, host := range hosts {
 		result += "_" + host.HostName + "_: "
-		remoteResult := executeRemoteCmd("sudo docker --version", &host)
+		remoteResult := executeRemoteCmd("docker --version", &host)
 		result += remoteResult.Stdout
 	}
 	return result + "\n"
