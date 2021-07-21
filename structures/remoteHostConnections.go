@@ -48,9 +48,7 @@ var PI4RemoteConnectConfig = &RemoteConnectConfig{
 	HostName:       os.Getenv("MASTER_HOSTNAME"),
 }
 
-var ackdeHostSSHKey, _ = base64.StdEncoding.DecodeString(os.Getenv("ACKDE_HOST_SSH_KEY_B64"))
-
-//PrivateKeyPath: "/home/ackersond/go/src/github.com/ackersonde/bender-slackbot/tmp/id_ed25519_github_deploy",
+var ackdeHostSSHKey, _ = base64.StdEncoding.DecodeString(os.Getenv("ACKDE_HOST_SSH_KEY_PUB_B64"))
 
 // ACKDERemoteConnectConfig connects to ackerson.de
 var ACKDERemoteConnectConfig = &RemoteConnectConfig{
