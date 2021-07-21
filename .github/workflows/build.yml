@@ -90,6 +90,7 @@ jobs:
               -v $MY_CA/id_ed25519-cert.pub:/root/.ssh/id_ed25519-cert.pub:ro \
               -v /root/syncthing/2086h-4d0t2:/app/sync \
               --label='traefik.enable=true' \
+              --label='traefik.http.routers.bender.middlewares=secHeaders@file' \
               --label='traefik.http.routers.bender.tls.certResolver=letsencrypt' \
               --label='traefik.http.routers.bender.tls.domains=${{ secrets.BENDER_HOSTNAME }}' \
               --label='traefik.http.routers.bender.rule=Host(\`${{ secrets.BENDER_HOSTNAME }}\`)' \
