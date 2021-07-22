@@ -32,8 +32,12 @@ func searchProxy(url string) []byte {
 		defer cancel()
 		req = req.WithContext(ctx)
 		resp, err := http.DefaultClient.Do(req)
-		if err != nil {
-			Logger.Printf("%s failed with:\n'%s'\n", proxy, err)
+		if err != nil || resp.StatusCode != http.StatusOK {
+			if resp.StatusCode != http.StatusOK {
+				Logger.Printf("GET %s failed with '%s'\n", uri, resp.Status)
+			} else {
+				Logger.Printf("%s failed with:\n'%s'\n", proxy, err)
+			}
 			continue
 		}
 		if resp != nil {
