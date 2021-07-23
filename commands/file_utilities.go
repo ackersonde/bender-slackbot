@@ -2,6 +2,7 @@ package commands
 
 import (
 	"fmt"
+	"os/exec"
 	"strings"
 
 	"github.com/ackersonde/bender-slackbot/structures"
@@ -35,6 +36,7 @@ func CheckServerDiskSpace(path string) string {
 			}
 		}
 	}
+	response += "\n==========================\n"
 
 	return ":raspberry_pi: *SD Card Disk Usage* `pi4`\n" + response
 }
@@ -88,6 +90,19 @@ func CheckMediaDiskSpace(path string) string {
 func CheckMediaDiskSpaceCron(path string) {
 	api.PostMessage(SlackReportChannel, slack.MsgOptionText(
 		CheckMediaDiskSpace(path), false), slack.MsgOptionAsUser(true))
+}
+
+func CheckDigitalOceanSpace(path string) string {
+	response := ""
+	out, err := exec.Command("df", "-h", syncthing).Output()
+	if err != nil {
+		Logger.Printf("ERR: %s", err.Error())
+	}
+
+	response = ":do_droplet: DO *Disk Usage* `root@" + syncthing +
+		"`\n" + string(out)
+
+	return response
 }
 
 // MoveTorrentFile now exported

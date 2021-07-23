@@ -134,6 +134,7 @@ func CheckCommand(event *slackevents.MessageEvent, command string) {
 			response += CheckMediaDiskSpace("")
 			response += CheckServerDiskSpace("")
 		}
+		response += CheckDigitalOceanSpace("")
 		api.PostMessage(event.Channel, slack.MsgOptionText(response, true), params)
 	} else if args[0] == "mv" {
 		if len(args) == 3 &&
