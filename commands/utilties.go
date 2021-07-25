@@ -127,11 +127,7 @@ func CheckFirewallRules() string {
 
 	response += "\n\n:house: "
 
-	cmd := "nslookup -type=aaaa ackerson.de | grep Address | tail -n +2"
-	domainIPv6Bytes, _ := exec.Command("/bin/sh", "-c", cmd).Output()
-
-	domainIPv6 := string(bytes.Trim(domainIPv6Bytes, "\n"))
-	domainIPv6 = strings.TrimPrefix(domainIPv6, "Address: ")
+	domainIPv6 := getIPv6forHostname("ackerson.de")
 	homeFirewallRules := checkHomeFirewallSettings(domainIPv6)
 	if len(homeFirewallRules) > 0 {
 		response += "opened on -> " + strings.Join(homeFirewallRules, "\n") + " :rotating_light:"
@@ -140,6 +136,16 @@ func CheckFirewallRules() string {
 	}
 
 	return response
+}
+
+func getIPv6forHostname(hostname string) string {
+	cmd := "nslookup -type=aaaa " + hostname + " | grep Address | tail -n +2"
+	domainIPv6Bytes, _ := exec.Command("/bin/sh", "-c", cmd).Output()
+
+	domainIPv6 := string(bytes.Trim(domainIPv6Bytes, "\n"))
+	domainIPv6 = strings.TrimPrefix(domainIPv6, "Address: ")
+
+	return domainIPv6
 }
 
 func contains(arr [2]string, str string) bool {
