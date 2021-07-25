@@ -220,21 +220,6 @@ func CheckCommand(event *slackevents.MessageEvent, command string) {
 	} else if args[0] == "security" {
 		response := CheckFirewallRules()
 		api.PostMessage(event.Channel, slack.MsgOptionText(response, false), params)
-	} else if args[0] == "fw" {
-		response := "Please provide the new IP rule to add to home network"
-		if len(args) > 1 {
-			domainIPv6 := getIPv6forHostname("ackerson.de")
-			cmd := exec.Command("/app/firewall_rules.sh")
-			cmd.Env = os.Environ()
-			cmd.Env = append(cmd.Env, "OLD_SERVER_IPV6="+domainIPv6, "NEW_SERVER_IPV6="+args[1])
-			resp, err := cmd.Output()
-			if err != nil {
-				log.Printf("ERR: failed to run firewall_rules.sh: %s\n", err.Error())
-			} else {
-				response = string(resp)
-			}
-		}
-		api.PostMessage(event.Channel, slack.MsgOptionText(response, false), params)
 	} else if args[0] == "help" {
 		response :=
 			":ethereum: `crypto`: Current cryptocurrency stats :lumens:\n" +
