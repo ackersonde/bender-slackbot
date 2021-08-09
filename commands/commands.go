@@ -60,7 +60,7 @@ func CheckCommand(event *slackevents.MessageEvent, command string) {
 			slack.MsgOptionText(raspberryPIChecks(), false), params)
 	} else if args[0] == "wf" {
 		if len(args) < 2 {
-			args[1] = "STATE" // empty cmd shows wifi status
+			args = append(args, "STATE") // empty cmd shows wifi status
 		}
 		api.PostMessage(event.Channel,
 			slack.MsgOptionText(WifiAction(args[1]), false), params)
