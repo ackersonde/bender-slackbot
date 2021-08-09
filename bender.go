@@ -25,10 +25,10 @@ func prepareScheduler() {
 
 	s.Every(1).Day().At("08:04").Do(
 		commands.ChangeToFastestVPNServer, commands.VPNCountry)
-	s.Every(1).Friday().At("09:05").Do(commands.CheckFirewallRules, "")
+	s.Every(1).Friday().At("09:05").Do(commands.DisplayFirewallRules, "")
 	s.Every(1).Day().At("17:30").Do(commands.ShowBBGamesCron, "")
 
-	//ensureWiFiOffOvernight(s)
+	ensureWiFiOffOvernight(s)
 
 	s.StartAsync()
 	// more examples: https://github.com/go-co-op/gocron/blob/master/README.md
@@ -36,13 +36,9 @@ func prepareScheduler() {
 
 func ensureWiFiOffOvernight(s *gocron.Scheduler) {
 	s.Every(1).Day().At("00:00").Do(commands.WifiAction, "0")
-	s.Every(1).Day().At("00:30").Do(commands.WifiAction, "0")
 	s.Every(1).Day().At("01:00").Do(commands.WifiAction, "0")
-	s.Every(1).Day().At("01:30").Do(commands.WifiAction, "0")
 	s.Every(1).Day().At("02:00").Do(commands.WifiAction, "0")
-	s.Every(1).Day().At("02:30").Do(commands.WifiAction, "0")
 	s.Every(1).Day().At("03:00").Do(commands.WifiAction, "0")
-	s.Every(1).Day().At("03:30").Do(commands.WifiAction, "0")
 	s.Every(1).Day().At("04:00").Do(commands.WifiAction, "0")
 }
 

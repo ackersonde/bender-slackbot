@@ -87,52 +87,10 @@ func getDeployFingerprint(deployCertFilePath string) string {
 func WifiAction(param string) string {
 	response := ":fritzbox: :wifi:\n"
 
-	var out []byte
-	var err error
-	if param == "1" { // only turn on 2G/5G bands (not Guest WLAN)
-		out, _ = createFritzCmd("WLAN_2G", param).Output()
-		response += string(out)
-		out, err = createFritzCmd("WLAN_5G", "0").Output()
-	} else if param == "5" {
-		out, err = createFritzCmd("WLAN_5G", "1").Output()
+	if param == "1" || param == "0" {
+		response += execFritzCmd("WLAN", param)
 	} else {
-		out, err = createFritzCmd("WLAN", param).Output()
-	}
-	// TODO: implement `wgg` to enable guest wifi (""" WLAN_GUEST 1)
-
-	if err != nil {
-		Logger.Printf("ERR: %s", err.Error())
-		response += "failed w/ " + err.Error()
-	} else {
-		response += string(out)
-	}
-
-	return response
-}
-
-// CheckFirewallRules does a cross check of SSH access between
-// digital ocean instance and home networks, ensuring minimal connectivity
-func CheckFirewallRules() string {
-	homeIPv6Prefix := fetchHomeIPv6Prefix()
-	extras := fetchExtraDOsshFirewallRules(homeIPv6Prefix)
-
-	response := ":do_droplet: "
-	if len(extras) > 0 {
-		response += "<https://cloud.digitalocean.com/networking/firewalls/" +
-			os.Getenv("CTX_DIGITALOCEAN_FIREWALL") + "/rules|open to> -> " +
-			strings.Join(extras, ", ") + " :rotating_light:"
-	} else {
-		response += "secured for " + homeIPv6Prefix + " :white_check_mark:"
-	}
-
-	response += "\n\n:house: "
-
-	domainIPv6 := getIPv6forHostname("ackerson.de")
-	homeFirewallRules := checkHomeFirewallSettings(domainIPv6)
-	if len(homeFirewallRules) > 0 {
-		response += "opened on -> " + strings.Join(homeFirewallRules, "\n") + " :rotating_light:"
-	} else {
-		response += "secured for " + domainIPv6 + " :white_check_mark:"
+		response += execFritzCmd("WLAN", "STATE")
 	}
 
 	return response
@@ -214,12 +172,22 @@ func dockerInfo(application string) string {
 	return response
 }
 
-func createFritzCmd(action string, param string) *exec.Cmd {
-	return exec.Command("/home/ubuntu/fritzBoxShell.sh",
-		"--boxip", os.Getenv("FRITZ_BOX_HOST"),
-		"--boxuser", os.Getenv("FRITZ_BOX_USER"),
-		"--boxpw", os.Getenv("FRITZ_BOX_PASS"),
-		action, param)
+func execFritzCmd(action string, param string) string {
+	response := "Unable to execute WLAN cmd " + action + ":" + param
+
+	cmd := fmt.Sprintf(
+		"/home/ubuntu/fritzBoxShell.sh --boxip %s --boxuser %s --boxpw %s %s %s",
+		os.Getenv("FRITZ_BOX_HOST"), os.Getenv("FRITZ_BOX_USER"),
+		os.Getenv("FRITZ_BOX_PASS"), action, param)
+
+	remoteResult := executeRemoteCmd(cmd, structures.PI4RemoteConnectConfig)
+	if remoteResult.Stdout == "" && remoteResult.Stderr != "" {
+		response = remoteResult.Stderr
+	} else {
+		response = remoteResult.Stdout
+	}
+
+	return response
 }
 
 var baseWireGuardCmd = "sudo kubectl exec -it $(sudo kubectl get po | grep wireguard | awk '{print $1; exit}' | tr -d \\n) -- bash -c"

@@ -58,6 +58,12 @@ func CheckCommand(event *slackevents.MessageEvent, command string) {
 	} else if args[0] == "pi" {
 		api.PostMessage(event.Channel,
 			slack.MsgOptionText(raspberryPIChecks(), false), params)
+	} else if args[0] == "wf" {
+		if len(args) < 2 {
+			args[1] = "STATE" // empty cmd shows wifi status
+		}
+		api.PostMessage(event.Channel,
+			slack.MsgOptionText(WifiAction(args[1]), false), params)
 	} else if args[0] == "yt" {
 		if len(args) > 1 {
 			// strip '<>' off url
@@ -218,7 +224,7 @@ func CheckCommand(event *slackevents.MessageEvent, command string) {
 		response := getBendersCurrentSSHCert()
 		api.PostMessage(event.Channel, slack.MsgOptionText(response, false), params)
 	} else if args[0] == "security" {
-		response := CheckFirewallRules()
+		response := checkFirewallRules()
 		api.PostMessage(event.Channel, slack.MsgOptionText(response, false), params)
 	} else if args[0] == "help" {
 		response :=
@@ -229,6 +235,7 @@ func CheckCommand(event *slackevents.MessageEvent, command string) {
 				":baseball: `bb <YYYY-MM-DD>`: show baseball games from given date (default yesterday)\n" +
 				":do_droplet: `do|dd <id>`: show|delete DigitalOcean droplet(s)\n" +
 				//":wireguard: `wg[s|u|d]`: [S]how status, [U]p or [D]own wireguard tunnel\n" +
+				":wifi: `wf [0|1|s]`: turn home wifi [0]ff, [1]n or [-default-s]tatus\n" +
 				":protonvpn: `vpn[s|c]`: [S]how status of VPN on :raspberry_pi:, [C]hange VPN to best in given country or " + VPNCountry + "\n" +
 				":pirate_bay: `torq <search term>`\n" +
 				":transmission: `tran[c|p|s|d]`: [C]reate <URL>, [P]aused <URL>, [S]tatus, [D]elete <ID> torrents on :raspberry_pi:\n" +
