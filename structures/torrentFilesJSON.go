@@ -18,7 +18,7 @@ type Torrents []struct {
 }
 
 // Top100Movies listing has an Anon field
-// https://tpb.cool/api?url=/precompiled/data_top100_207.json
+// https://apibay.org/precompiled/data_top100_207.json
 type Top100Movies []struct {
 	Added    int         `json:"added"`
 	Anon     int         `json:"anon,omitempty"`

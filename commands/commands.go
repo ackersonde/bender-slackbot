@@ -165,11 +165,11 @@ func CheckCommand(event *slackevents.MessageEvent, command string) {
 		var response string
 		if len(args) > 1 {
 			searchString := strings.Join(args[1:], " ")
-			searchStringURL := "/api?url=/q.php?q=" + url.QueryEscape(searchString)
+			searchStringURL := "/q.php?q=" + url.QueryEscape(searchString)
 
 			response = parseTorrents(searchProxy(searchStringURL))
 		} else {
-			response = parseTop100(searchProxy("/api?url=/precompiled/data_top100_207.json"))
+			response = parseTop100(searchProxy("/precompiled/data_top100_207.json"))
 		}
 
 		api.PostMessage(event.Channel, slack.MsgOptionText(response, false), params)

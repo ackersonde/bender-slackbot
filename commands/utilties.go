@@ -173,7 +173,7 @@ func dockerInfo(application string) string {
 }
 
 func execFritzCmd(action string, param string) string {
-	response := "Unable to execute WLAN cmd " + action + ":" + param
+	response := ""
 
 	cmd := fmt.Sprintf(
 		"/home/ubuntu/fritzBoxShell.sh --boxip %s --boxuser %s --boxpw %s %s %s",
