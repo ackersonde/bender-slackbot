@@ -249,11 +249,12 @@ func CheckCommand(event *slackevents.MessageEvent, command string) {
 				":closed_lock_with_key: `security`: overview of SSH key(s) and UFW rules\n" +
 				":whale2: `logs <container>`: last 100 lines of docker logs from <container> on ackerson.de\n"
 		api.PostMessage(event.Channel, slack.MsgOptionText(response, true), params)
-	} else if event.User != "" {
-		response := "whaddya say <@" + event.Message.User + ">? Try `help` instead..."
+	} else if event.Username != "" {
+		response := "Whaddya say <@" + event.Username + ">? Try `help` instead"
 		api.PostMessage(event.Channel, slack.MsgOptionText(response, false), params)
 	} else {
-		Logger.Printf("No Command found: %s", event.Text)
+		response := fmt.Sprintf("No such command found: %s. Try `help` instead", event.Text)
+		api.PostMessage(event.Channel, slack.MsgOptionText(response, false), params)
 	}
 }
 
