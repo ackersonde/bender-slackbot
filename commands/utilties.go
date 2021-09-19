@@ -278,6 +278,8 @@ func scrubParamOfHTTPMagicCrap(sourceString string) string {
 }
 
 func raspberryPIChecks() string {
+	executeRemoteCmd("wakeonlan 2c:f0:5d:5e:84:43", structures.PI4RemoteConnectConfig)
+
 	response := measureCPUTemp()
 	response += getAppVersions()
 
