@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/ackersonde/bender-slackbot/structures"
 	"github.com/ackersonde/digitaloceans/common"
 	"github.com/slack-go/slack"
 )
@@ -56,6 +57,7 @@ func DisplayFirewallRules() {
 // checkFirewallRules does a cross check of SSH access between
 // digital ocean instance and home networks, ensuring minimal connectivity
 func checkFirewallRules() string {
+	executeRemoteCmd("wakeonlan 2c:f0:5d:5e:84:43", structures.PI4RemoteConnectConfig)
 	homeIPv6Prefix := fetchHomeIPv6Prefix()
 	extras := fetchExtraDOsshFirewallRules(homeIPv6Prefix)
 
