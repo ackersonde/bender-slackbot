@@ -124,9 +124,15 @@ func CheckCommand(event *slackevents.MessageEvent, command string) {
 		}
 
 		for _, server := range servers {
-			response += fmt.Sprintf("%d %s [%s]: %s @ %s (%s)\n",
-				server.ID, server.Name,
-				server.PublicNet.IPv6.IP.String(), server.ServerType,
+			serverInfoURL := fmt.Sprintf("https://console.hetzner.cloud/projects/1200165/servers/%s/overview", server.ID)
+			serverIPv6 := server.PublicNet.IPv6.IP.String()
+			if strings.HasSuffix(serverIPv6, "::") {
+				serverIPv6 += "1"
+			}
+
+			response += fmt.Sprintf("<%s|%s> [%s]: %s (%d cores w/ %f GB RAM) @ %s => %s\n",
+				serverInfoURL, server.Name, serverIPv6,
+				server.ServerType.Name, server.ServerType.Cores, server.ServerType.Memory,
 				server.Created.Format("2006-01-02 15:04"), server.Status)
 		}
 
