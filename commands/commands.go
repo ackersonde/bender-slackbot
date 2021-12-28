@@ -117,10 +117,10 @@ func CheckCommand(event *slackevents.MessageEvent, command string) {
 		}
 		api.PostMessage(event.Channel, slack.MsgOptionText(result, false), params)
 	} else if args[0] == "htz" {
-		response := "No servers at Hetzner."
+		response := "No servers at :htz_server:."
 		servers := hetznercloud.ListAllServers()
 		if len(servers) > 0 {
-			response = "Found following server(s) at Hetzner:\n"
+			response = "Found following server(s) at :htz_server::\n"
 		}
 
 		for _, server := range servers {
@@ -130,8 +130,8 @@ func CheckCommand(event *slackevents.MessageEvent, command string) {
 				serverIPv6 += "1"
 			}
 
-			response += fmt.Sprintf("<%s|%s> [%s] @ %s => %s\n",
-				serverInfoURL, server.Name, serverIPv6,
+			response += fmt.Sprintf("ID %d: <%s|%s> [%s] @ %s => %s\n",
+				server.ID, serverInfoURL, server.Name, serverIPv6,
 				server.Created.Format("2006-01-02 15:04"), server.Status)
 		}
 
