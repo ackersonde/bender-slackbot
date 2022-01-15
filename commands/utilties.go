@@ -330,9 +330,9 @@ func measureCPUTemp() string {
 
 func retrieveHomeFirewallRules(authorizedIPs [2]string) []string {
 	hosts := []structures.RemoteConnectConfig{
-		*structures.BlondeBomberRemoteConnectConfig,
 		*structures.VPNPIRemoteConnectConfig,
-		*structures.PI4RemoteConnectConfig}
+		*structures.PI4RemoteConnectConfig,
+		*structures.BlondeBomberRemoteConnectConfig}
 
 	var result []string
 	for _, host := range hosts {

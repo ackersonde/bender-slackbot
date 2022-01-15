@@ -24,7 +24,7 @@ func prepareScheduler() {
 	s := gocron.NewScheduler(time.Now().Local().Location())
 
 	s.Every(1).Day().At("08:04").Do(
-		commands.ChangeToFastestVPNServer, commands.VPNCountry)
+		commands.VpnPiTunnelChecks, commands.VPNCountry)
 	s.Every(1).Day().At("09:05").Do(commands.DisplayFirewallRules)
 	//s.Every(1).Day().At("17:30").Do(commands.ShowBBGamesCron, "")
 

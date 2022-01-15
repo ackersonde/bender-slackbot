@@ -30,8 +30,7 @@ jobs:
           docker build --compress -t danackerson/slackbot:vg$GITHUB_RUN_ID .
           docker login -u ${{ secrets.CTX_DOCKER_USER }} -p ${{ secrets.CTX_DOCKER_PASS }}
           docker tag danackerson/slackbot:vg$GITHUB_RUN_ID danackerson/slackbot:latest
-          docker push danackerson/slackbot:vg$GITHUB_RUN_ID
-          docker push danackerson/slackbot:latest
+          docker push --all-tags danackerson/slackbot
 
       - name: Deploy to DigitalOcean
         run: |
@@ -64,6 +63,7 @@ jobs:
               -e COOKIE_SECRET=${{ secrets.COOKIE_SECRET }} \
               -e CTX_JOIN_API_KEY=${{ secrets.CTX_JOIN_API_KEY }} \
               -e CTX_PLEX_TOKEN=${{ secrets.CTX_PLEX_TOKEN }} \
+              -e CTX_HETZNER_API_TOKEN=${{ secrets.CTX_HETZNER_API_TOKEN }} \
               -e CTX_DIGITALOCEAN_DROPLET_PROXY_TOKEN=${{ secrets.CTX_DIGITALOCEAN_DROPLET_PROXY_TOKEN }} \
               -e CTX_DIGITALOCEAN_FIREWALL=${{ secrets.CTX_DIGITALOCEAN_FIREWALL }} \
               -e CTX_JOIN_API_KEY=${{ secrets.CTX_JOIN_API_KEY }} \

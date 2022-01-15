@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/ackersonde/digitaloceans/common"
+	"github.com/ackersonde/hetzner/hetznercloud"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/slack-go/slack"
 	"github.com/slack-go/slack/slackevents"
@@ -115,6 +116,38 @@ func CheckCommand(event *slackevents.MessageEvent, command string) {
 			result = dockerInfo("")
 		}
 		api.PostMessage(event.Channel, slack.MsgOptionText(result, false), params)
+	} else if args[0] == "htz" {
+		response := "No servers at :htz_server:."
+		servers := hetznercloud.ListAllServers()
+		if len(servers) > 0 {
+			response = "Found following server(s) at :htz_server::\n"
+		}
+
+		for _, server := range servers {
+			serverInfoURL := fmt.Sprintf("https://console.hetzner.cloud/projects/1200165/servers/%d/overview", server.ID)
+			serverIPv6 := server.PublicNet.IPv6.IP.String()
+			if strings.HasSuffix(serverIPv6, "::") {
+				serverIPv6 += "1"
+			}
+
+			response += fmt.Sprintf("ID %d: <%s|%s> [%s] @ %s => %s\n",
+				server.ID, serverInfoURL, server.Name, serverIPv6,
+				server.Created.Format("2006-01-02 15:04"), server.Status)
+		}
+
+		api.PostMessage(event.Channel, slack.MsgOptionText(response, false), params)
+	} else if args[0] == "htzd" {
+		if len(args) > 1 {
+			serverID, err := strconv.Atoi(args[1])
+			if err != nil {
+				api.PostMessage(event.Channel, slack.MsgOptionText("Invalid integer value for ID!", true), params)
+			} else {
+				result := hetznercloud.DeleteServer(serverID)
+				api.PostMessage(event.Channel, slack.MsgOptionText(result, true), params)
+			}
+		} else {
+			api.PostMessage(event.Channel, slack.MsgOptionText("Please provide Droplet ID from `do` cmd!", true), params)
+		}
 	} else if args[0] == "do" {
 		response := ListDODroplets()
 		api.PostMessage(event.Channel, slack.MsgOptionText(response, false), params)
@@ -234,6 +267,7 @@ func CheckCommand(event *slackevents.MessageEvent, command string) {
 				":mvv: `mvv`: Status | Trip In | Trip Home\n" +
 				":baseball: `bb <YYYY-MM-DD>`: show baseball games from given date (default yesterday)\n" +
 				":do_droplet: `do|dd <id>`: show|delete DigitalOcean droplet(s)\n" +
+				":htz_server: `htz|htzd <id>`: show|delete Hetzner server(s)\n" +
 				//":wireguard: `wg[s|u|d]`: [S]how status, [U]p or [D]own wireguard tunnel\n" +
 				":wifi: `wf [0|1|s]`: turn home wifi [0]ff, [1]n or [-default-s]tatus\n" +
 				":protonvpn: `vpn[s|c]`: [S]how status of VPN on :raspberry_pi:, [C]hange VPN to best in given country or " + VPNCountry + "\n" +
