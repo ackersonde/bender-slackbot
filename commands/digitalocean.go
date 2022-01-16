@@ -73,7 +73,7 @@ func checkFirewallRules() string {
 	response += "\n\n:house: "
 
 	domainIPv6 := getIPv6forHostname("ackerson.de")
-	homeFirewallRules := checkHomeFirewallSettings(domainIPv6)
+	homeFirewallRules := checkHomeFirewallSettings(domainIPv6, homeIPv6Prefix)
 	if len(homeFirewallRules) > 0 {
 		response += "opened on -> " + strings.Join(homeFirewallRules, "\n") + " :rotating_light:"
 	} else {

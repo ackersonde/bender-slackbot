@@ -106,7 +106,7 @@ func getIPv6forHostname(hostname string) string {
 	return domainIPv6
 }
 
-func contains(arr [2]string, str string) bool {
+func contains(arr []string, str string) bool {
 	for _, a := range arr {
 		if a == str {
 			return true
@@ -117,8 +117,8 @@ func contains(arr [2]string, str string) bool {
 
 // checkHomeFirewallSettings returns addresses of ackerson.de
 // and internal network has inbound SSH access
-func checkHomeFirewallSettings(domainIPv6 string) []string {
-	authorizedIPs := [2]string{domainIPv6, "192.168.178.0/24"}
+func checkHomeFirewallSettings(domainIPv6 string, homeIPv6Prefix string) []string {
+	authorizedIPs := []string{domainIPv6, homeIPv6Prefix, "192.168.178.0/24"}
 
 	return retrieveHomeFirewallRules(authorizedIPs)
 }
@@ -328,7 +328,7 @@ func measureCPUTemp() string {
 	return result
 }
 
-func retrieveHomeFirewallRules(authorizedIPs [2]string) []string {
+func retrieveHomeFirewallRules(authorizedIPs []string) []string {
 	hosts := []structures.RemoteConnectConfig{
 		*structures.VPNPIRemoteConnectConfig,
 		*structures.PI4RemoteConnectConfig,
