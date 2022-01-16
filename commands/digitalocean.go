@@ -67,7 +67,7 @@ func checkFirewallRules() string {
 			os.Getenv("CTX_DIGITALOCEAN_FIREWALL") + "/rules|open to> -> " +
 			strings.Join(extras, ", ") + " :rotating_light:"
 	} else {
-		response += "secured for " + homeIPv6Prefix + " :white_check_mark:"
+		response += "allowed from " + homeIPv6Prefix + " :house: :white_check_mark:"
 	}
 
 	response += "\n\n:house: "
@@ -77,7 +77,7 @@ func checkFirewallRules() string {
 	if len(homeFirewallRules) > 0 {
 		response += "opened on -> " + strings.Join(homeFirewallRules, "\n") + " :rotating_light:"
 	} else {
-		response += "secured for " + domainIPv6 + " :white_check_mark:"
+		response += "allowed from " + domainIPv6 + " :do_droplet: :white_check_mark:"
 	}
 
 	return response
