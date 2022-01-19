@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/ackersonde/bender-slackbot/structures"
 	"golang.org/x/crypto/ssh"
@@ -241,6 +242,12 @@ func executeRemoteCmd(cmd string, config *structures.RemoteConnectConfig) struct
 		var stderrBuf bytes.Buffer
 		session.Stderr = &stderrBuf
 		err := session.Run(cmd)
+
+		// as the wakeonlan cmd is usually followed directly by another one
+		// let's put the pause here to have more success
+		if strings.HasPrefix(cmd, "wakeonlan") {
+			time.Sleep(3 * time.Second)
+		}
 
 		errStr := ""
 		if stderrBuf.String() != "" {
