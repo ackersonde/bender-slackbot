@@ -246,7 +246,7 @@ func executeRemoteCmd(cmd string, config *structures.RemoteConnectConfig) struct
 		// as the wakeonlan cmd is usually followed directly by another one
 		// let's put the pause here to have more success
 		if strings.HasPrefix(cmd, "wakeonlan") {
-			time.Sleep(3 * time.Second)
+			time.Sleep(6 * time.Second)
 		}
 
 		errStr := ""
