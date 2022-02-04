@@ -37,21 +37,20 @@ func homeAndInternetIPsDoNotMatch(tunnelIP string) bool {
 			timeoutDig := time.After(10 * time.Second)
 			// ensure home.ackerson.de is DIFFERENT than PI IP address!
 			go func() {
-				cmd := "docker exec vpnission dig " + vpnGateway + " AAAA +short"
+				cmd := "curl -s " + ipCheckHost
 				remoteResult := executeRemoteCmd(cmd, structures.VPNPIRemoteConnectConfig)
 
 				resultsDig <- remoteResult.Stdout
 			}()
 			select {
 			case resComp := <-resultsDig:
-				Logger.Printf("dig %s : %s", vpnGateway, resComp)
-				lines := strings.Split(resComp, "\n")
+				Logger.Printf("curl -s %s : %s", ipCheckHost, resComp)
 				// IPv4 address of home.ackerson.de doesn't match Pi's
-				if lines[1] != res {
+				if resComp != res {
 					return true
 				}
 			case <-timeoutDig:
-				Logger.Printf("Time out on dig %s", vpnGateway)
+				Logger.Printf("Time out on curl -s %s", ipCheckHost)
 			}
 		}
 	case <-timeout:
