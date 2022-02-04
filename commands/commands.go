@@ -24,7 +24,6 @@ import (
 )
 
 var api *slack.Client
-var vpnGateway = os.Getenv("CTX_VPNC_GATEWAY")
 var githubRunID = os.Getenv("GITHUB_RUN_ID")
 
 // Logger to give senseful settings

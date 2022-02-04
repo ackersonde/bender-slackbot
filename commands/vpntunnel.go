@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"regexp"
 	"sort"
 	"strings"
@@ -44,7 +45,7 @@ func homeAndInternetIPsDoNotMatch(tunnelIP string) bool {
 			}()
 			select {
 			case resComp := <-resultsDig:
-				Logger.Printf("curl -s %s : %s", ipCheckHost, resComp)
+				Logger.Printf("on %s `curl -s %s` = %s", os.Getenv("SLAVE_HOSTNAME"), ipCheckHost, resComp)
 				// IPv4 address of home.ackerson.de doesn't match Pi's
 				if resComp != res {
 					return true
