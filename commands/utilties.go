@@ -262,7 +262,7 @@ func executeRemoteCmd(cmd string, config *structures.RemoteConnectConfig) struct
 
 func initialDialOut(hostname string, remoteConfig *ssh.ClientConfig) *ssh.Client {
 	connectionString := fmt.Sprintf("%s:%s", hostname, "22")
-	sshClient, errConn := ssh.Dial("tcp", connectionString, remoteConfig)
+	sshClient, errConn := ssh.Dial("tcp6", connectionString, remoteConfig)
 	if errConn != nil { //catch
 		Logger.Printf(errConn.Error())
 	}
