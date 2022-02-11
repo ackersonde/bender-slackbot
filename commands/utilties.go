@@ -343,7 +343,7 @@ func retrieveHomeFirewallRules(authorizedIPs []string) []string {
 
 	var result []string
 	for _, host := range hosts {
-		cmd := "sudo ufw status | grep 22 | awk '{print $3}'"
+		cmd := "sudo ip6tables -L -n | grep 22 | awk '{print $3}'"
 		res := executeRemoteCmd(cmd, &host)
 		if res.Stdout == "" {
 			result = append(result, "Firewall is NOT enabled for "+host.HostName+"!")
