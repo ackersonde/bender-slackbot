@@ -244,12 +244,12 @@ func CheckCommand(event *slackevents.MessageEvent, command string) {
 
 		api.PostMessage(event.Channel, slack.MsgOptionText(response, false), params)
 	} else if args[0] == "www" {
-		digitalOcean := ":do_droplet: <https://monitor.ackerson.de/dashboard/#/ | :traefik:> | <https://sync.ackerson.de/dashboard/#/ | :syncthing:> | <https://ackerson.de | :homepage:>\n"
-		hetzner := ":hetzner: <https://mv.ackerson.de | :traefik:> | <https://vault.ackerson.de/ui/ | :vault:>\n"
+		digitalOcean := ":do_droplet:: <https://monitor.ackerson.de/dashboard/#/ | :traefik:> | <https://sync.ackerson.de/dashboard/#/ | :syncthing:> | <https://ackerson.de | :homepage:>\n"
+		hetzner := ":htz_server:: <https://mv.ackerson.de | :traefik:> | <https://vault.ackerson.de/ui/ | :vault:>\n"
 
-		fritzBox := ":fritzbox: <https://fritz.ackerson.de/| fritz.box> | :afraid: <https://freedns.afraid.org/dynamic/v2/ | DynDNS>\n"
-		pi4 := ":raspberry_pi: <https://homesync.ackerson.de | :syncthing:> | <https://photos.ackerson.de/ | :photoprism:> | <https://ht.ackerson.de | :traefik:> | <http://192.168.178.27:8200 | :vault:>\n"
-		vpnpi := ":protonvpn: <http://vpnpi.fritz.box:9091/transmission/web/ | :transmission:> | <http://vpnpi:8096/web/index.html#!/home.html | :jelly:>\n"
+		fritzBox := ":house:: <https://fritz.ackerson.de/| :fritzbox:> | <https://freedns.afraid.org/dynamic/v2/ | :afraid:>\n"
+		pi4 := ":raspberry_pi:: <https://homesync.ackerson.de | :syncthing:> | <https://photos.ackerson.de/ | :photoprism:> | <https://ht.ackerson.de | :traefik:> | <http://192.168.178.27:8200 | :vault:>\n"
+		vpnpi := ":protonvpn:: <http://vpnpi.fritz.box:9091/transmission/web/ | :transmission:> | <http://vpnpi:8096/web/index.html#!/home.html | :jelly:>\n"
 
 		response := digitalOcean + hetzner + fritzBox + pi4 + vpnpi
 		api.PostMessage(event.Channel, slack.MsgOptionText(response, false), params)
