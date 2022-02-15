@@ -248,7 +248,7 @@ func CheckCommand(event *slackevents.MessageEvent, command string) {
 		hetzner := ":htz_server:: <https://mv.ackerson.de/dashboard/#/ | :traefik:> | <https://vault.ackerson.de/ui/ | :vault:>\n"
 
 		fritzBox := ":house:: <https://fritz.ackerson.de/ | :fritzbox:> | <https://freedns.afraid.org/dynamic/v2/ | :afraid:>\n"
-		pi4 := ":raspberry_pi:: <https://homesync.ackerson.de | :syncthing:> | <https://photos.ackerson.de/ | :photoprism:> | <https://ht.ackerson.de/dashboard/#/ | :traefik:> | <http://192.168.178.27:8200 | :vault:>\n"
+		pi4 := ":raspberry_pi:: <https://ht.ackerson.de/dashboard/#/ | :traefik:> | <https://homesync.ackerson.de | :syncthing:> | <https://photos.ackerson.de/ | :photoprism:> | <http://192.168.178.27:8200 | :vault:>\n"
 		vpnpi := ":protonvpn:: <http://vpnpi.fritz.box:9091/transmission/web/ | :transmission:> | <http://vpnpi:8096/web/index.html#!/home.html | :jelly:>\n"
 
 		response := digitalOcean + hetzner + fritzBox + pi4 + vpnpi
