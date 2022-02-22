@@ -85,7 +85,7 @@ func checkFirewallRules() string {
 		response += "allowed from " + homeIPv6Prefix + " :house:"
 	}
 
-	response += "\n\n:hetzner: "
+	response += "\n\n:htz_server: "
 	extras = fetchExtraHetznerFirewallRules(homeIPv6Prefix)
 	if len(extras) > 0 {
 		response += "<https://console.hetzner.cloud/projects/" + os.Getenv("CTX_HETZNER_PROJECT") +
