@@ -90,7 +90,7 @@ func checkFirewallRules() string {
 	if len(extras) > 0 {
 		response += "<https://console.hetzner.cloud/projects/" + os.Getenv("CTX_HETZNER_PROJECT") +
 			"/firewalls/" + os.Getenv("CTX_HETZNER_FIREWALL") + "/rules|open to> -> " +
-			strings.Join(extras, ", ") + ":rotating_light"
+			strings.Join(extras, ", ") + " :rotating_light:"
 	} else {
 		response += "allowed from " + homeIPv6Prefix + " :house:"
 	}
