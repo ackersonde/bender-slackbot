@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
-	"os"
 	"os/exec"
 	"regexp"
 	"strings"
@@ -126,30 +125,19 @@ func checkHomeFirewallSettings(domainIPv6 string, homeIPv6Prefix string) []strin
 
 func fetchHomeIPv6Prefix() string {
 	response := ""
+	remoteResult := execFritzCmd("IGDIP", "STATE")
 
-	cmd := []string{"/home/ubuntu/fritzBoxShell.sh",
-		"--boxip", os.Getenv("FRITZ_BOX_HOST"),
-		"--boxuser", os.Getenv("FRITZ_BOX_USER"),
-		"--boxpw", os.Getenv("FRITZ_BOX_PASS"),
-		"IGDIP", "STATE"}
+	re := regexp.MustCompile(`(.*)NewIPv6Prefix (?P<prefix>.*)\nNewPrefixLength (?P<length>.*)\n(.*)`)
+	matches := re.FindAllStringSubmatch(remoteResult, -1)
+	names := re.SubexpNames()
 
-	remoteResult := executeRemoteCmd(strings.Join(cmd, " "), structures.PI4RemoteConnectConfig)
-	if remoteResult.Stdout == "" && remoteResult.Stderr != "" {
-		response = remoteResult.Stderr
-		Logger.Printf("ERR: %s", response)
-	} else {
-		re := regexp.MustCompile(`(.*)NewIPv6Prefix (?P<prefix>.*)\nNewPrefixLength (?P<length>.*)\n(.*)`)
-		matches := re.FindAllStringSubmatch(remoteResult.Stdout, -1)
-		names := re.SubexpNames()
-
-		m := map[string]string{}
-		if len(matches) > 0 {
-			for i, n := range matches[0] {
-				m[names[i]] = n
-			}
-			if len(m) > 1 {
-				response = m["prefix"] + "/" + m["length"]
-			}
+	m := map[string]string{}
+	if len(matches) > 0 {
+		for i, n := range matches[0] {
+			m[names[i]] = n
+		}
+		if len(m) > 1 {
+			response = m["prefix"] + "/" + m["length"]
 		}
 	}
 
@@ -177,9 +165,7 @@ func execFritzCmd(action string, param string) string {
 	response := ""
 
 	cmd := fmt.Sprintf(
-		"/home/ubuntu/fritzBoxShell.sh --boxip %s --boxuser %s --boxpw %s %s %s",
-		os.Getenv("FRITZ_BOX_HOST"), os.Getenv("FRITZ_BOX_USER"),
-		os.Getenv("FRITZ_BOX_PASS"), action, param)
+		"/home/ubuntu/fritzBoxShell.sh %s %s", action, param)
 
 	remoteResult := executeRemoteCmd(cmd, structures.PI4RemoteConnectConfig)
 	if remoteResult.Stdout == "" && remoteResult.Stderr != "" {
