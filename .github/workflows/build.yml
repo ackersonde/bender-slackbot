@@ -85,9 +85,9 @@ jobs:
               -e MASTER_HOSTNAME=${{ secrets.CTX_IPV6_MASTER_HOME }} \
               -e SLAVE_HOSTNAME=${{ secrets.CTX_IPV6_SLAVE_HOME }} \
               -e BUILD_HOSTNAME=${{ secrets.CTX_IPV6_BUILD_HOME }} \
-              -e FRITZ_BOX_HOST=${{ secrets.FRITZ_BOX_HOST }} \
-              -e FRITZ_BOX_USER=${{ secrets.FRITZ_BOX_USER }} \
-              -e FRITZ_BOX_PASS=${{ secrets.FRITZ_BOX_PASS }} \
+              -e FRITZ_BOX_HOST=${{ secrets.CTX_FRITZ_BOX_HOST }} \
+              -e FRITZ_BOX_USER=${{ secrets.CTX_FRITZ_BOX_USER }} \
+              -e FRITZ_BOX_PASS=${{ secrets.CTX_FRITZ_BOX_PASS }} \
               -v $MY_CA/id_ed25519:/root/.ssh/id_ed25519:ro \
               -v $MY_CA/id_ed25519-cert.pub:/root/.ssh/id_ed25519-cert.pub:ro \
               -v /root/syncthing/2086h-4d0t2:/app/sync \
