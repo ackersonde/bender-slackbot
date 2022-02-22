@@ -27,7 +27,7 @@ jobs:
           go mod tidy
           CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build bender.go
 
-          docker build --compress -t danackerson/slackbot:vg$GITHUB_RUN_ID .
+          docker build --pull --no-cache -t danackerson/slackbot:vg$GITHUB_RUN_ID .
           docker login -u ${{ secrets.CTX_DOCKER_USER }} -p ${{ secrets.CTX_DOCKER_PASS }}
           docker tag danackerson/slackbot:vg$GITHUB_RUN_ID danackerson/slackbot:latest
           docker push --all-tags danackerson/slackbot
@@ -66,6 +66,8 @@ jobs:
               -e CTX_HETZNER_API_TOKEN=${{ secrets.CTX_HETZNER_API_TOKEN }} \
               -e CTX_DIGITALOCEAN_DROPLET_PROXY_TOKEN=${{ secrets.CTX_DIGITALOCEAN_DROPLET_PROXY_TOKEN }} \
               -e CTX_DIGITALOCEAN_FIREWALL=${{ secrets.CTX_DIGITALOCEAN_FIREWALL }} \
+              -e CTX_HETZNER_PROJECT=${{ secrets.CTX_HETZNER_PROJECT }} \
+	            -e CTX_HETZNER_FIREWALL=${{ secrets.CTX_HETZNER_FIREWALL }} \
               -e CTX_JOIN_API_KEY=${{ secrets.CTX_JOIN_API_KEY }} \
               -e CTX_DROPBOX_ACCESS_TOKEN=${{ secrets.CTX_DROPBOX_ACCESS_TOKEN }} \
               -e CTX_ETHERSCAN_API_KEY=${{ secrets.CTX_ETHERSCAN_API_KEY }} \

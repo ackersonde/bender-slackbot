@@ -9,8 +9,23 @@ import (
 
 	"github.com/ackersonde/bender-slackbot/structures"
 	"github.com/ackersonde/digitaloceans/common"
+	"github.com/ackersonde/hetzner/hetznercloud"
 	"github.com/slack-go/slack"
 )
+
+func fetchExtraHetznerFirewallRules(homeIPv6Prefix string) []string {
+	var extraRules []string
+	log.Printf("HomeIPv6Prefix: %s\n", homeIPv6Prefix)
+
+	sshFWRules := hetznercloud.GetSSHFirewallRules()
+	for _, rule := range sshFWRules {
+		if strings.TrimSpace(rule) != homeIPv6Prefix {
+			extraRules = append(extraRules, rule)
+		}
+	}
+
+	return extraRules
+}
 
 func fetchExtraDOsshFirewallRules(homeIPv6Prefix string) []string {
 	var extraRules []string
@@ -55,7 +70,7 @@ func DisplayFirewallRules() {
 }
 
 // checkFirewallRules does a cross check of SSH access between
-// digital ocean instance and home networks, ensuring minimal connectivity
+// cloud instances and home network, ensuring minimal connectivity
 func checkFirewallRules() string {
 	executeRemoteCmd("wakeonlan 2c:f0:5d:5e:84:43", structures.PI4RemoteConnectConfig)
 	homeIPv6Prefix := fetchHomeIPv6Prefix()
@@ -66,6 +81,16 @@ func checkFirewallRules() string {
 		response += "<https://cloud.digitalocean.com/networking/firewalls/" +
 			os.Getenv("CTX_DIGITALOCEAN_FIREWALL") + "/rules|open to> -> " +
 			strings.Join(extras, ", ") + " :rotating_light:"
+	} else {
+		response += "allowed from " + homeIPv6Prefix + " :house:"
+	}
+
+	response += "\n\n:hetzner: "
+	extras = fetchExtraHetznerFirewallRules(homeIPv6Prefix)
+	if len(extras) > 0 {
+		response += "<https://console.hetzner.cloud/projects/" + os.Getenv("CTX_HETZNER_PROJECT") +
+			"/firewalls/" + os.Getenv("CTX_HETZNER_FIREWALL") + "/rules|open to> -> " +
+			strings.Join(extras, ", "+":rotating_light")
 	} else {
 		response += "allowed from " + homeIPv6Prefix + " :house:"
 	}
