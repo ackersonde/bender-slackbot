@@ -5,7 +5,7 @@ go 1.17
 require (
 	github.com/ackersonde/ackerson.de-go v0.0.0-20220207140214-d06885593cc6
 	github.com/ackersonde/digitaloceans v0.0.0-20220214145939-6f290ea9a79e
-	github.com/ackersonde/hetzner v0.0.0-20220221170823-7d6c880cae80
+	github.com/ackersonde/hetzner v0.0.0-20220222094947-bb0c9e738d91
 	github.com/go-co-op/gocron v1.12.0
 	github.com/json-iterator/go v1.1.12
 	github.com/slack-go/slack v0.10.2
