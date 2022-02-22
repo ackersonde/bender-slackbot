@@ -18,8 +18,8 @@ func fetchExtraHetznerFirewallRules(homeIPv6Prefix string) []string {
 
 	sshFWRules := hetznercloud.GetSSHFirewallRules()
 	for _, rule := range sshFWRules {
-		log.Printf("%s doesn't MATCH %s\n", rule, homeIPv6Prefix)
 		if strings.TrimSpace(rule) != homeIPv6Prefix {
+			log.Printf("%s doesn't MATCH %s\n", rule, homeIPv6Prefix)
 			extraRules = append(extraRules, rule)
 		}
 	}
