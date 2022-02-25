@@ -65,8 +65,11 @@ func ListDODroplets() string {
 
 // DisplayFirewallRules for daily cron
 func DisplayFirewallRules() {
-	api.PostMessage(SlackReportChannel, slack.MsgOptionText(checkFirewallRules(), false),
-		slack.MsgOptionAsUser(true))
+	openFirewallRules := checkFirewallRules()
+	if openFirewallRules != "" {
+		api.PostMessage(SlackReportChannel, slack.MsgOptionText(openFirewallRules, false),
+			slack.MsgOptionAsUser(true))
+	}
 }
 
 // checkFirewallRules does a cross check of SSH access between
@@ -76,34 +79,25 @@ func checkFirewallRules() string {
 	homeIPv6Prefix := fetchHomeIPv6Prefix()
 	extras := fetchExtraDOsshFirewallRules(homeIPv6Prefix)
 
-	response := ":do_droplet: "
+	response := ""
 	if len(extras) > 0 {
-		response += "<https://cloud.digitalocean.com/networking/firewalls/" +
+		response += ":do_droplet: <https://cloud.digitalocean.com/networking/firewalls/" +
 			os.Getenv("CTX_DIGITALOCEAN_FIREWALL") + "/rules|open to> -> " +
-			strings.Join(extras, ", ") + " :rotating_light:"
-	} else {
-		response += "allowed from " + homeIPv6Prefix + " :house:"
+			strings.Join(extras, ", ") + " :rotating_light:\n\n"
 	}
 
-	response += "\n\n:htz_server: "
 	extras = fetchExtraHetznerFirewallRules(homeIPv6Prefix)
 	if len(extras) > 0 {
-		response += "<https://console.hetzner.cloud/projects/" + os.Getenv("CTX_HETZNER_PROJECT") +
+		response += ":htz_server: <https://console.hetzner.cloud/projects/" + os.Getenv("CTX_HETZNER_PROJECT") +
 			"/firewalls/" + os.Getenv("CTX_HETZNER_FIREWALL") + "/rules|open to> -> " +
-			strings.Join(extras, ", ") + " :rotating_light:"
-	} else {
-		response += "allowed from " + homeIPv6Prefix + " :house:"
+			strings.Join(extras, ", ") + " :rotating_light:\n\n"
 	}
-
-	response += "\n\n:house: "
 
 	domainIPv6 := getIPv6forHostname("ackerson.de")
 	homeFirewallRules := checkHomeFirewallSettings(domainIPv6, homeIPv6Prefix)
 	if len(homeFirewallRules) > 0 {
-		response += "opened on -> " + strings.Join(homeFirewallRules, "\n") + " :rotating_light:"
-	} else {
-		response += "allowed from " + domainIPv6 + " :do_droplet:"
+		response += ":house: opened on -> " + strings.Join(homeFirewallRules, "\n") + " :rotating_light:"
 	}
 
-	return response
+	return strings.TrimRight(response, "\n")
 }
