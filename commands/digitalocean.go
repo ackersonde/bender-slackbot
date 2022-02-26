@@ -83,26 +83,26 @@ func checkFirewallRules(manuallyCalled bool) string {
 	if len(extras) > 0 {
 		response += ":do_droplet: <https://cloud.digitalocean.com/networking/firewalls/" +
 			os.Getenv("CTX_DIGITALOCEAN_FIREWALL") + "/rules|open to> -> " +
-			strings.Join(extras, ", ") + " :rotating_light:\n\n"
+			"`" + strings.Join(extras, "`, `") + "`" + " :rotating_light:\n\n"
 	} else if manuallyCalled {
-		response += ":do_droplet: allowed from " + homeIPv6Prefix + " :house:"
+		response += ":do_droplet: allowed from `" + homeIPv6Prefix + "` :house:\n\n"
 	}
 
 	extras = fetchExtraHetznerFirewallRules(homeIPv6Prefix)
 	if len(extras) > 0 {
 		response += ":htz_server: <https://console.hetzner.cloud/projects/" + os.Getenv("CTX_HETZNER_PROJECT") +
 			"/firewalls/" + os.Getenv("CTX_HETZNER_FIREWALL") + "/rules|open to> -> " +
-			strings.Join(extras, ", ") + " :rotating_light:\n\n"
+			"`" + strings.Join(extras, "`, `") + "`" + " :rotating_light:\n\n"
 	} else if manuallyCalled {
-		response += ":htz_server: allowed from " + homeIPv6Prefix + " :house:"
+		response += ":htz_server: allowed from `" + homeIPv6Prefix + "` :house:\n\n"
 	}
 
 	domainIPv6 := getIPv6forHostname("ackerson.de")
 	homeFirewallRules := checkHomeFirewallSettings(domainIPv6, homeIPv6Prefix)
 	if len(homeFirewallRules) > 0 {
-		response += ":house: opened on -> " + strings.Join(homeFirewallRules, "\n") + " :rotating_light:"
+		response += ":house: opened on -> `" + strings.Join(homeFirewallRules, "`, `") + "`" + " :rotating_light:"
 	} else if manuallyCalled {
-		response += ":house: allowed from " + domainIPv6 + " :do_droplet:"
+		response += ":house: allowed from `" + domainIPv6 + "` :do_droplet:"
 	}
 
 	return strings.TrimRight(response, "\n")
