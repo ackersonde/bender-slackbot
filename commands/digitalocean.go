@@ -65,7 +65,7 @@ func ListDODroplets() string {
 
 // DisplayFirewallRules for daily cron
 func DisplayFirewallRules() {
-	openFirewallRules := checkFirewallRules()
+	openFirewallRules := checkFirewallRules(false)
 	if openFirewallRules != "" {
 		api.PostMessage(SlackReportChannel, slack.MsgOptionText(openFirewallRules, false),
 			slack.MsgOptionAsUser(true))
@@ -74,7 +74,7 @@ func DisplayFirewallRules() {
 
 // checkFirewallRules does a cross check of SSH access between
 // cloud instances and home network, ensuring minimal connectivity
-func checkFirewallRules() string {
+func checkFirewallRules(manuallyCalled bool) string {
 	executeRemoteCmd("wakeonlan 2c:f0:5d:5e:84:43", structures.PI4RemoteConnectConfig)
 	homeIPv6Prefix := fetchHomeIPv6Prefix()
 	extras := fetchExtraDOsshFirewallRules(homeIPv6Prefix)
@@ -84,6 +84,8 @@ func checkFirewallRules() string {
 		response += ":do_droplet: <https://cloud.digitalocean.com/networking/firewalls/" +
 			os.Getenv("CTX_DIGITALOCEAN_FIREWALL") + "/rules|open to> -> " +
 			strings.Join(extras, ", ") + " :rotating_light:\n\n"
+	} else if manuallyCalled {
+		response += ":do_droplet: allowed from " + homeIPv6Prefix + " :house:"
 	}
 
 	extras = fetchExtraHetznerFirewallRules(homeIPv6Prefix)
@@ -91,12 +93,16 @@ func checkFirewallRules() string {
 		response += ":htz_server: <https://console.hetzner.cloud/projects/" + os.Getenv("CTX_HETZNER_PROJECT") +
 			"/firewalls/" + os.Getenv("CTX_HETZNER_FIREWALL") + "/rules|open to> -> " +
 			strings.Join(extras, ", ") + " :rotating_light:\n\n"
+	} else if manuallyCalled {
+		response += ":htz_server: allowed from " + homeIPv6Prefix + " :house:"
 	}
 
 	domainIPv6 := getIPv6forHostname("ackerson.de")
 	homeFirewallRules := checkHomeFirewallSettings(domainIPv6, homeIPv6Prefix)
 	if len(homeFirewallRules) > 0 {
 		response += ":house: opened on -> " + strings.Join(homeFirewallRules, "\n") + " :rotating_light:"
+	} else if manuallyCalled {
+		response += ":house: allowed from " + domainIPv6 + " :do_droplet:"
 	}
 
 	return strings.TrimRight(response, "\n")
