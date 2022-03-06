@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/exec"
 	"strconv"
 	"strings"
 
@@ -52,13 +53,19 @@ func ListDODroplets() string {
 	if err != nil {
 		response = fmt.Sprintf("Failed to list droplets: %s", err)
 	} else {
-		response = fmt.Sprintf("Found %d droplet(s):", len(droplets))
+		response = fmt.Sprintf("Found %d droplet(s) at :do_droplet::\n", len(droplets))
 		for _, droplet := range droplets {
-			ipv4, _ := droplet.PublicIPv4()
+			ipv6, _ := droplet.PublicIPv6()
 			addr := doDropletInfoSite + strconv.Itoa(droplet.ID)
-			response += fmt.Sprintf(":do_droplet: <%s|%s> (%s) [ID: %d]\n", addr, droplet.Name, ipv4, droplet.ID)
+			response += fmt.Sprintf("ID %d: <%s|%s> [%s] @ %s => %s\n",
+				droplet.ID, addr, droplet.Name, ipv6, droplet.Created, droplet.Status)
 		}
 	}
+
+	out, _ := exec.Command("uptime").Output()
+	response += string(out)
+	out, _ = exec.Command("uname", "-a").Output()
+	response += string(out)
 
 	return response
 }

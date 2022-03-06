@@ -16,6 +16,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ackersonde/bender-slackbot/structures"
 	"github.com/ackersonde/digitaloceans/common"
 	"github.com/ackersonde/hetzner/hetznercloud"
 	jsoniter "github.com/json-iterator/go"
@@ -133,6 +134,11 @@ func CheckCommand(event *slackevents.MessageEvent, command string) {
 				server.ID, serverInfoURL, server.Name, serverIPv6,
 				server.Created.Format("2006-01-02 15:04"), server.Status)
 		}
+
+		remoteResult := executeRemoteCmd("ssh vault uptime", structures.PI4RemoteConnectConfig)
+		response += remoteResult.Stdout
+		remoteResult = executeRemoteCmd("ssh vault uname -a", structures.PI4RemoteConnectConfig)
+		response += remoteResult.Stdout
 
 		api.PostMessage(event.Channel, slack.MsgOptionText(response, false), params)
 	} else if args[0] == "htzd" {
