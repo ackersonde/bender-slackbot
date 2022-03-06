@@ -135,9 +135,7 @@ func CheckCommand(event *slackevents.MessageEvent, command string) {
 				server.Created.Format("2006-01-02 15:04"), server.Status)
 		}
 
-		remoteResult := executeRemoteCmd("ssh vault uptime", structures.PI4RemoteConnectConfig)
-		response += remoteResult.Stdout
-		remoteResult = executeRemoteCmd("ssh vault uname -a", structures.PI4RemoteConnectConfig)
+		remoteResult := executeRemoteCmd("ssh vault 'uptime;uname -a", structures.PI4RemoteConnectConfig)
 		response += remoteResult.Stdout
 
 		api.PostMessage(event.Channel, slack.MsgOptionText(response, false), params)
