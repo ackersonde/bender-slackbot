@@ -116,6 +116,29 @@ func CheckCommand(event *slackevents.MessageEvent, command string) {
 			result = dockerInfo("")
 		}
 		api.PostMessage(event.Channel, slack.MsgOptionText(result, false), params)
+	} else if args[0] == "vfa" {
+		response := "Usage: 'vfa <get|put> (<optional keyname>)|<keyname> <secret>"
+
+		if args[1] == "get" {
+			cmd := "ssh vault 'vault list totp/keys'"
+			if len(args) == 3 {
+				cmd = "ssh vault 'vault read totp/code/" + args[2] + "'"
+			}
+			remoteResult := executeRemoteCmd(cmd, structures.PI4RemoteConnectConfig)
+			response += remoteResult.Stdout
+		} else if args[1] == "add" {
+			cmd := "ssh vault 'vault write totp/keys/" + args[2] +
+				" url='otpauth://totp/" + args[2] + "?secret=" + args[3] + "'"
+
+			remoteResult := executeRemoteCmd(cmd, structures.PI4RemoteConnectConfig)
+			response += remoteResult.Stdout
+
+			cmd = "ssh vault 'vault read totp/code/" + args[2] + "'"
+			remoteResult = executeRemoteCmd(cmd, structures.PI4RemoteConnectConfig)
+			response += remoteResult.Stdout
+		}
+
+		api.PostMessage(event.Channel, slack.MsgOptionText(response, false), params)
 	} else if args[0] == "htz" {
 		response := "No servers at :htz_server:."
 		servers := hetznercloud.ListAllServers()
@@ -267,6 +290,7 @@ func CheckCommand(event *slackevents.MessageEvent, command string) {
 		response :=
 			":ethereum: `crypto`: Current cryptocurrency stats :lumens:\n" +
 				":sleuth_or_spy: `pgp`: PGP keys\n" +
+				":vault: `vfa <get (keyname)| put keyname secret>`: Vault Factor Auth (TOTP)\n" +
 				":sun_behind_rain_cloud: `rw`: Oberhatzkofen weather\n" +
 				":mvv: `mvv`: Status | Trip In | Trip Home\n" +
 				":baseball: `bb <YYYY-MM-DD>`: show baseball games from given date (default yesterday)\n" +
