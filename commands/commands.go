@@ -127,7 +127,7 @@ func CheckCommand(event *slackevents.MessageEvent, command string) {
 			remoteResult := executeRemoteCmd(cmd, structures.PI4RemoteConnectConfig)
 			response = remoteResult.Stdout
 		} else if args[1] == "put" {
-			cmd := "ssh vault 'docker exec vault vault write totp/keys/" + args[2] +
+			cmd := "ssh vault docker exec vault vault write totp/keys/" + args[2] +
 				" url='otpauth://totp/" + args[2] + "?secret=" + args[3] + "'"
 
 			remoteResult := executeRemoteCmd(cmd, structures.PI4RemoteConnectConfig)
