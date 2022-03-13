@@ -117,23 +117,23 @@ func CheckCommand(event *slackevents.MessageEvent, command string) {
 		}
 		api.PostMessage(event.Channel, slack.MsgOptionText(result, false), params)
 	} else if args[0] == "vfa" {
-		response := "Usage: 'vfa <get|put> (<optional keyname>)|<keyname> <secret>"
+		response := "Usage: vfa <get|put> (<optional keyname>)|<keyname> <secret>"
 
 		if args[1] == "get" {
-			cmd := "ssh vault 'vault list totp/keys'"
+			cmd := "ssh vault 'docker exec vault vault list totp/keys'"
 			if len(args) == 3 {
-				cmd = "ssh vault 'vault read totp/code/" + args[2] + "'"
+				cmd = "ssh vault 'docker exec vault vault read totp/code/" + args[2] + "'"
 			}
 			remoteResult := executeRemoteCmd(cmd, structures.PI4RemoteConnectConfig)
-			response += remoteResult.Stdout
-		} else if args[1] == "add" {
-			cmd := "ssh vault 'vault write totp/keys/" + args[2] +
+			response = remoteResult.Stdout
+		} else if args[1] == "put" {
+			cmd := "ssh vault 'docker exec vault vault write totp/keys/" + args[2] +
 				" url='otpauth://totp/" + args[2] + "?secret=" + args[3] + "'"
 
 			remoteResult := executeRemoteCmd(cmd, structures.PI4RemoteConnectConfig)
-			response += remoteResult.Stdout
+			response = remoteResult.Stdout
 
-			cmd = "ssh vault 'vault read totp/code/" + args[2] + "'"
+			cmd = "ssh vault 'docker exec vault vault read totp/code/" + args[2] + "'"
 			remoteResult = executeRemoteCmd(cmd, structures.PI4RemoteConnectConfig)
 			response += remoteResult.Stdout
 		}
