@@ -114,7 +114,7 @@ func MoveTorrentFile(sourceFile string, destinationDir string) {
 	remoteResult := executeRemoteCmd(cmd, structures.VPNPIRemoteConnectConfig)
 
 	if remoteResult.Stdout == "" && remoteResult.Stderr != "" {
-		response = fmt.Sprintf(fmt.Sprint(remoteResult.Stderr) + ": " + string(remoteResult.Stdout))
+		response = fmt.Sprint(remoteResult.Stderr)
 		response = ":x: ERR: `" + cmd + "` => " + response
 	} else {
 		response += fmt.Sprintf("moved: %s to %s\n", sourceFile, destinationDir)

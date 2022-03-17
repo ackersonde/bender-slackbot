@@ -20,6 +20,7 @@ import (
 	"github.com/ackersonde/digitaloceans/common"
 	"github.com/ackersonde/hetzner/hetznercloud"
 	jsoniter "github.com/json-iterator/go"
+	"github.com/sethvargo/go-password/password"
 	"github.com/slack-go/slack"
 	"github.com/slack-go/slack/slackevents"
 )
@@ -116,26 +117,106 @@ func CheckCommand(event *slackevents.MessageEvent, command string) {
 			result = dockerInfo("")
 		}
 		api.PostMessage(event.Channel, slack.MsgOptionText(result, false), params)
-	} else if args[0] == "vfa" {
-		response := "Usage: vfa <get|put> (<optional keyname>)|<keyname> <secret>"
+	} else if args[0] == "pass" {
+		usage := "Usage: pass (chars:64 digits:10 symbols:10 upper&lower:false repeatChars:true).\nOrder counts! If you only need to change `upper&lower`, you *must* enter preceding params."
+		response := ""
+		var err error
 
-		if args[1] == "get" {
-			cmd := "ssh vault 'docker exec vault vault list totp/keys'"
-			if len(args) == 3 {
-				cmd = "ssh vault 'docker exec vault vault read totp/code/" + args[2] + "'"
+		switch len(args) {
+		case 2:
+			chars, _ := strconv.Atoi(args[1])
+
+			response, err = password.Generate(chars, 10, 10, false, false)
+			if err != nil {
+				response = err.Error() + "\n" + usage
 			}
+		case 3:
+			chars, _ := strconv.Atoi(args[1])
+			digits, _ := strconv.Atoi(args[2])
+
+			response, err = password.Generate(chars, digits, 10, false, false)
+			if err != nil {
+				response = err.Error() + "\n" + usage
+			}
+		case 4:
+			chars, _ := strconv.Atoi(args[1])
+			digits, _ := strconv.Atoi(args[2])
+			symbols, _ := strconv.Atoi(args[3])
+
+			response, err = password.Generate(chars, digits, symbols, false, false)
+			if err != nil {
+				response = err.Error() + "\n" + usage
+			}
+		case 5:
+			chars, _ := strconv.Atoi(args[1])
+			digits, _ := strconv.Atoi(args[2])
+			symbols, _ := strconv.Atoi(args[3])
+			upAndLow, _ := strconv.ParseBool(args[4])
+
+			response, err = password.Generate(chars, digits, symbols, upAndLow, false)
+			if err != nil {
+				response = err.Error() + "\n" + usage
+			}
+		case 6:
+			chars, _ := strconv.Atoi(args[1])
+			digits, _ := strconv.Atoi(args[2])
+			symbols, _ := strconv.Atoi(args[3])
+			upAndLow, _ := strconv.ParseBool(args[4])
+			repeatChars, _ := strconv.ParseBool(args[5])
+
+			response, err = password.Generate(chars, digits, symbols, upAndLow, !repeatChars)
+			if err != nil {
+				response = err.Error() + "\n" + usage
+			}
+		default:
+			response, err = password.Generate(64, 10, 10, false, false)
+			if err != nil {
+				response = err.Error() + "\n" + usage
+			}
+		}
+
+		api.PostMessage(event.Channel, slack.MsgOptionText(response, false), params)
+	} else if args[0] == "vfa" {
+		response := "Usage: vfa <(get) keyname | put keyname secret>"
+		if len(args) == 1 || args[1] == "get" {
+			cmd := "ssh vault 'docker exec vault vault list totp/keys'"
+			keyname := args[1]
+			if len(args) == 3 {
+				keyname = args[2]
+			}
+
+			cmd = "ssh vault 'docker exec vault vault read totp/code/" + keyname + "'"
+
 			remoteResult := executeRemoteCmd(cmd, structures.PI4RemoteConnectConfig)
-			response = remoteResult.Stdout
+			if remoteResult.Stdout == "" && remoteResult.Stderr != "" {
+				if strings.Contains(remoteResult.Stderr, "unknown key") {
+					cmd := "ssh vault 'docker exec vault vault list totp/keys | grep -i " + keyname + "'"
+					remoteResult = executeRemoteCmd(cmd, structures.PI4RemoteConnectConfig)
+					if remoteResult.Stdout == "" && remoteResult.Stderr != "" {
+						response = ":x: ERR: `" + cmd + "` => " + remoteResult.Stderr
+					} else {
+						response = "*" + keyname + "* not found. I found: *" + remoteResult.Stdout + "*"
+					}
+				}
+			} else {
+				response = remoteResult.Stdout
+			}
 		} else if args[1] == "put" {
 			cmd := "ssh vault docker exec vault vault write totp/keys/" + args[2] +
 				" url='otpauth://totp/" + args[2] + "?secret=" + args[3] + "'"
 
 			remoteResult := executeRemoteCmd(cmd, structures.PI4RemoteConnectConfig)
-			response = remoteResult.Stdout
-
-			cmd = "ssh vault 'docker exec vault vault read totp/code/" + args[2] + "'"
-			remoteResult = executeRemoteCmd(cmd, structures.PI4RemoteConnectConfig)
-			response += remoteResult.Stdout
+			if remoteResult.Stdout == "" && remoteResult.Stderr != "" {
+				response = ":x: ERR: `" + cmd + "` => " + remoteResult.Stderr
+			} else {
+				cmd = "ssh vault 'docker exec vault vault read totp/code/" + args[2] + "'"
+				remoteResult = executeRemoteCmd(cmd, structures.PI4RemoteConnectConfig)
+				if remoteResult.Stdout == "" && remoteResult.Stderr != "" {
+					response = ":x: ERR: `" + cmd + "` => " + remoteResult.Stderr
+				} else {
+					response = remoteResult.Stdout
+				}
+			}
 		}
 
 		api.PostMessage(event.Channel, slack.MsgOptionText(response, false), params)
@@ -291,6 +372,7 @@ func CheckCommand(event *slackevents.MessageEvent, command string) {
 			":ethereum: `crypto`: Current cryptocurrency stats :lumens:\n" +
 				":sleuth_or_spy: `pgp`: PGP keys\n" +
 				":vault: `vfa <get (keyname)| put keyname secret>`: Vault Factor Auth (TOTP)\n" +
+				":key: `pass (chars:64 digits:10 symbols:10 upper&lower:false repeatChars:true)`: Generate password with params\n" +
 				":sun_behind_rain_cloud: `rw`: Oberhatzkofen weather\n" +
 				":mvv: `mvv`: Status | Trip In | Trip Home\n" +
 				":baseball: `bb <YYYY-MM-DD>`: show baseball games from given date (default yesterday)\n" +
