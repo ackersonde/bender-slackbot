@@ -178,7 +178,7 @@ func CheckCommand(event *slackevents.MessageEvent, command string) {
 		api.PostMessage(event.Channel, slack.MsgOptionText(response, false), params)
 	} else if args[0] == "vfa" {
 		response := "Usage: vfa <(get) keyname | put keyname secret>"
-		if len(args) == 1 || args[1] == "get" {
+		if len(args) == 2 || args[1] == "get" {
 			cmd := "ssh vault 'docker exec vault vault list totp/keys'"
 			keyname := args[1]
 			if len(args) == 3 {
@@ -195,7 +195,7 @@ func CheckCommand(event *slackevents.MessageEvent, command string) {
 					if remoteResult.Stdout == "" && remoteResult.Stderr != "" {
 						response = ":x: ERR: `" + cmd + "` => " + remoteResult.Stderr
 					} else {
-						response = "*" + keyname + "* not found. I found: *" + remoteResult.Stdout + "*"
+						response = "*" + keyname + "* not found. I found:\n" + strings.TrimSuffix(remoteResult.Stdout, "\n")
 					}
 				}
 			} else {
