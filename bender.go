@@ -107,8 +107,12 @@ func processMessage(ev *slackevents.MessageEvent, api *slack.Client) {
 		r, n := utf8.DecodeRuneInString(parsedMessage)
 		parsedMessage = string(unicode.ToLower(r)) + parsedMessage[n:]
 
-		user, _ := api.GetUserInfo(ev.User)
-		commands.Logger.Printf("%s(%s) asks '%v'\n", user.Profile.RealName, ev.User, parsedMessage)
+		user, err := api.GetUserInfo(ev.User)
+		if err != nil {
+			commands.Logger.Printf("NO user info for %s: %s\n", ev.User, err.Error())
+		} else {
+			commands.Logger.Printf("%s(%s) asks '%v'\n", user.Name, ev.User, parsedMessage)
+		}
 		commands.CheckCommand(ev, user, parsedMessage)
 	}
 }
