@@ -184,16 +184,18 @@ func CheckCommand(event *slackevents.MessageEvent, user *slack.User, command str
 			totpEngineName = "liuda"
 		}
 
-		if len(args) == 1 || args[1] == "get" {
-			keyname := args[1]
-			cmd := "ssh vault 'docker exec vault vault read " + totpEngineName + "/code/" + keyname + "'"
-			if len(args) == 3 {
-				keyname = args[2]
-			} else {
-				cmd = "ssh vault 'docker exec vault vault list " + totpEngineName + "/keys'"
-			}
-
+		if len(args) == 1 || (len(args) == 2 && args[1] == "get") {
+			cmd := "ssh vault 'docker exec vault vault list " + totpEngineName + "/keys'"
 			remoteResult := executeRemoteCmd(cmd, structures.PI4RemoteConnectConfig)
+			response = remoteResult.Stdout
+		} else if args[1] != "put" {
+			keyname := args[1]
+			if args[1] == "get" {
+				keyname = args[2]
+			}
+			cmd := "ssh vault 'docker exec vault vault read " + totpEngineName + "/code/" + keyname + "'"
+			remoteResult := executeRemoteCmd(cmd, structures.PI4RemoteConnectConfig)
+
 			if remoteResult.Stdout == "" && remoteResult.Stderr != "" {
 				if strings.Contains(remoteResult.Stderr, "unknown key") {
 					cmd := "ssh vault 'docker exec vault vault list " + totpEngineName + "/keys | grep -i " + keyname + "'"
