@@ -46,11 +46,9 @@ func SetAPI(apiPassed *slack.Client) {
 }
 
 // CheckCommand is now commented
-func CheckCommand(event *slackevents.MessageEvent, command string) {
+func CheckCommand(event *slackevents.MessageEvent, user *slack.User, command string) {
 	args := strings.Fields(command)
 	params := slack.MsgOptionAsUser(true)
-
-	log.Printf("%+v\n", event)
 
 	if args[0] == "crypto" {
 		response := checkEthereumValue() + "\n" + checkStellarLumensValue()
@@ -182,20 +180,15 @@ func CheckCommand(event *slackevents.MessageEvent, command string) {
 		response := "Usage: vfa <(get) keyname | put keyname secret>"
 
 		totpEngineName := "totp"
-		if event.Message.User != "papa" {
+		if event.User != "U092UC9EW" {
 			totpEngineName = "liuda"
 		}
 
-		if len(args) == 1 {
-			cmd := "ssh vault 'docker exec vault vault list " + totpEngineName + "/keys'"
-			remoteResult := executeRemoteCmd(cmd, structures.PI4RemoteConnectConfig)
-			response = remoteResult.Stdout
-		} else if len(args) == 2 || args[1] == "get" {
-			cmd := ""
+		if len(args) == 1 || args[1] == "get" {
 			keyname := args[1]
+			cmd := "ssh vault 'docker exec vault vault read " + totpEngineName + "/code/" + keyname + "'"
 			if len(args) == 3 {
 				keyname = args[2]
-				cmd = "ssh vault 'docker exec vault vault read " + totpEngineName + "/code/" + keyname + "'"
 			} else {
 				cmd = "ssh vault 'docker exec vault vault list " + totpEngineName + "/keys'"
 			}
@@ -406,11 +399,8 @@ func CheckCommand(event *slackevents.MessageEvent, command string) {
 				":closed_lock_with_key: `security`: overview of SSH key(s) and UFW rules\n" +
 				":whale2: `logs <container>`: last 100 lines of docker logs from <container> on ackerson.de\n"
 		api.PostMessage(event.Channel, slack.MsgOptionText(response, true), params)
-	} else if event.Username != "" {
-		response := "Whaddya say <@" + event.Username + ">? Try `help` instead"
-		api.PostMessage(event.Channel, slack.MsgOptionText(response, false), params)
 	} else {
-		response := fmt.Sprintf("No such command found: %s. Try `help` instead", event.Text)
+		response := "Whaddya say <@" + user.Profile.DisplayName + ">? Try `help` instead"
 		api.PostMessage(event.Channel, slack.MsgOptionText(response, false), params)
 	}
 }

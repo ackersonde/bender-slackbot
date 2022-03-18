@@ -94,7 +94,7 @@ func parseSlackEvent(w http.ResponseWriter, r *http.Request) slackevents.EventsA
 	return eventsAPIEvent
 }
 
-func processMessage(ev *slackevents.MessageEvent) {
+func processMessage(ev *slackevents.MessageEvent, api *slack.Client) {
 	originalMessage := ev.Text
 
 	if ev.User != "" && ev.User != botID && ev.User != "U2NQSPHHD" &&
@@ -107,8 +107,9 @@ func processMessage(ev *slackevents.MessageEvent) {
 		r, n := utf8.DecodeRuneInString(parsedMessage)
 		parsedMessage = string(unicode.ToLower(r)) + parsedMessage[n:]
 
-		commands.Logger.Printf("%s(%s) asks '%v'\n", ev.Username, ev.User, parsedMessage)
-		commands.CheckCommand(ev, parsedMessage)
+		user, _ := api.GetUserInfo(ev.User)
+		commands.Logger.Printf("%s(%s) asks '%v'\n", user.Profile.RealName, ev.User, parsedMessage)
+		commands.CheckCommand(ev, user, parsedMessage)
 	}
 }
 
@@ -128,7 +129,7 @@ func main() {
 				innerEvent := eventsAPIEvent.InnerEvent
 				switch ev := innerEvent.Data.(type) {
 				case *slackevents.MessageEvent:
-					go processMessage(ev)
+					go processMessage(ev, api)
 					// HTTP 202 -> we heard and are working on an async response
 					w.WriteHeader(http.StatusAccepted)
 				}
