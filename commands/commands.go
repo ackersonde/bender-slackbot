@@ -122,11 +122,19 @@ func CheckCommand(event *slackevents.MessageEvent, user *slack.User, command str
 		response := ""
 		var err error
 
+		chars := 64
+		digits := 10
+		symbols := 10
+
 		switch len(args) {
 		case 2:
-			chars, _ := strconv.Atoi(args[1])
+			chars, _ = strconv.Atoi(args[1])
 
-			response, err = password.Generate(chars, 10, 10, false, false)
+			if chars < 20 {
+				digits = chars / 2
+				symbols = digits
+			}
+			response, err = password.Generate(chars, digits, symbols, false, false)
 			if err != nil {
 				response = err.Error() + "\n" + usage
 			}
@@ -134,7 +142,10 @@ func CheckCommand(event *slackevents.MessageEvent, user *slack.User, command str
 			chars, _ := strconv.Atoi(args[1])
 			digits, _ := strconv.Atoi(args[2])
 
-			response, err = password.Generate(chars, digits, 10, false, false)
+			if chars-digits > 10 {
+				symbols = chars - digits
+			}
+			response, err = password.Generate(chars, digits, symbols, false, false)
 			if err != nil {
 				response = err.Error() + "\n" + usage
 			}
