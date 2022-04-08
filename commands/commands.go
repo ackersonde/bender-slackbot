@@ -214,7 +214,14 @@ func CheckCommand(event *slackevents.MessageEvent, user *slack.User, command str
 					if remoteResult.Stdout == "" && remoteResult.Stderr != "" {
 						response = ":x: ERR: `" + cmd + "` => " + remoteResult.Stderr
 					} else {
-						response = "*" + keyname + "* not found. I found:\n" + strings.TrimSuffix(remoteResult.Stdout, "\n")
+						if strings.Count(remoteResult.Stdout, "\n") == 1 {
+							keyname = strings.TrimSuffix(remoteResult.Stdout, "\n")
+							cmd = "ssh vault 'docker exec vault vault read " + totpEngineName + "/code/" + keyname + "'"
+							remoteResult = executeRemoteCmd(cmd, structures.PI4RemoteConnectConfig)
+							response = "Guessing you wanted `" + keyname + "`:\n" + strings.TrimSuffix(remoteResult.Stdout, "\n")
+						} else {
+							response = "*" + keyname + "* not found. I found:\n" + strings.TrimSuffix(remoteResult.Stdout, "\n")
+						}
 					}
 				}
 			} else {
