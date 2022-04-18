@@ -196,53 +196,15 @@ func CheckCommand(event *slackevents.MessageEvent, user *slack.User, command str
 		}
 
 		if len(args) == 1 || (len(args) == 2 && args[1] == "get") {
-			cmd := "ssh vault 'docker exec vault vault list " + totpEngineName + "/keys'"
-			remoteResult := executeRemoteCmd(cmd, structures.PI4RemoteConnectConfig)
-			response = remoteResult.Stdout
+			response = fmt.Sprintf("%v\n", listTOTPKeysForEngine(totpEngineName))
 		} else if args[1] != "put" {
 			keyname := args[1]
 			if args[1] == "get" {
 				keyname = args[2]
 			}
-			cmd := "ssh vault 'docker exec vault vault read " + totpEngineName + "/code/" + keyname + "'"
-			remoteResult := executeRemoteCmd(cmd, structures.PI4RemoteConnectConfig)
-
-			if remoteResult.Stdout == "" && remoteResult.Stderr != "" {
-				if strings.Contains(remoteResult.Stderr, "unknown key") {
-					cmd := "ssh vault 'docker exec vault vault list " + totpEngineName + "/keys | grep -i " + keyname + "'"
-					remoteResult = executeRemoteCmd(cmd, structures.PI4RemoteConnectConfig)
-					if remoteResult.Stdout == "" && remoteResult.Stderr != "" {
-						response = ":x: ERR: `" + cmd + "` => " + remoteResult.Stderr
-					} else {
-						if strings.Count(remoteResult.Stdout, "\n") == 1 {
-							keyname = strings.TrimSuffix(remoteResult.Stdout, "\n")
-							cmd = "ssh vault 'docker exec vault vault read " + totpEngineName + "/code/" + keyname + "'"
-							remoteResult = executeRemoteCmd(cmd, structures.PI4RemoteConnectConfig)
-							response = "Guessing you wanted `" + keyname + "`:\n" + strings.TrimSuffix(remoteResult.Stdout, "\n")
-						} else {
-							response = "*" + keyname + "* not found. I found:\n" + strings.TrimSuffix(remoteResult.Stdout, "\n")
-						}
-					}
-				}
-			} else {
-				response = remoteResult.Stdout
-			}
+			response = fmt.Sprintf("%s\n", readTOTPCodeForKey(totpEngineName, keyname))
 		} else if args[1] == "put" {
-			cmd := "ssh vault docker exec vault vault write " + totpEngineName + "/keys/" + args[2] +
-				" url='otpauth://totp/" + args[2] + "?secret=" + args[3] + "'"
-
-			remoteResult := executeRemoteCmd(cmd, structures.PI4RemoteConnectConfig)
-			if remoteResult.Stdout == "" && remoteResult.Stderr != "" {
-				response = ":x: ERR: `" + cmd + "` => " + remoteResult.Stderr
-			} else {
-				cmd = "ssh vault 'docker exec vault vault read " + totpEngineName + "/code/" + args[2] + "'"
-				remoteResult = executeRemoteCmd(cmd, structures.PI4RemoteConnectConfig)
-				if remoteResult.Stdout == "" && remoteResult.Stderr != "" {
-					response = ":x: ERR: `" + cmd + "` => " + remoteResult.Stderr
-				} else {
-					response = remoteResult.Stdout
-				}
-			}
+			response = fmt.Sprintf("%s\n", putTOTPKeyForEngine(totpEngineName, args[2], args[3]))
 		}
 
 		api.PostMessage(event.Channel, slack.MsgOptionText(response, false), params)
