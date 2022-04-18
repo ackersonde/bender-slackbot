@@ -85,6 +85,9 @@ jobs:
               -e MASTER_HOSTNAME=${{ secrets.CTX_IPV6_MASTER_HOME }} \
               -e SLAVE_HOSTNAME=${{ secrets.CTX_IPV6_SLAVE_HOME }} \
               -e BUILD_HOSTNAME=${{ secrets.CTX_IPV6_BUILD_HOME }} \
+              -e VAULT_ADDR=${{ secrets.VAULT_ADDR }} \
+              -e VAULT_APPROLE_SECRET_ID=${{ secrets.VAULT_APPROLE_SECRET_ID }} \
+              -e VAULT_APPROLE_ROLE_ID=${{ secrets.VAULT_APPROLE_ROLE_ID }} \
               -v $MY_CA/id_ed25519:/root/.ssh/id_ed25519:ro \
               -v $MY_CA/id_ed25519-cert.pub:/root/.ssh/id_ed25519-cert.pub:ro \
               -v /root/syncthing/2086h-4d0t2:/app/sync \
