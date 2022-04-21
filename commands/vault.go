@@ -122,7 +122,6 @@ func loginToVault() (*vault.Secret, error) {
 	if err != nil {
 		log.Println(fmt.Errorf("unable to initialize AppRole auth method: %w", err))
 	} else {
-
 		authInfo, err := vaultClient.Auth().Login(context.Background(), appRoleAuth)
 		if err != nil {
 			log.Println(fmt.Errorf("%w", err))

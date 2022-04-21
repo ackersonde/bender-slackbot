@@ -187,6 +187,12 @@ func CheckCommand(event *slackevents.MessageEvent, user *slack.User, command str
 		}
 
 		api.PostMessage(event.Channel, slack.MsgOptionText(response, false), params)
+	} else if args[0] == "vlg" {
+		// TODO: check vault-traefik logs via:
+		// `awk '{print $1}' traefik/logs/access.log|sort|uniq -c|sort|grep -v '<HOME_IPV6_PREFIX>'|grep -v '172.17.0'|tail -n 10`
+		// where <HOME_IPV6_PREFIX> is first 4 octals of fetchHomeIPv6Prefix()
+		// e.g. 2a00:432a:40:9154::/62 => 2a00:432a:40:9154
+		// show last 10
 	} else if args[0] == "vfa" {
 		response := "Usage: vfa <(get) keyname | put keyname secret>"
 
