@@ -82,6 +82,29 @@ func putTOTPKeyForEngine(totpEngineName string, keyName string, secret string) s
 	return response
 }
 
+func updateTOTPRoleCIDRs(roleName string, CIDRs string) string {
+	initVaultClient()
+	response := ""
+
+	parts := strings.Split(CIDRs, ",")
+	finalList := ""
+	for _, part := range parts {
+		finalList += "\"" + part + "\","
+	}
+	finalList += "\"127.0.0.1/32\""
+
+	payload := map[string]interface{}{
+		"token_bound_cidrs": finalList,
+	}
+	_, err := vaultClient.Logical().Write("auth/approle/role/"+roleName, payload)
+	if err != nil {
+		response = fmt.Sprintf("Unable to update %s's CIDRs to %s: %s", roleName, CIDRs, err.Error())
+	} else {
+		response = "Updated TOTP Role `" + roleName + "` CIDRS to: " + CIDRs
+	}
+	return response
+}
+
 func listTOTPKeysForEngine(totpEngineName string) []string {
 	initVaultClient()
 	var response []string

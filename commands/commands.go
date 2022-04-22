@@ -211,6 +211,9 @@ func CheckCommand(event *slackevents.MessageEvent, user *slack.User, command str
 			response = fmt.Sprintf("%s\n", readTOTPCodeForKey(totpEngineName, keyname))
 		} else if args[1] == "put" {
 			response = fmt.Sprintf("%s\n", putTOTPKeyForEngine(totpEngineName, args[2], args[3]))
+		} else if args[1] == "update" {
+			response = fmt.Sprintf("%s\n", updateTOTPRoleCIDRs("totp-mgmt",
+				fetchHomeIPv6Prefix()+","+args[2]))
 		}
 
 		api.PostMessage(event.Channel, slack.MsgOptionText(response, false), params)
