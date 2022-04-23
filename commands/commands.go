@@ -203,7 +203,7 @@ func CheckCommand(event *slackevents.MessageEvent, user *slack.User, command str
 
 		if len(args) == 1 || (len(args) == 2 && args[1] == "get") {
 			response = fmt.Sprintf("%v\n", listTOTPKeysForEngine(totpEngineName))
-		} else if args[1] != "put" {
+		} else if args[1] != "put" && args[1] != "update" {
 			keyname := args[1]
 			if args[1] == "get" {
 				keyname = args[2]
