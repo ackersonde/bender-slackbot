@@ -52,13 +52,13 @@ func readTOTPCodeForKey(totpEngineName string, keyName string) string {
 			if response == "" {
 				response = fmt.Sprintf("Unable to find keyName %s. Try looking at all keys w/ `vfa`\n", keyName)
 			} else {
-				response = fmt.Sprintf("Found the following keys: %s\n", response)
+				response = fmt.Sprintf("Found the following keys:\n%s\n", response)
 			}
 		} else {
 			response = fmt.Sprintf("unexpected error: %s\n", err.Error())
 		}
 	} else {
-		response = code.Data["code"].(string)
+		response = "*" + code.Data["code"].(string) + "*"
 	}
 
 	return response
