@@ -354,10 +354,10 @@ func CheckCommand(event *slackevents.MessageEvent, user *slack.User, command str
 
 		fritzBox := ":house:: <https://fritz.ackerson.de/|fritzbox> | <https://freedns.afraid.org/dynamic/v2/|afraid>\n"
 		pi4 := ":raspberry_pi:: <https://ht.ackerson.de/dashboard/#/|traefik> | <https://homesync.ackerson.de|syncthing> | <https://photos.ackerson.de/|photoprism> | <http://192.168.178.27:8200|vault>\n"
-		vpnpi := ":protonvpn:: <http://vpnpi.fritz.box:9091/transmission/web/|:transmission:> | <http://vpnpi:8096/web/index.html#!/home.html|:jelly:>\n"
+		vpnpi := ":protonvpn:: <http://vpnpi.fritz.box:9091/transmission/web/|transmission> | <http://vpnpi:8096/web/index.html#!/home.html|jelly>\n"
 
 		response := digitalOcean + hetzner + fritzBox + pi4 + vpnpi
-		api.PostMessage(event.Channel, slack.MsgOptionText(response, true), params)
+		api.PostMessage(event.Channel, slack.MsgOptionText(response, false), params)
 	} else if args[0] == "key" {
 		response := getBendersCurrentSSHCert()
 		api.PostMessage(event.Channel, slack.MsgOptionText(response, false), params)
