@@ -98,7 +98,7 @@ func inspectVPNConnection() map[string]string {
 func ChangeToNextWireguardServer(vpnCountry string) {
 	response := "Failed auto VPN update"
 
-	response = updateVpnPiTunnel("NL-28")
+	response = updateVpnPiTunnel("NL_28")
 
 	api.PostMessage(SlackReportChannel, slack.MsgOptionText(response, false),
 		slack.MsgOptionAsUser(true))
@@ -127,10 +127,10 @@ func VpnPiTunnelChecks(vpnCountry string) string {
 
 	if strings.Contains(response, ":protonvpn: VPN: DOWN") {
 		response = ipsecVersion.Stdout + "VPN was DOWN! Restarting...\n" +
-			updateVpnPiTunnel("NL-88")
+			updateVpnPiTunnel("NL_88")
 	} else {
 		// check if we're already using the Best server
-		response = "switching to 'NL-88'"
+		response = "switching to 'NL_88'"
 	}
 
 	return response

@@ -116,7 +116,7 @@ func transmissionSettingsAreSane(internalIP string) bool {
 		} else if internalIP != "" {
 			Logger.Printf("FIXing Transmission settings: %s not found...", internalIP)
 
-			response := updateVpnPiTunnel("NL-28") // other wireguard endpoint is NL-88
+			response := updateVpnPiTunnel("NL_28") // other wireguard endpoint is NL_88
 
 			if strings.HasPrefix(response, "Updated") {
 				result = true
