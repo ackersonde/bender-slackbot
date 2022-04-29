@@ -58,7 +58,7 @@ func inspectVPNConnection() map[string]string {
 	resultsChannel := make(chan string, 10)
 	timeout := time.After(10 * time.Second)
 	go func() {
-		cmd := "docker exec vpnission sudo wg show | grep endpoint"
+		cmd := "docker exec vpnission wg show | grep endpoint"
 		remoteResult := executeRemoteCmd(cmd, structures.VPNPIRemoteConnectConfig)
 
 		result := ""
@@ -141,7 +141,7 @@ func updateVpnPiTunnel(vpnServerDomain string) string {
 
 	stopVPNCmd := `docker rm -f vpnission && `
 	startVPNCmd := `docker run --env-file .config/vpnission.env.list -d \
-        --restart=always --name vpnission --cap-add NET_ADMIN -p9091:9091 -p51413:51413 \
+        --restart=always --name vpnission --privileged --cap-add NET_ADMIN -p9091:9091 -p51413:51413 \
         -v /etc/wireguard:/etc/wireguard -v /mnt/usb4TB/DLNA/torrents:/mnt/torrents \
         danackerson/vpnission ` + vpnServerDomain
 
