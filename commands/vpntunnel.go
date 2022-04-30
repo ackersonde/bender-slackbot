@@ -113,15 +113,13 @@ func VpnPiTunnelChecks(vpnCountry string) string {
 
 	vpnTunnelSpecs := inspectVPNConnection()
 	if len(vpnTunnelSpecs) > 0 {
-		Logger.Printf("Using VPN server: %s\n", vpnTunnelSpecs["endpointDNS"])
-		response += " with " + vpnTunnelSpecs["time"] + " (using " +
-			vpnTunnelSpecs["endpointDNS"] + ")"
+		Logger.Printf("Using VPN server: %s\n", vpnTunnelSpecs["endpointIP"])
+		response += " with " + vpnTunnelSpecs["endpointIP"]
 
 		if homeAndInternetIPsDoNotMatch(vpnTunnelSpecs["endpointIP"]) &&
-			transmissionSettingsAreSane(vpnTunnelSpecs["internalIP"]) {
-			response = ipsecVersion.Stdout + ":protonvpn: VPN: UP for " +
-				vpnTunnelSpecs["time"] + " (*" +
-				vpnTunnelSpecs["endpointDNS"] + "*)"
+			transmissionSettingsAreSane("10.2.0.2") {
+			response = ipsecVersion.Stdout + ":protonvpn: VPN: UP @ " +
+				vpnTunnelSpecs["endpointIP"]
 		}
 	}
 
