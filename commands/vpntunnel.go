@@ -126,9 +126,6 @@ func VpnPiTunnelChecks(vpnCountry string) string {
 	if strings.Contains(response, ":protonvpn: VPN: DOWN") {
 		response = ipsecVersion.Stdout + "VPN was DOWN! Restarting...\n" +
 			updateVpnPiTunnel("NL_88")
-	} else {
-		// check if we're already using the Best server
-		response = "switching to 'NL_88'"
 	}
 
 	return response
