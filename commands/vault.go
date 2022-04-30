@@ -89,16 +89,16 @@ func updateTOTPRoleCIDRs(roleName string, CIDRs string) string {
 	parts := strings.Split(CIDRs, ",")
 	finalList := ""
 	for _, part := range parts {
-		finalList += "\"" + part + "\","
+		finalList += part + ","
 	}
-	finalList += "\"127.0.0.1/32\""
+	finalList += "127.0.0.1"
 
 	payload := map[string]interface{}{
 		"token_bound_cidrs": finalList,
 	}
 	_, err := vaultClient.Logical().Write("auth/approle/role/"+roleName, payload)
 	if err != nil {
-		response = fmt.Sprintf("Unable to update %s's CIDRs to %s: %s", roleName, CIDRs, err.Error())
+		response = fmt.Sprintf("Unable to update %s's CIDRs to %s: %s", roleName, finalList, err.Error())
 	} else {
 		response = "Updated TOTP Role `" + roleName + "` CIDRS to: " + CIDRs
 	}
