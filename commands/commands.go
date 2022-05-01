@@ -354,7 +354,7 @@ func CheckCommand(event *slackevents.MessageEvent, user *slack.User, command str
 
 		fritzBox := ":house:: <https://fritz.ackerson.de/|fritzbox> | <https://freedns.afraid.org/dynamic/v2/|afraid>\n"
 		pi4 := ":raspberry_pi:: <https://ht.ackerson.de/dashboard/#/|traefik> | <https://homesync.ackerson.de|syncthing> | <https://photos.ackerson.de/|photoprism> | <http://192.168.178.27:8200|vault>\n"
-		vpnpi := ":protonvpn:: <https://vpnission.ackerson.de/transmission/web/|transmission> | <http://vpnpi:8096/web/index.html#!/home.html|jelly> | <https://vt.ackerson.de|traefik>\n"
+		vpnpi := ":protonvpn:: <https://vpnission.ackerson.de/transmission/web/|transmission> | <https://jelly.ackerson.de/web/index.html#!/home.html|jelly> | <https://vt.ackerson.de|traefik>\n"
 
 		response := digitalOcean + hetzner + fritzBox + pi4 + vpnpi
 		api.PostMessage(event.Channel, slack.MsgOptionText(response, false), params)
