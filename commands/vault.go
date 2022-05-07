@@ -3,11 +3,11 @@ package commands
 import (
 	"context"
 	"fmt"
-	"log"
 	"os"
 	"strings"
 	"time"
 
+	"github.com/ackersonde/bender-slackbot/structures"
 	vault "github.com/hashicorp/vault/api"
 	auth "github.com/hashicorp/vault/api/auth/approle"
 )
@@ -132,7 +132,7 @@ func loginToVault() (*vault.Secret, error) {
 	// First, let's get the role ID given to us by our Vault administrator.
 	roleID := os.Getenv("VAULT_APPROLE_ROLE_ID")
 	if roleID == "" {
-		log.Printf("no role ID was provided in VAULT_APPROLE_ROLE_ID env var")
+		Logger.Printf("no role ID was provided in VAULT_APPROLE_ROLE_ID env var")
 	}
 
 	// The Secret ID is a value that needs to be protected, so instead of the
@@ -143,13 +143,23 @@ func loginToVault() (*vault.Secret, error) {
 
 	appRoleAuth, err := auth.NewAppRoleAuth(roleID, secretID)
 	if err != nil {
-		log.Println(fmt.Errorf("unable to initialize AppRole auth method: %w", err))
+		Logger.Println(fmt.Errorf("unable to initialize AppRole auth method: %w", err))
 	} else {
 		authInfo, err := vaultClient.Auth().Login(context.Background(), appRoleAuth)
 		if err != nil {
-			log.Println(fmt.Errorf("%w", err))
+			Logger.Println(fmt.Errorf("%w", err))
+			if strings.Contains(err.Error(), "Vault is sealed") {
+				cmd := "/home/ubuntu/vault/unseal_vault.sh"
+				remoteResult := executeRemoteCmd(cmd, structures.PI4RemoteConnectConfig)
+
+				if remoteResult.Stdout == "" && remoteResult.Stderr != "" {
+					Logger.Println(remoteResult.Stderr)
+				} else {
+					authInfo, err = vaultClient.Auth().Login(context.Background(), appRoleAuth)
+				}
+			}
 		} else if authInfo == nil {
-			log.Printf("no auth info was returned after login")
+			Logger.Printf("no auth info was returned after login")
 		}
 
 		return authInfo, err
@@ -164,12 +174,12 @@ func renewToken() {
 	for {
 		vaultLoginResp, err := loginToVault()
 		if err != nil {
-			log.Printf("unable to authenticate to Vault: %v\n", err)
+			Logger.Printf("unable to authenticate to Vault: %v\n", err)
 			break
 		} else {
 			tokenErr := manageTokenLifecycle(vaultLoginResp)
 			if tokenErr != nil {
-				log.Printf("unable to start managing token lifecycle: %v\n", tokenErr)
+				Logger.Printf("unable to start managing token lifecycle: %v\n", tokenErr)
 				break
 			}
 		}
@@ -181,7 +191,7 @@ func renewToken() {
 func manageTokenLifecycle(token *vault.Secret) error {
 	renew := token.Auth.Renewable // You may notice a different top-level field called Renewable. That one is used for dynamic secrets renewal, not token renewal.
 	if !renew {
-		log.Printf("Token is not configured to be renewable. Re-attempting login.")
+		Logger.Printf("Token is not configured to be renewable. Re-attempting login.")
 		return nil
 	}
 
@@ -204,16 +214,16 @@ func manageTokenLifecycle(token *vault.Secret) error {
 		// needs to attempt to log in again.
 		case err := <-watcher.DoneCh():
 			if err != nil {
-				log.Printf("Failed to renew token: %v. Re-attempting login.", err)
+				Logger.Printf("Failed to renew token: %v. Re-attempting login.", err)
 				return nil
 			}
 			// This occurs once the token has reached max TTL.
-			log.Printf("Token can no longer be renewed. Re-attempting login.")
+			Logger.Printf("Token can no longer be renewed. Re-attempting login.")
 			return nil
 
 		// Successfully completed renewal
 		case renewal := <-watcher.RenewCh():
-			log.Printf("Successfully renewed: %#v", renewal)
+			Logger.Printf("Successfully renewed: %#v", renewal)
 		}
 	}
 }

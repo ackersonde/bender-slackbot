@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"os"
 	"strings"
@@ -47,7 +46,7 @@ func verifiedSlackMessage(w http.ResponseWriter, r *http.Request) []byte {
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		log.Printf("[ERROR] Fail to read request body: %v", err)
+		commands.Logger.Printf("[ERROR] Fail to read request body: %v", err)
 		return nil
 	}
 
@@ -55,13 +54,13 @@ func verifiedSlackMessage(w http.ResponseWriter, r *http.Request) []byte {
 	sv, err := slack.NewSecretsVerifier(r.Header, os.Getenv("SLACK_SIGNING_SECRET"))
 	if err != nil {
 		w.WriteHeader(http.StatusUnauthorized)
-		log.Printf("[ERROR] Fail to verify SigningSecret: %v", err)
+		commands.Logger.Printf("[ERROR] Fail to verify SigningSecret: %v", err)
 		return nil
 	}
 	sv.Write(body)
 	if err := sv.Ensure(); err != nil {
 		w.WriteHeader(http.StatusUnauthorized)
-		log.Printf("[ERROR] Fail to verify SigningSecret: %v", err)
+		commands.Logger.Printf("[ERROR] Fail to verify SigningSecret: %v", err)
 		body = nil
 	}
 
@@ -76,7 +75,7 @@ func parseSlackEvent(w http.ResponseWriter, r *http.Request) slackevents.EventsA
 
 	if e != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		log.Printf("[ERROR] Fail to parseEvent: %v\n", e)
+		commands.Logger.Printf("[ERROR] Fail to parseEvent: %v\n", e)
 	}
 
 	// when you change the Bender Bot app server URL

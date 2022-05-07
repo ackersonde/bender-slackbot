@@ -2,7 +2,6 @@ package commands
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
 	"strconv"
@@ -20,7 +19,7 @@ func fetchExtraHetznerFirewallRules(homeIPv6Prefix string) []string {
 	sshFWRules := hetznercloud.GetSSHFirewallRules()
 	for _, rule := range sshFWRules {
 		if strings.TrimSpace(rule) != homeIPv6Prefix {
-			log.Printf("%s doesn't MATCH %s\n", rule, homeIPv6Prefix)
+			Logger.Printf("%s doesn't MATCH %s\n", rule, homeIPv6Prefix)
 			extraRules = append(extraRules, rule)
 		}
 	}
@@ -30,7 +29,7 @@ func fetchExtraHetznerFirewallRules(homeIPv6Prefix string) []string {
 
 func fetchExtraDOsshFirewallRules(homeIPv6Prefix string) []string {
 	var extraRules []string
-	log.Printf("HomeIPv6Prefix: %s\n", homeIPv6Prefix)
+	Logger.Printf("HomeIPv6Prefix: %s\n", homeIPv6Prefix)
 
 	sshFWRules := common.GetSSHFirewallRules()
 	for _, rule := range sshFWRules {

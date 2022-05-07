@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os/exec"
 	"regexp"
 	"strings"
@@ -27,14 +26,14 @@ func remoteConnectionConfiguration(unparsedHostKey string, username string) *ssh
 	if username == "root" { // TODO : figure out a better way to distinguish
 		key, err := ioutil.ReadFile(privateKeyPath)
 		if err != nil {
-			log.Printf("ROOT: unable to read private key: %v", err)
+			Logger.Printf("ROOT: unable to read private key: %v", err)
 			return nil
 		}
 
 		// Create the Signer for this private key.
 		signer, err = ssh.ParsePrivateKey(key)
 		if err != nil {
-			log.Printf("unable to parse private key: %v", err)
+			Logger.Printf("unable to parse private key: %v", err)
 			return nil
 		}
 	}
@@ -50,24 +49,24 @@ func remoteConnectionConfiguration(unparsedHostKey string, username string) *ssh
 func GetPublicCertificate(privateKeyPath string) ssh.Signer {
 	key, err := ioutil.ReadFile(privateKeyPath)
 	if err != nil {
-		log.Printf("unable to read private key file: %v", err)
+		Logger.Printf("unable to read private key file: %v", err)
 	}
 
 	signer, err := ssh.ParsePrivateKey(key)
 	if err != nil {
-		log.Printf("Unable to parse private key: %v", err)
+		Logger.Printf("Unable to parse private key: %v", err)
 	}
 
 	cert, _ := ioutil.ReadFile(privateKeyPath + "-cert.pub")
 	pk, _, _, _, err := ssh.ParseAuthorizedKey(cert)
 	if err != nil {
-		log.Printf("unable to parse CA public key: %v", err)
+		Logger.Printf("unable to parse CA public key: %v", err)
 		return nil
 	}
 
 	certSigner, err := ssh.NewCertSigner(pk.(*ssh.Certificate), signer)
 	if err != nil {
-		log.Printf("failed to create cert signer: %v", err)
+		Logger.Printf("failed to create cert signer: %v", err)
 		return nil
 	}
 

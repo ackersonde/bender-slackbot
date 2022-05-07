@@ -460,20 +460,20 @@ func fetchAktuelles() string {
 	var postData = []byte(`{"id":"ssww7rjiiqci9m88","ver":"1.25","lang":"deu","auth":{"type":"AID","aid":"da39a3ee5e6b4"},"client":{"id":"HAFAS","type":"WEB","name":"webapp","l":"vs_webapp"},"formatted":false,"svcReqL":[{"req":{"getChildren":true,"getParent":true,"maxNum":500,"himFltrL":[{"mode":"INC","type":"CH","value":"CUSTOM1"}],"sortL":["LMOD_DESC"]},"meth":"HimSearch","id":"1|1|"}]}`)
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(postData))
 	if err != nil {
-		log.Printf("ERR prep request: %s", err.Error())
+		Logger.Printf("ERR prep request: %s", err.Error())
 	}
 	req.Header.Set("Content-Type", "application/json")
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Printf("ERR make request: %s", err.Error())
+		Logger.Printf("ERR make request: %s", err.Error())
 	}
 	defer resp.Body.Close()
 
 	response, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.Printf("ERR read resp: %s", err.Error())
+		Logger.Printf("ERR read resp: %s", err.Error())
 	}
 
 	/* TEST response
@@ -496,7 +496,7 @@ func fetchAktuelles() string {
 
 		err2 := json.Unmarshal([]byte(lines), &effectedTrains)
 		if err2 != nil {
-			log.Printf("ERR parsing trains: %s", err2.Error())
+			Logger.Printf("ERR parsing trains: %s", err2.Error())
 		} else {
 			for _, train := range effectedTrains {
 				logo := strings.Replace(train["name"], " ", "", 1)
