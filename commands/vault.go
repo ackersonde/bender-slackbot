@@ -2,6 +2,7 @@ package commands
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -154,11 +155,17 @@ func loginToVault() (*vault.Secret, error) {
 
 				if remoteResult.Stdout == "" && remoteResult.Stderr != "" {
 					Logger.Println(remoteResult.Stderr)
+					err = errors.New(remoteResult.Stderr)
 				} else {
 					authInfo, err = vaultClient.Auth().Login(context.Background(), appRoleAuth)
+					if authInfo != nil {
+						err = errors.New("Successfully unsealed Vault")
+					}
 				}
 			}
-		} else if authInfo == nil {
+		}
+
+		if authInfo == nil {
 			Logger.Printf("no auth info was returned after login")
 		}
 
