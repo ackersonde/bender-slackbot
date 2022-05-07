@@ -93,14 +93,18 @@ func parseSlackEvent(w http.ResponseWriter, r *http.Request) slackevents.EventsA
 	return eventsAPIEvent
 }
 
+func isValidMessageEvent(ev *slackevents.MessageEvent) bool {
+	return ev.User != "" && ev.User != botID && // don't talk to yourself or ghosts!
+		ev.SubType != "message_deleted" && // don't respond to msgs being deleted
+		(strings.Contains(ev.Text, "<@"+botID+">") || // the msg is directed @ you in a channel you're in
+			strings.HasPrefix(ev.Channel, "D") || // or the msg is sent to you directly
+			ev.Channel == commands.SlackReportChannel) // or the msg is sent to #bender_rodriguez
+}
+
 func processMessage(ev *slackevents.MessageEvent, api *slack.Client) {
 	originalMessage := ev.Text
 
-	if ev.User != "" && ev.User != botID && ev.User != "U2NQSPHHD" &&
-		ev.SubType != "message_deleted" &&
-		(strings.Contains(ev.Text, "<@"+botID+">") ||
-			strings.HasPrefix(ev.Channel, "D") ||
-			ev.Channel == commands.SlackReportChannel) {
+	if isValidMessageEvent(ev) {
 		// strip out bot's name and spaces
 		parsedMessage := strings.TrimSpace(strings.Replace(originalMessage, "<@"+botID+">", "", -1))
 		r, n := utf8.DecodeRuneInString(parsedMessage)
@@ -113,6 +117,8 @@ func processMessage(ev *slackevents.MessageEvent, api *slack.Client) {
 			commands.Logger.Printf("%s(%s) asks '%v'\n", user.Name, ev.User, parsedMessage)
 		}
 		commands.CheckCommand(ev, user, parsedMessage)
+	} else {
+		commands.Logger.Printf("Cowardly refusing to process event: %v\n", ev)
 	}
 }
 
