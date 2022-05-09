@@ -230,7 +230,8 @@ func manageTokenLifecycle(token *vault.Secret) error {
 
 		// Successfully completed renewal
 		case renewal := <-watcher.RenewCh():
-			Logger.Printf("Successfully renewed: %#v", renewal)
+			duration, _ := renewal.Secret.TokenTTL()
+			Logger.Printf("Renewed vault Token for addtl %s", duration)
 		}
 	}
 }

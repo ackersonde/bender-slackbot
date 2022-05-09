@@ -112,13 +112,13 @@ func processMessage(ev *slackevents.MessageEvent, api *slack.Client) {
 
 		user, err := api.GetUserInfo(ev.User)
 		if err != nil {
-			commands.Logger.Printf("NO user info for %s: %s\n", ev.User, err.Error())
+			commands.Logger.Printf("NO user info for %s: %s", ev.User, err.Error())
 		} else {
-			commands.Logger.Printf("%s(%s) asks '%v'\n", user.Name, ev.User, parsedMessage)
+			commands.Logger.Printf("%s(%s) asks '%v'", user.Name, ev.User, parsedMessage)
 		}
 		commands.CheckCommand(ev, user, parsedMessage)
 	} else {
-		commands.Logger.Printf("Cowardly refusing to process event: %#v\n", ev)
+		fmt.Printf("Cowardly refusing to process cmd `%s`\n", ev.Text)
 	}
 }
 
