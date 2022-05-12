@@ -117,8 +117,6 @@ func processMessage(ev *slackevents.MessageEvent, api *slack.Client) {
 			commands.Logger.Printf("%s(%s) asks '%v'", user.Name, ev.User, parsedMessage)
 		}
 		commands.CheckCommand(ev, user, parsedMessage)
-	} else {
-		fmt.Printf("Cowardly refusing to process cmd `%s`\n", ev.Text)
 	}
 }
 
