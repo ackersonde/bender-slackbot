@@ -118,7 +118,7 @@ func CheckCommand(event *slackevents.MessageEvent, user *slack.User, command str
 		}
 		api.PostMessage(event.Channel, slack.MsgOptionText(result, false), params)
 	} else if args[0] == "pass" {
-		usage := "Usage: pass <64 10 10 false true>\nwhere default params are <chars:64 digits:10 symbols:10 upper&lower:false repeatChars:true>.\nOrder counts! If you only need to change `upper&lower`, you *must* enter preceding params."
+		usage := "Usage: pass <64 10 10 false true>\nparams are <chars:64 digits:10 symbols:10 noUpper:false allowRepeat:true>.\nOrder counts! If you only need to change `upper&lower`, you *must* enter preceding params."
 		response := ""
 		var err error
 
@@ -128,15 +128,20 @@ func CheckCommand(event *slackevents.MessageEvent, user *slack.User, command str
 
 		switch len(args) {
 		case 2:
-			chars, _ = strconv.Atoi(args[1])
+			if strings.HasPrefix(args[1], "-") &&
+				(strings.HasSuffix(args[1], "h") || strings.HasSuffix(args[1], "help")) {
+				response = usage
+			} else {
+				chars, _ = strconv.Atoi(args[1])
 
-			if chars < 20 {
-				digits = chars / 2
-				symbols = digits
-			}
-			response, err = password.Generate(chars, digits, symbols, false, false)
-			if err != nil {
-				response = err.Error() + "\n" + usage
+				if chars < 20 {
+					digits = chars / 2
+					symbols = digits
+				}
+				response, err = password.Generate(chars, digits, symbols, false, false)
+				if err != nil {
+					response = err.Error() + "\n" + usage
+				}
 			}
 		case 3:
 			chars, _ := strconv.Atoi(args[1])
@@ -349,12 +354,12 @@ func CheckCommand(event *slackevents.MessageEvent, user *slack.User, command str
 
 		api.PostMessage(event.Channel, slack.MsgOptionText(response, false), params)
 	} else if args[0] == "www" {
-		digitalOcean := ":do_droplet:: <https://monitor.ackerson.de/dashboard/#/|traefik> | <https://sync.ackerson.de|syncthing> | <https://ackerson.de|homepage>\n"
+		digitalOcean := ":do_droplet:: <https://sync.ackerson.de|syncthing> | <https://ackerson.de|homepage>\n"
 		hetzner := ":htz_server:: <https://mv.ackerson.de/dashboard/#/|traefik> | <https://vault.ackerson.de/ui/|vault>\n"
 
 		fritzBox := ":house:: <https://fritz.ackerson.de/|fritzbox> | <https://freedns.afraid.org/dynamic/v2/|afraid>\n"
-		pi4 := ":raspberry_pi:: <https://ht.ackerson.de/dashboard/#/|traefik> | <https://homesync.ackerson.de|syncthing> | <https://photos.ackerson.de/|photoprism> | <http://192.168.178.27:8200|vault>\n"
-		vpnpi := ":protonvpn:: <https://vpnission.ackerson.de/transmission/web/|transmission> | <https://jelly.ackerson.de/web/index.html#!/home.html|jelly> | <https://vt.ackerson.de|traefik>\n"
+		pi4 := ":raspberry_pi:: <https://homesync.ackerson.de|syncthing> | <https://photos.ackerson.de/|photoprism> | <http://192.168.178.27:8200|test vault>\n"
+		vpnpi := ":protonvpn:: <https://vpnission.ackerson.de/transmission/web/|transmission> | <https://jelly.ackerson.de/web/index.html#!/home.html|jelly>\n"
 
 		response := digitalOcean + hetzner + fritzBox + pi4 + vpnpi
 		api.PostMessage(event.Channel, slack.MsgOptionText(response, false), params)
@@ -369,7 +374,7 @@ func CheckCommand(event *slackevents.MessageEvent, user *slack.User, command str
 			":ethereum: `crypto`: Current cryptocurrency stats :lumens:\n" +
 				":sleuth_or_spy: `pgp`: PGP keys\n" +
 				":vault: `vfa <get (keyname)| put keyname secret>`: Vault Factor Auth (TOTP)\n" +
-				":key: `pass (chars:64 digits:10 symbols:10 upper&lower:false repeatChars:true)`: Generate password with params\n" +
+				":key: `pass <64 10 10 false true>`: random pass with <chars digits symbols noUpper repeatChars>\n" +
 				":sun_behind_rain_cloud: `rw`: Oberhatzkofen weather\n" +
 				":mvv: `mvv`: Status | Trip In | Trip Home\n" +
 				":baseball: `bb <YYYY-MM-DD>`: show baseball games from given date (default yesterday)\n" +
