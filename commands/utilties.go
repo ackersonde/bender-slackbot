@@ -176,38 +176,6 @@ func execFritzCmd(action string, param string) string {
 	return response
 }
 
-var baseWireGuardCmd = "sudo kubectl exec -it $(sudo kubectl get po | grep wireguard | awk '{print $1; exit}' | tr -d \\n) -- bash -c"
-
-func wireguardAction(action string) string {
-	response := ":wireguard: "
-	cmd := fmt.Sprintf("%s 'wg-quick %s wg0'", baseWireGuardCmd, action)
-	Logger.Printf("cmd: %s", cmd)
-	remoteResult := executeRemoteCmd(cmd, structures.PI4RemoteConnectConfig)
-
-	if remoteResult.Stdout == "" && remoteResult.Stderr != "" {
-		response += remoteResult.Stderr
-	} else {
-		response += remoteResult.Stdout
-	}
-
-	return response
-}
-
-func wireguardShow() string {
-	response := ":wireguard: "
-	cmd := fmt.Sprintf("%s 'wg --version; wg'", baseWireGuardCmd)
-	Logger.Printf("cmd: %s", cmd)
-	remoteResult := executeRemoteCmd(cmd, structures.PI4RemoteConnectConfig)
-
-	if remoteResult.Stdout == "" && remoteResult.Stderr != "" {
-		response += remoteResult.Stderr
-	} else {
-		response += remoteResult.Stdout
-	}
-
-	return response
-}
-
 func executeRemoteCmd(cmd string, config *structures.RemoteConnectConfig) structures.RemoteResult {
 	defer func() { //catch or finally
 		if err := recover(); err != nil { //catch

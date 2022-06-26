@@ -159,7 +159,7 @@ func loginToVault() (*vault.Secret, error) {
 				} else {
 					authInfo, err = vaultClient.Auth().Login(context.Background(), appRoleAuth)
 					if authInfo != nil {
-						err = errors.New("Successfully unsealed Vault")
+						err = errors.New("successfully unsealed vault")
 					}
 				}
 			}

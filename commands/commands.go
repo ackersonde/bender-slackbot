@@ -118,7 +118,7 @@ func CheckCommand(event *slackevents.MessageEvent, user *slack.User, command str
 		}
 		api.PostMessage(event.Channel, slack.MsgOptionText(result, false), params)
 	} else if args[0] == "pass" {
-		usage := "Usage: pass <64 10 10 false true>\nparams are <chars:64 digits:10 symbols:10 noUpper:false allowRepeat:true>.\nOrder counts! If you only need to change `upper&lower`, you *must* enter preceding params."
+		usage := "Usage: pass <64 10 10 false true>\nparams are <chars:64 digits:10 symbols:10 noUpper:false allowRepeat:true>.\nOrder counts! If you only need to change `noUpper`, you *must* enter preceding params."
 		response := ""
 		var err error
 
