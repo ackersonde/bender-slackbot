@@ -57,6 +57,7 @@ jobs:
             docker login -u ${{ secrets.CTX_DOCKER_USER }} -p ${{ secrets.CTX_DOCKER_PASS }} && \
             docker rm -f bender || true && \
             docker run -d --restart=always \
+              -e ORG_PHOTOS_BASIC_AUTH_TOKEN_B64=${{ secrets.ORG_PHOTOS_BASIC_AUTH_TOKEN }} \
               -e DARKSKY_API_KEY=${{ secrets.CTX_DARKSKY_API_KEY }} \
               -e GITHUB_RUN_ID=$GITHUB_RUN_ID \
               -e COOKIE_SECRET=${{ secrets.COOKIE_SECRET }} \

@@ -3,10 +3,12 @@ package commands
 // forked from https://github.com/jasonrhansen/piratebay
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"strconv"
 	"time"
 
@@ -157,4 +159,53 @@ func getTop100FromJSON(jsonObject []byte) *structures.Top100Movies {
 	}
 
 	return s
+}
+
+func buildPhotoPrismAlbums() structures.PhotoPrismAlbums {
+	url := "https://photos.ackerson.de/api/v1/albums?count=192&type=album"
+	basicAuthToken, _ := base64.StdEncoding.DecodeString(os.Getenv("ORG_PHOTOS_BASIC_AUTH_TOKEN_B64"))
+	albumsJSON := callPhotoPrismAPI(url, basicAuthToken)
+
+	var albums structures.PhotoPrismAlbums
+	if err := json.Unmarshal(albumsJSON, &albums); err != nil {
+		Logger.Printf("photoPrism: Can't unmarshal JSON: %s => %s", err, albumsJSON)
+	}
+
+	var populatedAlbums structures.PhotoPrismAlbums
+	for _, album := range albums {
+		var links structures.PhotoPrismLinks
+
+		linksURL := fmt.Sprintf("https://photos.ackerson.de/api/v1/albums/%s/links", album.UID)
+		linksJSON := callPhotoPrismAPI(linksURL, basicAuthToken)
+		if err := json.Unmarshal(linksJSON, &links); err != nil {
+			Logger.Printf("photoPrism: Can't unmarshal JSON: %s => %s", err, linksJSON)
+		}
+		album.PublicURL = fmt.Sprintf("https://albums.ackerson.de/s/%s/%s", links[0].Token, album.UID)
+		album.ExpiringInDays = links[0].Expires / 3600 / 24
+		album.Views = links[0].Views
+		populatedAlbums = append(populatedAlbums, album)
+	}
+
+	return populatedAlbums
+}
+
+func callPhotoPrismAPI(url string, basicAuthToken []byte) []byte {
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		Logger.Printf("photoPrism client failed to create request: %s", err)
+	}
+	req.Header.Set("Authorization", "Basic "+string(basicAuthToken))
+	req.Header.Set("Content-Type", "application/json")
+
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		Logger.Printf("photoPrism client: error making http request: %s\n", err)
+	}
+
+	resBody, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		Logger.Printf("photoPrism client: could not read response body: %s\n", err)
+	}
+
+	return resBody
 }

@@ -14,6 +14,7 @@ var mediaPath = "/mnt/usb4TB/DLNA"
 // CheckServerDiskSpace now exported
 func CheckServerDiskSpace(path string) string {
 	if path != "" {
+		path = scrubParamOfHTTPMagicCrap(path)
 		path = strings.TrimSuffix(path, "/")
 		if !strings.HasPrefix(path, "/") {
 			path = "/" + path

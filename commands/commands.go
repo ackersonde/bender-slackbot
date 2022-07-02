@@ -369,6 +369,13 @@ func CheckCommand(event *slackevents.MessageEvent, user *slack.User, command str
 	} else if args[0] == "security" {
 		response := checkFirewallRules(true)
 		api.PostMessage(event.Channel, slack.MsgOptionText(response, false), params)
+	} else if args[0] == "photos" {
+		response := "Available public photo albums on :photoprism::\n=========================\n"
+		albums := buildPhotoPrismAlbums()
+		for _, album := range albums {
+			response += fmt.Sprintf("%s: %s (expiring %dd w/ %d views)\n", album.Title, album.PublicURL, album.ExpiringInDays, album.Views)
+		}
+		api.PostMessage(event.Channel, slack.MsgOptionText(response, false), params)
 	} else if args[0] == "help" {
 		response :=
 			":ethereum: `crypto`: Current cryptocurrency stats :lumens:\n" +
@@ -376,11 +383,9 @@ func CheckCommand(event *slackevents.MessageEvent, user *slack.User, command str
 				":vault: `vfa <get (keyname)| put keyname secret>`: Vault Factor Auth (TOTP)\n" +
 				":key: `pass <64 10 10 false true>`: random pass with <chars digits symbols noUpper repeatChars>\n" +
 				":sun_behind_rain_cloud: `rw`: Oberhatzkofen weather\n" +
-				":mvv: `mvv`: Status | Trip In | Trip Home\n" +
 				":baseball: `bb <YYYY-MM-DD>`: show baseball games from given date (default yesterday)\n" +
 				":do_droplet: `do|dd <id>`: show|delete DigitalOcean droplet(s)\n" +
 				":htz_server: `htz|htzd <id>`: show|delete Hetzner server(s)\n" +
-				//":wireguard: `wg[s|u|d]`: [S]how status, [U]p or [D]own wireguard tunnel\n" +
 				":wifi: `wf [0|1|s]`: turn home wifi [0]ff, [1]n or [-default-s]tatus\n" +
 				":protonvpn: `vpn[s|c]`: [S]how status of VPN on :raspberry_pi:, [C]hange VPN to best in given country or " + VPNCountry + "\n" +
 				":pirate_bay: `torq <search term>`\n" +
@@ -391,7 +396,7 @@ func CheckCommand(event *slackevents.MessageEvent, user *slack.User, command str
 				":bar_chart: `pi`: Stats of various :raspberry_pi:s\n" +
 				":github: `version`: Which build/deploy is this Bender bot?\n" +
 				":earth_americas: `www`: Show various internal links\n" +
-				":copyright: `scpxl <URL>`: scp URL file to Pops4XL\n" +
+				":photoprism: `photos`: Available public photo albums and stats\n" +
 				":closed_lock_with_key: `security`: overview of SSH key(s) and UFW rules\n" +
 				":whale2: `logs <container>`: last 100 lines of docker logs from <container> on ackerson.de\n"
 		api.PostMessage(event.Channel, slack.MsgOptionText(response, true), params)
