@@ -68,7 +68,6 @@ jobs:
               -e CTX_HETZNER_PROJECT=${{ secrets.CTX_HETZNER_PROJECT }} \
               -e CTX_HETZNER_FIREWALL=${{ secrets.CTX_HETZNER_FIREWALL }} \
               -e CTX_JOIN_API_KEY=${{ secrets.CTX_JOIN_API_KEY }} \
-              -e CTX_DROPBOX_ACCESS_TOKEN=${{ secrets.CTX_DROPBOX_ACCESS_TOKEN }} \
               -e CTX_ETHERSCAN_API_KEY=${{ secrets.CTX_ETHERSCAN_API_KEY }} \
               -e CTX_ETHEREUM_ADDRESS_METAMASK=${{ secrets.CTX_ETHEREUM_ADDRESS_METAMASK }} \
               -e CTX_CURRENT_PGP_FINGERPRINT=${{ secrets.CTX_CURRENT_PGP_FINGERPRINT }} \
