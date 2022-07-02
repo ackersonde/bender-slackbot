@@ -93,6 +93,25 @@ func CheckMediaDiskSpaceCron(path string) {
 		CheckMediaDiskSpace(path), false), slack.MsgOptionAsUser(true))
 }
 
+func CheckHetznerSpace(path string) string {
+	response := ""
+
+	cmd := fmt.Sprintf("ssh vault df %s | awk '{ print $5 }'", path)
+	if !strings.HasSuffix(path, "/*") {
+		cmd += " | sed '1d'"
+	}
+	Logger.Printf("cmd: %s", cmd)
+	remoteResult := executeRemoteCmd(cmd, structures.PI4RemoteConnectConfig)
+
+	if remoteResult.Stdout == "" && remoteResult.Stderr != "" {
+		response = remoteResult.Stderr
+	} else {
+		response = remoteResult.Stdout
+	}
+
+	return response
+}
+
 func CheckDigitalOceanSpace(path string) string {
 	response := ""
 	out, err := exec.Command("df", "-h", syncthing).Output()

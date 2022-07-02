@@ -283,6 +283,9 @@ func CheckCommand(event *slackevents.MessageEvent, user *slack.User, command str
 			response += CheckServerDiskSpace("")
 		}
 		response += CheckDigitalOceanSpace("")
+
+		response += ":htz_server: Hetzner *Disk Usage* @ `/` & `/mnt/hetzner_disk`:\n"
+		response += CheckHetznerSpace("/") + "\n" + CheckHetznerSpace("/mnt/hetzner_disk")
 		api.PostMessage(event.Channel, slack.MsgOptionText(response, true), params)
 	} else if args[0] == "mv" {
 		if len(args) == 3 &&
