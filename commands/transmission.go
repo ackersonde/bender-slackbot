@@ -29,15 +29,15 @@ func getTorrents() (response string) {
 func addTorrents(torrentLink string, paused bool) (response string) {
 	// slack 'markdown's URLs with '<link|text>' so clip these off
 	if strings.HasPrefix(torrentLink, "<http://magnet/") {
-		torrentLink = "magnet:" + strings.TrimLeft(torrentLink, "<http://magnet/")
+		torrentLink = "magnet:" + strings.TrimPrefix(torrentLink, "<http://magnet/")
 	} else {
-		torrentLink = strings.TrimLeft(torrentLink, "<")
+		torrentLink = strings.TrimPrefix(torrentLink, "<")
 	}
 
 	if indexPipe := strings.Index(torrentLink, "|"); indexPipe > 0 {
 		torrentLink = torrentLink[:indexPipe]
 	} else {
-		torrentLink = strings.TrimRight(torrentLink, ">")
+		torrentLink = strings.TrimSuffix(torrentLink, ">")
 	}
 	response = fmt.Sprintf(":star2: adding %s\n", torrentLink)
 

@@ -111,5 +111,5 @@ func checkFirewallRules(manuallyCalled bool) string {
 		response += ":house: allowed from `" + domainIPv6 + "` :do_droplet:"
 	}
 
-	return strings.TrimRight(response, "\n")
+	return strings.TrimSuffix(response, "\n")
 }
