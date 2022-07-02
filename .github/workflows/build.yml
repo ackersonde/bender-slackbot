@@ -60,7 +60,6 @@ jobs:
               -e DARKSKY_API_KEY=${{ secrets.CTX_DARKSKY_API_KEY }} \
               -e GITHUB_RUN_ID=$GITHUB_RUN_ID \
               -e COOKIE_SECRET=${{ secrets.COOKIE_SECRET }} \
-              -e CTX_PLEX_TOKEN=${{ secrets.CTX_PLEX_TOKEN }} \
               -e CTX_HETZNER_API_TOKEN=${{ secrets.CTX_HETZNER_API_TOKEN }} \
               -e CTX_DIGITALOCEAN_DROPLET_PROXY_TOKEN=${{ secrets.CTX_DIGITALOCEAN_DROPLET_PROXY_TOKEN }} \
               -e CTX_DIGITALOCEAN_FIREWALL=${{ secrets.CTX_DIGITALOCEAN_FIREWALL }} \
