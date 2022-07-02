@@ -3,7 +3,6 @@ package commands
 // forked from https://github.com/jasonrhansen/piratebay
 import (
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -163,7 +162,7 @@ func getTop100FromJSON(jsonObject []byte) *structures.Top100Movies {
 
 func buildPhotoPrismAlbums() structures.PhotoPrismAlbums {
 	url := "https://photos.ackerson.de/api/v1/albums?count=192&type=album"
-	basicAuthToken, _ := base64.StdEncoding.DecodeString(os.Getenv("ORG_PHOTOS_BASIC_AUTH_TOKEN_B64"))
+	basicAuthToken := os.Getenv("ORG_PHOTOS_BASIC_AUTH_TOKEN_B64")
 	albumsJSON := callPhotoPrismAPI(url, basicAuthToken)
 
 	var albums structures.PhotoPrismAlbums
@@ -189,12 +188,12 @@ func buildPhotoPrismAlbums() structures.PhotoPrismAlbums {
 	return populatedAlbums
 }
 
-func callPhotoPrismAPI(url string, basicAuthToken []byte) []byte {
+func callPhotoPrismAPI(url string, basicAuthToken string) []byte {
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		Logger.Printf("photoPrism client failed to create request: %s", err)
 	}
-	req.Header.Set("Authorization", "Basic "+string(basicAuthToken))
+	req.Header.Set("Authorization", "Basic "+basicAuthToken)
 	req.Header.Set("Content-Type", "application/json")
 
 	res, err := http.DefaultClient.Do(req)
