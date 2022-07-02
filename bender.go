@@ -26,6 +26,7 @@ func prepareScheduler() {
 		commands.VpnPiTunnelChecks, commands.VPNCountry)
 	s.Every(1).Day().At("06:55").Do(commands.DisplayFirewallRules)
 	s.Every(1).Day().At("17:30").Do(commands.ShowBBGamesCron, "")
+	s.Every(1).Day().At("05:00").Do(commands.CheckDiskSpace)
 
 	ensureWiFiOffOvernight(s)
 

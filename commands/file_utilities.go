@@ -3,6 +3,7 @@ package commands
 import (
 	"fmt"
 	"os/exec"
+	"strconv"
 	"strings"
 
 	"github.com/ackersonde/bender-slackbot/structures"
@@ -87,6 +88,55 @@ func CheckMediaDiskSpace(path string) string {
 	return response
 }
 
+// Check disk space of important devices - only report if > 95%
+func CheckDiskSpace() {
+	response := ""
+	response += checkDiskSpace("pi4", "/dev/mmcblk0p2")
+	response += checkDiskSpace("vpnpi", "/dev/mmcblk0p2")
+	response += checkDiskSpace("vpnpi", "/dev/sda1")
+	response += checkDiskSpace("hetzner", "/")
+	response += checkDiskSpace("hetzner", "/mnt/hetzner_disk")
+
+	if response != "" {
+		api.PostMessage(SlackReportChannel, slack.MsgOptionText(
+			response, false), slack.MsgOptionAsUser(true))
+	}
+}
+
+func checkDiskSpace(server string, mount string) string {
+	response := ""
+	cmdPrefix := ""
+	sshConfig := structures.PI4RemoteConnectConfig
+
+	if server == "hetzner" {
+		cmdPrefix = "ssh vault "
+	} else if server == "vpnpi" {
+		sshConfig = structures.VPNPIRemoteConnectConfig
+	}
+
+	cmd := fmt.Sprintf("%sdf %s | sed 1d | awk '{ print $5 }'", cmdPrefix, mount)
+	Logger.Printf("checkDiskSpace: %s", cmd)
+	remoteResult := executeRemoteCmd(cmd, sshConfig)
+
+	if remoteResult.Stdout == "" && remoteResult.Stderr != "" {
+		response = remoteResult.Stderr
+	} else {
+		response = remoteResult.Stdout
+		// take the resulting string and get it's numeric value e.g. "29%" => 29
+		i, err := strconv.Atoi(strings.TrimRight(response, "%"))
+		if err != nil {
+			response = fmt.Sprintf("%s@%s: unable to parse %s: %s\n", server, mount, response, err)
+		} else if i >= 15 {
+			response = fmt.Sprintf("%s@%s: disk used *%d%%* :rotating_light:\n", server, mount, i)
+		} else { // disk space is < 95% -> OK
+			Logger.Printf("%s@%s: disk used %d%%\n", server, mount, i)
+			response = ""
+		}
+	}
+
+	return response
+}
+
 // CheckMediaDiskSpaceCron called by scheduler
 func CheckMediaDiskSpaceCron(path string) {
 	api.PostMessage(SlackReportChannel, slack.MsgOptionText(
@@ -96,10 +146,7 @@ func CheckMediaDiskSpaceCron(path string) {
 func CheckHetznerSpace(path string) string {
 	response := ""
 
-	cmd := fmt.Sprintf("ssh vault df %s | awk '{ print $5 }'", path)
-	if !strings.HasSuffix(path, "/*") {
-		cmd += " | sed '1d'"
-	}
+	cmd := fmt.Sprintf("ssh vault df %s", path)
 	Logger.Printf("cmd: %s", cmd)
 	remoteResult := executeRemoteCmd(cmd, structures.PI4RemoteConnectConfig)
 
