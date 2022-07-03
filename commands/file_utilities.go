@@ -88,7 +88,7 @@ func CheckMediaDiskSpace(path string) string {
 	return response
 }
 
-// Check disk space of important devices - only report if > 95%
+// Check disk space of important devices
 func CheckDiskSpace() {
 	response := ""
 	response += checkDiskSpace("pi4", "/dev/mmcblk0p2")
@@ -97,6 +97,7 @@ func CheckDiskSpace() {
 	response += checkDiskSpace("hetzner", "/")
 	response += checkDiskSpace("hetzner", "/mnt/hetzner_disk")
 
+	// only report back if something is amiss
 	if response != "" {
 		api.PostMessage(SlackReportChannel, slack.MsgOptionText(
 			response, false), slack.MsgOptionAsUser(true))
@@ -123,14 +124,15 @@ func checkDiskSpace(server string, mount string) string {
 	} else {
 		response = remoteResult.Stdout
 		// take the resulting string and get it's numeric value e.g. "29%" => 29
-		i, err := strconv.Atoi(strings.TrimRight(response, "%"))
+		// if error || >= 95% report an error
+		i, err := strconv.Atoi(strings.TrimRight(response, "%\n"))
 		if err != nil {
 			response = fmt.Sprintf("%s@%s: unable to parse %s: %s\n", server, mount, response, err)
-		} else if i >= 15 {
+		} else if i >= 15 { // only report if > 95%
 			response = fmt.Sprintf("%s@%s: disk used *%d%%* :rotating_light:\n", server, mount, i)
 		} else { // disk space is < 95% -> OK
 			Logger.Printf("%s@%s: disk used %d%%\n", server, mount, i)
-			response = ""
+			response = "" // don't bother me
 		}
 	}
 
@@ -143,11 +145,16 @@ func CheckMediaDiskSpaceCron(path string) {
 		CheckMediaDiskSpace(path), false), slack.MsgOptionAsUser(true))
 }
 
-func CheckHetznerSpace(path string) string {
+func CheckHetznerSpace(path string, showHeader bool) string {
 	response := ""
+	suffix := ""
 
-	cmd := fmt.Sprintf("ssh vault df %s", path)
-	Logger.Printf("cmd: %s", cmd)
+	if showHeader {
+		suffix = " | sed 1d"
+	}
+
+	cmd := fmt.Sprintf("ssh vault df -h %s%s", path, suffix)
+	Logger.Printf("CheckHetznerSpace: %s", cmd)
 	remoteResult := executeRemoteCmd(cmd, structures.PI4RemoteConnectConfig)
 
 	if remoteResult.Stdout == "" && remoteResult.Stderr != "" {
@@ -166,9 +173,10 @@ func CheckDigitalOceanSpace(path string) string {
 		Logger.Printf("ERR: %s", err.Error())
 	}
 
-	response = ":do_droplet: DO *Disk Usage* `root@" + syncthing +
+	response = ":do_droplet: *DO Disk Usage* `root@" + syncthing +
 		"`\n" + string(out)
 
+	response += "\n==========================\n"
 	return response
 }
 
