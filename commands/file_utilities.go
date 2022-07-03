@@ -149,7 +149,7 @@ func CheckHetznerSpace(path string, showHeader bool) string {
 	response := ""
 	suffix := ""
 
-	if showHeader {
+	if !showHeader {
 		suffix = " | sed 1d"
 	}
 
