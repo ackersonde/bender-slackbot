@@ -22,11 +22,12 @@ var botID = os.Getenv("SLACK_BENDER_BOT_USERID")
 func prepareScheduler() {
 	s := gocron.NewScheduler(time.Now().Local().Location())
 
+	s.Every(1).Day().At("05:00").Do(commands.CheckDiskSpace)
+	s.Every(1).Day().At("05:05").Do(commands.CheckBackups)
+	s.Every(1).Day().At("06:55").Do(commands.DisplayFirewallRules)
 	s.Every(1).Day().At("08:04").Do(
 		commands.VpnPiTunnelChecks, commands.VPNCountry)
-	s.Every(1).Day().At("06:55").Do(commands.DisplayFirewallRules)
 	s.Every(1).Day().At("17:30").Do(commands.ShowBBGamesCron, "")
-	s.Every(1).Day().At("05:00").Do(commands.CheckDiskSpace)
 
 	ensureWiFiOffOvernight(s)
 

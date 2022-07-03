@@ -132,9 +132,9 @@ func checkDiskSpaceOfServer(server string, mount string) string {
 		i, err := strconv.Atoi(strings.TrimRight(response, "%\n"))
 		if err != nil {
 			response = fmt.Sprintf("%s@%s: unable to parse %s: %s\n", server, mount, response, err)
-		} else if i >= 15 { // only report if > 95%
+		} else if i >= 92 { // only report if > 92%
 			response = fmt.Sprintf("%s@%s: disk used *%d%%* :rotating_light:\n", server, mount, i)
-		} else { // disk space is < 95% -> OK
+		} else { // disk space is < 92% -> OK
 			Logger.Printf("%s@%s: disk used %d%%\n", server, mount, i)
 			response = "" // don't bother me
 		}
@@ -164,16 +164,16 @@ func CheckBackups() string {
 }
 
 func checkBackupDirectory(server string, path string) string {
-	response := ""
-	cmdPrefix := ""
+	response, cmdPrefix, cmdSuffix := "", "", ""
 	sshConfig := structures.VPNPIRemoteConnectConfig
 
 	if server == "hetzner" {
-		cmdPrefix = "ssh vault "
+		cmdPrefix = "ssh vault '"
+		cmdSuffix = "'"
 		sshConfig = structures.PI4RemoteConnectConfig
 	}
 
-	cmd := fmt.Sprintf("%s'ls -l %s | wc -l && du -sh %s'", cmdPrefix, path, path)
+	cmd := fmt.Sprintf("%sls -l %s | wc -l && du -sh %s%s", cmdPrefix, path, path, cmdSuffix)
 	// e.g.
 	// 108
 	// 495M	/mnt/hetzner_disk/backups/photos/2022/05/
