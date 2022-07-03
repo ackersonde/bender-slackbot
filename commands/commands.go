@@ -404,7 +404,7 @@ func CheckCommand(event *slackevents.MessageEvent, user *slack.User, command str
 				":transmission: `tran[c|p|s|d]`: [C]reate <URL>, [P]aused <URL>, [S]tatus, [D]elete <ID> torrents on :raspberry_pi:\n" +
 				":movie_camera: `mv " + mediaPath + "/torrents/<filename> [movies|tv/(<path>)]`\n" +
 				":youtube: `yt <video url>`: Download Youtube video to Papa's handy\n" +
-				":floppy_disk: `fsck`: show disk space on :raspberry_pi:\n" +
+				":floppy_disk: `fsck`: show storage space and issues on remote servers\n" +
 				":bar_chart: `pi`: Stats of various :raspberry_pi:s\n" +
 				":github: `version`: Which build/deploy is this Bender bot?\n" +
 				":earth_americas: `www`: Show various internal links\n" +
