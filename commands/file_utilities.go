@@ -1,10 +1,12 @@
 package commands
 
 import (
+	"bufio"
 	"fmt"
 	"os/exec"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/ackersonde/bender-slackbot/structures"
 	"github.com/slack-go/slack"
@@ -89,22 +91,24 @@ func CheckMediaDiskSpace(path string) string {
 }
 
 // Check disk space of important devices
-func CheckDiskSpace() {
+func CheckDiskSpace() string {
 	response := ""
-	response += checkDiskSpace("pi4", "/dev/mmcblk0p2")
-	response += checkDiskSpace("vpnpi", "/dev/mmcblk0p2")
-	response += checkDiskSpace("vpnpi", "/dev/sda1")
-	response += checkDiskSpace("hetzner", "/")
-	response += checkDiskSpace("hetzner", "/mnt/hetzner_disk")
+	response += checkDiskSpaceOfServer("pi4", "/dev/mmcblk0p2")
+	response += checkDiskSpaceOfServer("vpnpi", "/dev/mmcblk0p2")
+	response += checkDiskSpaceOfServer("vpnpi", "/dev/sda1")
+	response += checkDiskSpaceOfServer("hetzner", "/")
+	response += checkDiskSpaceOfServer("hetzner", "/mnt/hetzner_disk")
 
 	// only report back if something is amiss
 	if response != "" {
 		api.PostMessage(SlackReportChannel, slack.MsgOptionText(
 			response, false), slack.MsgOptionAsUser(true))
 	}
+
+	return response
 }
 
-func checkDiskSpace(server string, mount string) string {
+func checkDiskSpaceOfServer(server string, mount string) string {
 	response := ""
 	cmdPrefix := ""
 	sshConfig := structures.PI4RemoteConnectConfig
@@ -143,6 +147,61 @@ func checkDiskSpace(server string, mount string) string {
 func CheckMediaDiskSpaceCron(path string) {
 	api.PostMessage(SlackReportChannel, slack.MsgOptionText(
 		CheckMediaDiskSpace(path), false), slack.MsgOptionAsUser(true))
+}
+
+func CheckBackups() string {
+	response := ""
+
+	now := time.Now()
+	lastMonth := now.AddDate(0, -1, 0)
+	calcDate := lastMonth.Format("2006/01/")
+
+	response += checkBackupDirectory("vpnpi", "/mnt/usb4TB/backups/vault-secrets/")
+	response += checkBackupDirectory("vpnpi", "/mnt/usb4TB/backups/photos/originals/"+calcDate)
+	response += checkBackupDirectory("hetzner", "/mnt/hetzner_disk/backups/photos/"+calcDate)
+
+	return response
+}
+
+func checkBackupDirectory(server string, path string) string {
+	response := ""
+	cmdPrefix := ""
+	sshConfig := structures.VPNPIRemoteConnectConfig
+
+	if server == "hetzner" {
+		cmdPrefix = "ssh vault "
+		sshConfig = structures.PI4RemoteConnectConfig
+	}
+
+	cmd := fmt.Sprintf("%s'ls -l %s | wc -l && du -sh %s'", cmdPrefix, path, path)
+	// e.g.
+	// 108
+	// 495M	/mnt/hetzner_disk/backups/photos/2022/05/
+
+	Logger.Printf("checkBackups: %s", cmd)
+
+	remoteResult := executeRemoteCmd(cmd, sshConfig)
+	if remoteResult.Stdout == "" && remoteResult.Stderr != "" {
+		response = remoteResult.Stderr
+	} else {
+		scanner := bufio.NewScanner(strings.NewReader(remoteResult.Stdout))
+		for scanner.Scan() {
+			text := scanner.Text()
+			if strings.Contains(text, path) {
+				// this is the dir size - so cut the path out and parse remaining value
+				if strings.HasPrefix(text, "0") {
+					response += " for a total of 0 bytes!"
+				}
+			} else {
+				files, _ := strconv.Atoi(text)
+				if files == 0 {
+					response += "Still NO files in the backup dir `" + path + "`"
+				}
+			}
+		}
+	}
+
+	return response
 }
 
 func CheckHetznerSpace(path string, showHeader bool) string {
