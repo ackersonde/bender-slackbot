@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"net/url"
 	"strings"
 	"time"
 
@@ -39,9 +40,12 @@ func ShowBBGames(fromDate string) string {
 
 	for _, gameMetaData := range response.Games {
 		watchURL := "<" + gameMetaData[10] + "|" + gameMetaData[0] + " @ " + gameMetaData[4] + ">"
-		downloadURL := strings.ReplaceAll(response.ReadableDate, "  ", "%20") + "&gameURL=" + gameMetaData[10] + "|:red_dot:> "
+		downloadURL := "<https://ackerson.de/bb_download?gameTitle=" + gameMetaData[2] + "-" + gameMetaData[6] + "__" +
+			strings.ReplaceAll(response.ReadableDate, "  ", "%20") + "&gameURL=" +
+			url.QueryEscape(gameMetaData[10]) + "|:red_dot:> "
+
 		Logger.Printf("WTF: %s", downloadURL)
-		result += "<https://ackerson.de/bb_download?gameTitle=" + gameMetaData[2] + "-" + gameMetaData[6] + "__" + downloadURL + watchURL + "\n"
+		result += downloadURL + watchURL + "\n"
 	}
 
 	return result
