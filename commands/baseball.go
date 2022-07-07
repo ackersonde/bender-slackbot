@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"strings"
 	"time"
 
 	"github.com/ackersonde/ackerson.de-go/baseball"
@@ -38,7 +39,7 @@ func ShowBBGames(fromDate string) string {
 
 	for _, gameMetaData := range response.Games {
 		watchURL := "<" + gameMetaData[10] + "|" + gameMetaData[0] + " @ " + gameMetaData[4] + ">"
-		downloadURL := "<https://ackerson.de/bb_download?gameTitle=" + gameMetaData[2] + "-" + gameMetaData[6] + "__" + response.ReadableDate + "&gameURL=" + gameMetaData[10] + "|:red_dot:> "
+		downloadURL := "<https://ackerson.de/bb_download?gameTitle=" + gameMetaData[2] + "-" + gameMetaData[6] + "__" + strings.ReplaceAll(response.ReadableDate, " ", "%20") + "&gameURL=" + gameMetaData[10] + "|:red_dot:> "
 		Logger.Printf("WTF: %s", downloadURL)
 		result += downloadURL + watchURL + "\n"
 	}
