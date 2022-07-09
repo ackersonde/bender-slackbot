@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"strings"
 	"time"
 
 	"github.com/ackersonde/ackerson.de-go/baseball"
@@ -37,7 +38,13 @@ func ShowBBGames(fromDate string) string {
 	result := "Ball games from " + response.ReadableDate + ":\n"
 
 	for _, gameMetaData := range response.Games {
-		result += "<" + gameMetaData[10] + "|" + gameMetaData[0] + " @ " + gameMetaData[4] + ">\n"
+		homeTeamSuffix := ""
+		if strings.Contains(gameMetaData[0], "Tampa") || strings.Contains(gameMetaData[4], "Tampa") {
+			homeTeamSuffix = " :tampa:"
+		}
+
+		watchURL := "<" + gameMetaData[10] + "|" + gameMetaData[0] + " @ " + gameMetaData[4] + ">"
+		result += watchURL + homeTeamSuffix + "\n"
 	}
 
 	return result
