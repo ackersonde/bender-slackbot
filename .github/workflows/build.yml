@@ -57,8 +57,12 @@ jobs:
           export DPASS=$(echo ${{ secrets.ORG_DOCKER_PASS }} | base64 -d)
           export VAULT_SECRET_ID=$(echo ${{ secrets.ORG_VAULT_WRITE_SECRET_ID }} | base64 -d)
           export VAULT_APPROLE_ID=$(echo ${{ secrets.ORG_VAULT_WRITE_APPROLE_ID }} | base64 -d)
+
           ssh -o StrictHostKeyChecking=no root@ackerson.de "\
             mkdir $MY_CA || true && \
+            echo "$VAULT_APPROLE_ID" > $MY_CA/approle_id && \
+            echo "$VAULT_SECRET_ID" > $MY_CA/secret_id && \
+            echo "${{ secrets.ORG_CLOUD_SYNCTHING_CONFIG }}" | base64 -d > $MY_CA/config.xml && \
             echo "${{ secrets.ORG_SERVER_DEPLOY_SECRET }}" | base64 -d > $MY_CA/id_ed25519 && \
             chmod 600 $MY_CA/id_ed25519 && \
             echo "${{ secrets.ORG_SERVER_DEPLOY_CACERT }}" | base64 -d > $MY_CA/id_ed25519-cert.pub && \
