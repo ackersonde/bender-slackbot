@@ -58,9 +58,9 @@ jobs:
 
           ssh -o StrictHostKeyChecking=no root@ackerson.de "\
             mkdir $MY_CA || true && \
-            echo "${{ secrets.ORG_SERVER_DEPLOY_SECRET_B64 }}" | base64 -d > $MY_CA/id_ed25519 && \
+            echo "${{ secrets.ORG_SERVER_DEPLOY_SECRET }}" | base64 -d > $MY_CA/id_ed25519 && \
             chmod 600 $MY_CA/id_ed25519 && \
-            echo "${{ secrets.ORG_SERVER_DEPLOY_CACERT_B64 }}" | base64 -d > $MY_CA/id_ed25519-cert.pub && \
+            echo "${{ secrets.ORG_SERVER_DEPLOY_CACERT }}" | base64 -d > $MY_CA/id_ed25519-cert.pub && \
             chmod 600 $MY_CA/id_ed25519-cert.pub && \
             echo $DPASS | docker login -u $DUSER --password-stdin && \
             docker rm -f bender || true && \
