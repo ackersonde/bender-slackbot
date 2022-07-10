@@ -61,7 +61,7 @@ jobs:
             chmod 600 $MY_CA/id_ed25519-cert.pub && \
             export DUSER=$(echo ${{ secrets.ORG_DOCKER_USER }} | base64 -d) && \
             export DPASS=$(echo ${{ secrets.ORG_DOCKER_PASS }} | base64 -d) && \
-            docker login -u $DUSER -p $DPASS && \
+            echo $DPASS | docker login -u $DUSER --password-stdin && \
             docker rm -f bender || true && \
             docker run -d --restart=always \
               -e ORG_PHOTOS_BASIC_AUTH_TOKEN_B64=${{ secrets.ORG_PHOTOS_BASIC_AUTH_TOKEN }} \
