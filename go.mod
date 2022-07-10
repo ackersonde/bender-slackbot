@@ -54,7 +54,7 @@ require (
 )
 
 require (
-	github.com/ackersonde/hetzner v0.0.0-20220705053253-9cc499dc8783
+	github.com/ackersonde/hetzner_vault v0.0.0-20220710173317-6616bf33bf5e
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/digitalocean/godo v1.81.0 // indirect

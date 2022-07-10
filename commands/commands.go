@@ -18,7 +18,7 @@ import (
 
 	"github.com/ackersonde/bender-slackbot/structures"
 	"github.com/ackersonde/digitaloceans/common"
-	"github.com/ackersonde/hetzner/hetznercloud"
+	"github.com/ackersonde/hetzner_vault/hetznercloud"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/sethvargo/go-password/password"
 	"github.com/slack-go/slack"

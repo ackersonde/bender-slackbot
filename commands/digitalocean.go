@@ -9,7 +9,7 @@ import (
 
 	"github.com/ackersonde/bender-slackbot/structures"
 	"github.com/ackersonde/digitaloceans/common"
-	"github.com/ackersonde/hetzner/hetznercloud"
+	"github.com/ackersonde/hetzner_vault/hetznercloud"
 	"github.com/slack-go/slack"
 )
 
