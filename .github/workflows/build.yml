@@ -55,7 +55,8 @@ jobs:
 
           export DUSER=$(echo ${{ secrets.ORG_DOCKER_USER }} | base64 -d)
           export DPASS=$(echo ${{ secrets.ORG_DOCKER_PASS }} | base64 -d)
-
+          export VAULT_SECRET_ID=$(echo ${{ secrets.ORG_VAULT_WRITE_SECRET_ID }} | base64 -d)
+          export VAULT_APPROLE_ID=$(echo ${{ secrets.ORG_VAULT_WRITE_APPROLE_ID }} | base64 -d)
           ssh -o StrictHostKeyChecking=no root@ackerson.de "\
             mkdir $MY_CA || true && \
             echo "${{ secrets.ORG_SERVER_DEPLOY_SECRET }}" | base64 -d > $MY_CA/id_ed25519 && \
@@ -87,8 +88,8 @@ jobs:
               -e MASTER_HOSTNAME=$(echo ${{ secrets.ORG_MASTER_HOST }} | base64 -d) \
               -e SLAVE_HOSTNAME=$(echo ${{ secrets.ORG_SLAVE_HOST }} | base64 -d) \
               -e VAULT_ADDR=$(echo ${{ secrets.ORG_VAULT_API_ENDPOINT }} | base64 -d) \
-              -e VAULT_APPROLE_SECRET_ID=$(echo ${{ secrets.ORG_VAULT_WRITE_SECRET_ID }} | base64 -d) \
-              -e VAULT_APPROLE_ROLE_ID=$(echo ${{ secrets.ORG_VAULT_WRITE_APPROLE_ID }} | base64 -d) \
+              -e VAULT_APPROLE_SECRET_ID=$VAULT_SECRET_ID \
+              -e VAULT_APPROLE_ROLE_ID=$VAULT_APPROLE_ID \
               -v $MY_CA/id_ed25519:/root/.ssh/id_ed25519:ro \
               -v $MY_CA/id_ed25519-cert.pub:/root/.ssh/id_ed25519-cert.pub:ro \
               -v /root/syncthing/2086h-4d0t2:/app/sync \
