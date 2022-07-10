@@ -67,11 +67,11 @@ jobs:
             docker run -d --restart=always \
               -e ORG_PHOTOS_BASIC_AUTH_TOKEN_B64=${{ secrets.ORG_PHOTOS_BASIC_AUTH_TOKEN }} \
               -e GITHUB_RUN_ID=$GITHUB_RUN_ID \
-              -e HETZNER_API_TOKEN=$(echo ${{ secrets.ORG_HETZNER_CLOUD_API_TOKEN }} | base64 -d)\
+              -e CTX_HETZNER_API_TOKEN=$(echo ${{ secrets.ORG_HETZNER_CLOUD_API_TOKEN }} | base64 -d)\
               -e CTX_DIGITALOCEAN_DROPLET_PROXY_TOKEN=$CTX_DIGITALOCEAN_DROPLET_PROXY_TOKEN \
               -e CTX_DIGITALOCEAN_FIREWALL=$CTX_DIGITALOCEAN_FIREWALL \
-              -e HETZNER_PROJECT=$(echo ${{ secrets.ORG_HETZNER_PROJECT }} | base64 -d) \
-              -e HETZNER_FIREWALL=$(echo ${{ secrets.ORG_HETZNER_FIREWALL }} | base64 -d) \
+              -e CTX_HETZNER_PROJECT=$(echo ${{ secrets.ORG_HETZNER_PROJECT }} | base64 -d) \
+              -e CTX_HETZNER_FIREWALL=$(echo ${{ secrets.ORG_HETZNER_FIREWALL }} | base64 -d) \
               -e ETHERSCAN_API_KEY=$(echo ${{ secrets.ORG_ETHERSCAN_API_KEY }} | base64 -d) \
               -e ETHEREUM_ADDRESS_METAMASK=$(echo ${{ secrets.ORG_ETHEREUM_ADDRESS_METAMASK }} | base64 -d) \
               -e CURRENT_PGP_FINGERPRINT=$(echo ${{ secrets.ORG_CURRENT_PGP_FINGERPRINT }} | base64 -d) \

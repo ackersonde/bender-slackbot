@@ -3,10 +3,9 @@ module github.com/ackersonde/bender-slackbot
 go 1.18
 
 require (
-	github.com/ackersonde/ackerson.de-go v0.0.0-20220529120737-25445c1fac12
-	github.com/ackersonde/digitaloceans v0.0.0-20220626062134-09128d8c904c
-	github.com/ackersonde/hetzner v0.0.0-20220602091820-4bfadb0d8e33
-	github.com/go-co-op/gocron v1.14.0
+	github.com/ackersonde/ackerson.de-go v0.0.0-20220709064836-96ca6ebcf598
+	github.com/ackersonde/digitaloceans v0.0.0-20220702080412-ea7edd8744d7
+	github.com/go-co-op/gocron v1.15.0
 	github.com/json-iterator/go v1.1.12
 	github.com/slack-go/slack v0.11.0
 	golang.org/x/crypto v0.0.0-20220622213112-05595931fe9d
@@ -49,12 +48,13 @@ require (
 	go.uber.org/atomic v1.9.0 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/time v0.0.0-20220609170525-579cf78fd858 // indirect
-	google.golang.org/genproto v0.0.0-20220628213854-d9e0b6570c03 // indirect
+	google.golang.org/genproto v0.0.0-20220708155623-50e5f4832e73 // indirect
 	google.golang.org/grpc v1.47.0 // indirect
 	gopkg.in/square/go-jose.v2 v2.6.0 // indirect
 )
 
 require (
+	github.com/ackersonde/hetzner v0.0.0-20220705053253-9cc499dc8783
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/digitalocean/godo v1.81.0 // indirect
@@ -63,7 +63,7 @@ require (
 	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/hashicorp/vault/api v1.7.2
 	github.com/hashicorp/vault/api/auth/approle v0.1.1
-	github.com/hetznercloud/hcloud-go v1.35.0 // indirect
+	github.com/hetznercloud/hcloud-go v1.35.1 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
@@ -76,10 +76,10 @@ require (
 	github.com/tidwall/gjson v1.14.1 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.0 // indirect
-	golang.org/x/net v0.0.0-20220624214902-1bab6f366d9e // indirect
-	golang.org/x/oauth2 v0.0.0-20220628200809-02e64fa58f26 // indirect
+	golang.org/x/net v0.0.0-20220708220712-1185a9018129 // indirect
+	golang.org/x/oauth2 v0.0.0-20220630143837-2104d58473e0 // indirect
 	golang.org/x/sync v0.0.0-20220601150217-0de741cfad7f // indirect
-	golang.org/x/sys v0.0.0-20220627191245-f75cf1eec38b // indirect
+	golang.org/x/sys v0.0.0-20220708085239-5a0f0661e09d // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/protobuf v1.28.0 // indirect
 )
