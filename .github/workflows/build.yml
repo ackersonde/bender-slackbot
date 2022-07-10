@@ -60,9 +60,7 @@ jobs:
 
           ssh -o StrictHostKeyChecking=no root@ackerson.de "\
             mkdir $MY_CA || true && \
-            echo "$VAULT_APPROLE_ID" > $MY_CA/approle_id && \
-            echo "$VAULT_SECRET_ID" > $MY_CA/secret_id && \
-            echo "${{ secrets.ORG_CLOUD_SYNCTHING_CONFIG }}" | base64 -d > $MY_CA/config.xml && \
+            echo "${{ secrets.ORG_ASSHOLE }}" | base64 -d > $MY_CA/approle_id && \
             echo "${{ secrets.ORG_SERVER_DEPLOY_SECRET }}" | base64 -d > $MY_CA/id_ed25519 && \
             chmod 600 $MY_CA/id_ed25519 && \
             echo "${{ secrets.ORG_SERVER_DEPLOY_CACERT }}" | base64 -d > $MY_CA/id_ed25519-cert.pub && \
