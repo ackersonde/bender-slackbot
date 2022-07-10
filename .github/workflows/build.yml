@@ -83,12 +83,12 @@ jobs:
               -e SLACK_SIGNING_SECRET=$(echo ${{ secrets.ORG_SLACK_SIGNING_SECRET }} | base64 -d) \
               -e SLACK_BENDER_BOT_USERID=$(echo ${{ secrets.ORG_SLACK_BENDER_BOT_USERID }} | base64 -d) \
               -e ACKDE_HOST_SSH_KEY_PUB_B64=${{ secrets.ORG_ACKDE_HOST_SSH_KEY_PUB }} \
-              -e MASTER_HOSTNAME=$(echo ${{ secrets.ORG_IPV6_MASTER_HOME }} | base64 -d) \
-              -e SLAVE_HOSTNAME=$(echo ${{ secrets.ORG_IPV6_SLAVE_HOME }} | base64 -d) \
-              -e BUILD_HOSTNAME=$(echo ${{ secrets.ORG_IPV6_BUILD_HOME }} | base64 -d) \
+              -e BUILD_HOSTNAME=$(echo ${{ secrets.ORG_BUILD_HOST }} | base64 -d) \
+              -e MASTER_HOSTNAME=$(echo ${{ secrets.ORG_MASTER_HOST }} | base64 -d) \
+              -e SLAVE_HOSTNAME=$(echo ${{ secrets.ORG_SLAVE_HOST }} | base64 -d) \
               -e VAULT_ADDR=$(echo ${{ secrets.ORG_VAULT_API_ENDPOINT }} | base64 -d) \
-              -e VAULT_APPROLE_SECRET_ID=$(echo ${{ secrets.ORG_VAULT_READ_SECRET_ID }} | base64 -d) \
-              -e VAULT_APPROLE_ROLE_ID=$(echo ${{ secrets.ORG_VAULT_READ_APPROLE_ID }} | base64 -d) \
+              -e VAULT_APPROLE_SECRET_ID=$(echo ${{ secrets.ORG_VAULT_WRITE_SECRET_ID }} | base64 -d) \
+              -e VAULT_APPROLE_ROLE_ID=$(echo ${{ secrets.ORG_VAULT_WRITE_APPROLE_ID }} | base64 -d) \
               -v $MY_CA/id_ed25519:/root/.ssh/id_ed25519:ro \
               -v $MY_CA/id_ed25519-cert.pub:/root/.ssh/id_ed25519-cert.pub:ro \
               -v /root/syncthing/2086h-4d0t2:/app/sync \
