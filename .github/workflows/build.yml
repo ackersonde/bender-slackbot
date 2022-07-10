@@ -11,10 +11,8 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     env:
-      CTX_DIGITALOCEAN_DROPLET_PROXY_TOKEN: ${{ secrets.CTX_DIGITALOCEAN_DROPLET_PROXY_TOKEN }}
-      CTX_DIGITALOCEAN_FIREWALL: ${{ secrets.CTX_DIGITALOCEAN_FIREWALL }}
       MY_CA: /root/my-ca
     steps:
       - uses: actions/checkout@v2
@@ -27,12 +25,19 @@ jobs:
           CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build bender.go
 
           docker build --pull --no-cache -t danackerson/slackbot:vg$GITHUB_RUN_ID .
-          docker login -u ${{ secrets.CTX_DOCKER_USER }} -p ${{ secrets.CTX_DOCKER_PASS }}
+
+          export DUSER=$(echo ${{ secrets.ORG_DOCKER_USER }} | base64 -d)
+          export DPASS=$(echo ${{ secrets.ORG_DOCKER_PASS }} | base64 -d)
+          docker login -u $DUSER -p $DPASS
+
           docker tag danackerson/slackbot:vg$GITHUB_RUN_ID danackerson/slackbot:latest
           docker push --all-tags danackerson/slackbot
 
       - name: Deploy to DigitalOcean
         run: |
+          export CTX_DIGITALOCEAN_DROPLET_PROXY_TOKEN=$(echo ${{ secrets.ORG_DIGITALOCEAN_DROPLET_PROXY_TOKEN }} | base64 -d)
+          export CTX_DIGITALOCEAN_FIREWALL=$(echo ${{ secrets.ORG_DIGITALOCEAN_FIREWALL }} | base64 -d)
+
           git clone https://github.com/ackersonde/digitaloceans.git
           cd digitaloceans
           go get -t -d -v ./...
@@ -44,60 +49,60 @@ jobs:
 
           mkdir ~/.ssh
           cat <<EOF >~/.ssh/id_rsa
-          ${{ secrets.CTX_DIGITALOCEAN_SSH_PRIVKEY }}
+          $(echo ${{ secrets.ORG_DIGITALOCEAN_SSH_PRIVKEY }} | base64 -d)
           EOF
           chmod 400 ~/.ssh/id_rsa
 
           ssh -o StrictHostKeyChecking=no root@ackerson.de "\
             mkdir $MY_CA || true && \
-            echo "${{ secrets.CTX_SERVER_DEPLOY_SECRET_B64 }}" | base64 --decode > $MY_CA/id_ed25519 && \
+            echo "${{ secrets.ORG_SERVER_DEPLOY_SECRET_B64 }}" | base64 -d > $MY_CA/id_ed25519 && \
             chmod 600 $MY_CA/id_ed25519 && \
-            echo "${{ secrets.CTX_SERVER_DEPLOY_CACERT_B64 }}" | base64 --decode > $MY_CA/id_ed25519-cert.pub && \
+            echo "${{ secrets.ORG_SERVER_DEPLOY_CACERT_B64 }}" | base64 -d > $MY_CA/id_ed25519-cert.pub && \
             chmod 600 $MY_CA/id_ed25519-cert.pub && \
-            docker login -u ${{ secrets.CTX_DOCKER_USER }} -p ${{ secrets.CTX_DOCKER_PASS }} && \
+            export DUSER=$(echo ${{ secrets.ORG_DOCKER_USER }} | base64 -d) && \
+            export DPASS=$(echo ${{ secrets.ORG_DOCKER_PASS }} | base64 -d) && \
+            docker login -u $DUSER -p $DPASS && \
             docker rm -f bender || true && \
             docker run -d --restart=always \
               -e ORG_PHOTOS_BASIC_AUTH_TOKEN_B64=${{ secrets.ORG_PHOTOS_BASIC_AUTH_TOKEN }} \
-              -e DARKSKY_API_KEY=${{ secrets.CTX_DARKSKY_API_KEY }} \
               -e GITHUB_RUN_ID=$GITHUB_RUN_ID \
-              -e COOKIE_SECRET=${{ secrets.COOKIE_SECRET }} \
-              -e CTX_HETZNER_API_TOKEN=${{ secrets.CTX_HETZNER_API_TOKEN }} \
-              -e CTX_DIGITALOCEAN_DROPLET_PROXY_TOKEN=${{ secrets.CTX_DIGITALOCEAN_DROPLET_PROXY_TOKEN }} \
-              -e CTX_DIGITALOCEAN_FIREWALL=${{ secrets.CTX_DIGITALOCEAN_FIREWALL }} \
-              -e CTX_HETZNER_PROJECT=${{ secrets.CTX_HETZNER_PROJECT }} \
-              -e CTX_HETZNER_FIREWALL=${{ secrets.CTX_HETZNER_FIREWALL }} \
-              -e CTX_ETHERSCAN_API_KEY=${{ secrets.CTX_ETHERSCAN_API_KEY }} \
-              -e CTX_ETHEREUM_ADDRESS_METAMASK=${{ secrets.CTX_ETHEREUM_ADDRESS_METAMASK }} \
-              -e CTX_CURRENT_PGP_FINGERPRINT=${{ secrets.CTX_CURRENT_PGP_FINGERPRINT }} \
-              -e CTX_STELLAR_LUMENS_ADDRESS=${{ secrets.CTX_STELLAR_LUMENS_ADDRESS }} \
-              -e CTX_VPNC_GATEWAY=${{ secrets.CTX_VPNC_GATEWAY }} \
-              -e CTX_SLACK_CHANNEL=${{ secrets.CTX_SLACK_CHANNEL }} \
-              -e CTX_SLACK_NEW_API_TOKEN=${{ secrets.CTX_SLACK_NEW_API_TOKEN }} \
-              -e SLACK_EVENTSAPI_ENDPOINT=${{ secrets.SLACK_EVENTSAPI_ENDPOINT }} \
-              -e SLACK_VERIFICATION_TOKEN=${{ secrets.SLACK_VERIFICATION_TOKEN }} \
-              -e SLACK_SIGNING_SECRET=${{ secrets.SLACK_SIGNING_SECRET }} \
-              -e SLACK_BENDER_BOT_USERID=${{ secrets.SLACK_BENDER_BOT_USERID }} \
-              -e ACKDE_HOST_SSH_KEY_PUB_B64=${{ secrets.CTX_ACKDE_HOST_SSH_KEY_PUB_B64 }} \
-              -e MASTER_HOSTNAME=${{ secrets.CTX_IPV6_MASTER_HOME }} \
-              -e SLAVE_HOSTNAME=${{ secrets.CTX_IPV6_SLAVE_HOME }} \
-              -e BUILD_HOSTNAME=${{ secrets.CTX_IPV6_BUILD_HOME }} \
-              -e VAULT_ADDR=${{ secrets.VAULT_ADDR }} \
-              -e VAULT_APPROLE_SECRET_ID=${{ secrets.VAULT_APPROLE_SECRET_ID }} \
-              -e VAULT_APPROLE_ROLE_ID=${{ secrets.VAULT_APPROLE_ROLE_ID }} \
+              -e HETZNER_API_TOKEN=$(echo ${{ secrets.ORG_HETZNER_CLOUD_API_TOKEN }} | base64 -d)\
+              -e CTX_DIGITALOCEAN_DROPLET_PROXY_TOKEN=$CTX_DIGITALOCEAN_DROPLET_PROXY_TOKEN \
+              -e CTX_DIGITALOCEAN_FIREWALL=$CTX_DIGITALOCEAN_FIREWALL \
+              -e HETZNER_PROJECT=$(echo ${{ secrets.ORG_HETZNER_PROJECT }} | base64 -d) \
+              -e HETZNER_FIREWALL=$(echo ${{ secrets.ORG_HETZNER_FIREWALL }} | base64 -d) \
+              -e ETHERSCAN_API_KEY=$(echo ${{ secrets.ORG_ETHERSCAN_API_KEY }} | base64 -d) \
+              -e ETHEREUM_ADDRESS_METAMASK=$(echo ${{ secrets.ORG_ETHEREUM_ADDRESS_METAMASK }} | base64 -d) \
+              -e CURRENT_PGP_FINGERPRINT=$(echo ${{ secrets.ORG_CURRENT_PGP_FINGERPRINT }} | base64 -d) \
+              -e STELLAR_LUMENS_ADDRESS=$(echo ${{ secrets.ORG_STELLAR_LUMENS_ADDRESS }} | base64 -d) \
+              -e SLACK_CHANNEL=$(echo ${{ secrets.ORG_SLACK_CHANNEL }} | base64 -d) \
+              -e SLACK_NEW_API_TOKEN=$(echo ${{ secrets.ORG_SLACK_NEW_API_TOKEN }} | base64 -d) \
+              -e SLACK_EVENTSAPI_ENDPOINT=$(echo ${{ secrets.ORG_SLACK_EVENTSAPI_ENDPOINT }} | base64 -d) \
+              -e SLACK_VERIFICATION_TOKEN=$(echo ${{ secrets.ORG_SLACK_VERIFICATION_TOKEN }} | base64 -d) \
+              -e SLACK_SIGNING_SECRET=$(echo ${{ secrets.ORG_SLACK_SIGNING_SECRET }} | base64 -d) \
+              -e SLACK_BENDER_BOT_USERID=$(echo ${{ secrets.ORG_SLACK_BENDER_BOT_USERID }} | base64 -d) \
+              -e ACKDE_HOST_SSH_KEY_PUB_B64=${{ secrets.ORG_ACKDE_HOST_SSH_KEY_PUB }} \
+              -e MASTER_HOSTNAME=$(echo ${{ secrets.ORG_IPV6_MASTER_HOME }} | base64 -d) \
+              -e SLAVE_HOSTNAME=$(echo ${{ secrets.ORG_IPV6_SLAVE_HOME }} | base64 -d) \
+              -e BUILD_HOSTNAME=$(echo ${{ secrets.ORG_IPV6_BUILD_HOME }} | base64 -d) \
+              -e VAULT_ADDR=$(echo ${{ secrets.ORG_VAULT_API_ENDPOINT }} | base64 -d) \
+              -e VAULT_APPROLE_SECRET_ID=$(echo ${{ secrets.ORG_VAULT_READ_SECRET_ID }} | base64 -d) \
+              -e VAULT_APPROLE_ROLE_ID=$(echo ${{ secrets.ORG_VAULT_READ_APPROLE_ID }} | base64 -d) \
               -v $MY_CA/id_ed25519:/root/.ssh/id_ed25519:ro \
               -v $MY_CA/id_ed25519-cert.pub:/root/.ssh/id_ed25519-cert.pub:ro \
               -v /root/syncthing/2086h-4d0t2:/app/sync \
               --label='traefik.enable=true' \
               --label='traefik.http.routers.bender.middlewares=secHeaders@file' \
               --label='traefik.http.routers.bender.tls.certResolver=letsencrypt' \
-              --label='traefik.http.routers.bender.tls.domains=${{ secrets.BENDER_HOSTNAME }}' \
-              --label='traefik.http.routers.bender.rule=Host(\`${{ secrets.BENDER_HOSTNAME }}\`)' \
+              --label='traefik.http.routers.bender.tls.domains=$(echo ${{ secrets.ORG_SLACK_BENDER_HOST }} | base64 -d)' \
+              --label='traefik.http.routers.bender.rule=Host(\`$(echo ${{ secrets.ORG_SLACK_BENDER_HOST }} | base64 -d)\`)' \
               --name bender danackerson/slackbot:vg$GITHUB_RUN_ID"
 
           rm -Rf ~/.ssh/id_rsa ~/.docker/config.json
           ./digitaloceans/do -fn=firewallSSH -allow=false -ip=$public_ip_address
 
-          curl -s -o /dev/null -X POST -d token=${{ secrets.CTX_SLACK_NOTIFICATIONS_TOKEN }} -d channel=C092UE0H4 \
+          export SLACK_NOTIFY_TOKEN=$(echo ${{ secrets.ORG_SLACK_NOTIFICATIONS_TOKEN }} | base64 -d)
+          curl -s -o /dev/null -X POST -d token=$SLACK_NOTIFY_TOKEN -d channel=C092UE0H4 \
             -d text="<https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID|$GITHUB_REPOSITORY @ $GITHUB_RUN_ID>" \
             https://slack.com/api/chat.postMessage
 

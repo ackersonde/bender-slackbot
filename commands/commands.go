@@ -38,7 +38,7 @@ var VPNCountry = "NL"
 var syncthing = "/app/sync/"
 
 // SlackReportChannel default reporting channel for bot crons
-var SlackReportChannel = os.Getenv("CTX_SLACK_CHANNEL")
+var SlackReportChannel = os.Getenv("SLACK_CHANNEL")
 
 // SetAPI sets singleton
 func SetAPI(apiPassed *slack.Client) {

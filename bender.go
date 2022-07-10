@@ -124,7 +124,7 @@ func processMessage(ev *slackevents.MessageEvent, api *slack.Client) {
 
 func main() {
 	api := slack.New(
-		os.Getenv("CTX_SLACK_NEW_API_TOKEN"),
+		os.Getenv("SLACK_NEW_API_TOKEN"),
 		slack.OptionDebug(false),
 		slack.OptionLog(commands.Logger),
 	)

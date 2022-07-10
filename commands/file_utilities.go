@@ -153,8 +153,8 @@ func CheckBackups() string {
 	response := ""
 
 	now := time.Now()
-	lastMonth := now.AddDate(0, -1, 0)
-	calcDate := lastMonth.Format("2006/01/")
+	//lastMonth := now.AddDate(0, -1, 0)
+	calcDate := now.Format("2006/01/")
 
 	response += checkBackupDirectory("vpnpi", "/mnt/usb4TB/backups/vault-secrets/")
 	response += checkBackupDirectory("vpnpi", "/mnt/usb4TB/backups/photos/originals/"+calcDate)
@@ -185,19 +185,19 @@ func checkBackupDirectory(server string, path string) string {
 		response = remoteResult.Stderr
 	} else {
 		scanner := bufio.NewScanner(strings.NewReader(remoteResult.Stdout))
+		row := 0
 		for scanner.Scan() {
 			text := scanner.Text()
-			if strings.Contains(text, path) {
-				// this is the dir size - so cut the path out and parse remaining value
-				if strings.HasPrefix(text, "0") {
-					response += " for a total of 0 bytes!"
+			if row == 0 {
+				files, err := strconv.Atoi(text)
+				if err != nil || files < 2 {
+					response += "No files in the backup dir `" + path + "`"
+					break
 				}
-			} else {
-				files, _ := strconv.Atoi(text)
-				if files == 0 {
-					response += "Still NO files in the backup dir `" + path + "`"
-				}
+			} else if strings.HasPrefix(text, "4.0K") {
+				response += "`" + path + "` exists, but currently empty"
 			}
+			row++
 		}
 	}
 

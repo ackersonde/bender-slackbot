@@ -13,10 +13,10 @@ import (
 	"github.com/ackersonde/bender-slackbot/structures"
 )
 
-var ethAddrMetaMask = os.Getenv("CTX_ETHEREUM_ADDRESS_METAMASK")
-var etherscanAPIKey = os.Getenv("CTX_ETHERSCAN_API_KEY")
-var stellarAccount = os.Getenv("CTX_STELLAR_LUMENS_ADDRESS")
-var pgpKey = os.Getenv("CTX_CURRENT_PGP_FINGERPRINT")
+var ethAddrMetaMask = os.Getenv("ETHEREUM_ADDRESS_METAMASK")
+var etherscanAPIKey = os.Getenv("ETHERSCAN_API_KEY")
+var stellarAccount = os.Getenv("STELLAR_LUMENS_ADDRESS")
+var pgpKey = os.Getenv("CURRENT_PGP_FINGERPRINT")
 
 func checkStellarLumensValue() string {
 	response := ""
