@@ -27,6 +27,7 @@ import (
 
 var api *slack.Client
 var githubRunID = os.Getenv("GITHUB_RUN_ID")
+var HETZNER_PROJECT = os.Getenv("HETZNER_PROJECT")
 
 // Logger to give senseful settings
 var Logger = log.New(os.Stdout, "", log.LstdFlags)
@@ -230,7 +231,7 @@ func CheckCommand(event *slackevents.MessageEvent, user *slack.User, command str
 		}
 
 		for _, server := range servers {
-			serverInfoURL := fmt.Sprintf("https://console.hetzner.cloud/projects/1200165/servers/%d/overview", server.ID)
+			serverInfoURL := fmt.Sprintf("https://console.hetzner.cloud/projects/%s/servers/%d/overview", HETZNER_PROJECT, server.ID)
 			serverIPv6 := server.PublicNet.IPv6.IP.String()
 			if strings.HasSuffix(serverIPv6, "::") {
 				serverIPv6 += "1"
