@@ -184,6 +184,7 @@ func checkBackupDirectory(server string, path string) string {
 	if remoteResult.Stdout == "" && remoteResult.Stderr != "" {
 		response = remoteResult.Stderr
 	} else {
+		Logger.Printf("%s: %s", path, remoteResult.Stdout)
 		scanner := bufio.NewScanner(strings.NewReader(remoteResult.Stdout))
 		row := 0
 		for scanner.Scan() {
@@ -191,11 +192,11 @@ func checkBackupDirectory(server string, path string) string {
 			if row == 0 {
 				files, err := strconv.Atoi(text)
 				if err != nil || files < 2 {
-					response += "No files in the backup dir `" + path + "`"
+					response += "No files in the backup dir `" + path + "`\n"
 					break
 				}
 			} else if strings.HasPrefix(text, "4.0K") {
-				response += "`" + path + "` exists, but currently empty"
+				response += "`" + path + "` exists, but currently empty\n"
 			}
 			row++
 		}
