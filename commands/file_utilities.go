@@ -91,7 +91,7 @@ func CheckMediaDiskSpace(path string) string {
 }
 
 // Check disk space of important devices
-func CheckDiskSpace() string {
+func CheckDiskSpace(manuallyCalled bool) string {
 	response := ""
 	response += checkDiskSpaceOfServer("pi4", "/dev/mmcblk0p2")
 	response += checkDiskSpaceOfServer("vpnpi", "/dev/mmcblk0p2")
@@ -105,7 +105,15 @@ func CheckDiskSpace() string {
 			response, false), slack.MsgOptionAsUser(true))
 	}
 
-	return response
+	if manuallyCalled {
+		return response
+	} else { // called via Cron - only output if there's an issue!
+		if response != "" {
+			api.PostMessage(SlackReportChannel, slack.MsgOptionText(response, false),
+				slack.MsgOptionAsUser(true))
+		}
+		return ""
+	}
 }
 
 func checkDiskSpaceOfServer(server string, mount string) string {
@@ -149,7 +157,7 @@ func CheckMediaDiskSpaceCron(path string) {
 		CheckMediaDiskSpace(path), false), slack.MsgOptionAsUser(true))
 }
 
-func CheckBackups() string {
+func CheckBackups(manuallyCalled bool) string {
 	response := ""
 
 	now := time.Now()
@@ -160,7 +168,15 @@ func CheckBackups() string {
 	response += checkBackupDirectory("vpnpi", "/mnt/usb4TB/backups/photos/originals/"+calcDate)
 	response += checkBackupDirectory("hetzner", "/mnt/hetzner_disk/backups/photos/"+calcDate)
 
-	return response
+	if manuallyCalled {
+		return response
+	} else { // called via Cron - only output if there's an issue!
+		if response != "" {
+			api.PostMessage(SlackReportChannel, slack.MsgOptionText(response, false),
+				slack.MsgOptionAsUser(true))
+		}
+		return ""
+	}
 }
 
 func checkBackupDirectory(server string, path string) string {

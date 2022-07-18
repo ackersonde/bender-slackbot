@@ -289,8 +289,8 @@ func CheckCommand(event *slackevents.MessageEvent, user *slack.User, command str
 		response += CheckHetznerSpace("/", true) + CheckHetznerSpace("/mnt/hetzner_disk", false)
 
 		response += "\n==========================\n:skull_and_crossbones: *Remote Storage and Backups issues* :skull_and_crossbones::\n"
-		issues := CheckDiskSpace()
-		issues += CheckBackups()
+		issues := CheckDiskSpace(true)
+		issues += CheckBackups(true)
 		if issues == "" {
 			issues = ":simple_smile: None found :rainbow:"
 		}
