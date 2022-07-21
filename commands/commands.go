@@ -386,7 +386,11 @@ func CheckCommand(event *slackevents.MessageEvent, user *slack.User, command str
 		response := "Available public photo albums on :photoprism::\n=========================\n"
 		albums := buildPhotoPrismAlbums()
 		for _, album := range albums {
-			response += fmt.Sprintf("<%s|%s> (expiring %dd w/ %d views)\n", album.PublicURL, album.Title, album.ExpiringInDays, album.Views)
+			expiryMessage := fmt.Sprintf("expiring %dd w/ ", album.ExpiringInDays)
+			if album.ExpiringInDays == 0 {
+				expiryMessage = ""
+			}
+			response += fmt.Sprintf("<%s|%s> (%s%d views)\n", album.PublicURL, album.Title, expiryMessage, album.Views)
 		}
 		api.PostMessage(event.Channel, slack.MsgOptionText(response, false), params)
 	} else if args[0] == "help" {
