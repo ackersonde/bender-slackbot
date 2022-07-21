@@ -60,7 +60,7 @@ jobs:
           export DUSER=$(echo ${{ secrets.ORG_DOCKER_USER }} | base64 -d)
           export DPASS=$(echo ${{ secrets.ORG_DOCKER_PASS }} | base64 -d)
 
-          ssh -o StrictHostKeyChecking=no root@78.46.208.157 "\
+          ssh -o StrictHostKeyChecking=no root@168.119.170.94 "\
             mkdir $MY_CA || true && \
             echo "${{ secrets.ORG_SERVER_DEPLOY_SECRET }}" | base64 -d > $MY_CA/id_ed25519 && \
             chmod 600 $MY_CA/id_ed25519 && \
