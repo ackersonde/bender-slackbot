@@ -17,8 +17,7 @@ import (
 	"time"
 
 	"github.com/ackersonde/bender-slackbot/structures"
-	"github.com/ackersonde/digitaloceans/common"
-	"github.com/ackersonde/hetzner_vault/hetznercloud"
+	"github.com/ackersonde/hetzner_home/hetznercloud"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/sethvargo/go-password/password"
 	"github.com/slack-go/slack"
@@ -260,21 +259,6 @@ func CheckCommand(event *slackevents.MessageEvent, user *slack.User, command str
 		} else {
 			api.PostMessage(event.Channel, slack.MsgOptionText("Please provide Droplet ID from `do` cmd!", true), params)
 		}
-	} else if args[0] == "do" {
-		response := ListDODroplets()
-		api.PostMessage(event.Channel, slack.MsgOptionText(response, false), params)
-	} else if args[0] == "dd" {
-		if len(args) > 1 {
-			number, err := strconv.Atoi(args[1])
-			if err != nil {
-				api.PostMessage(event.Channel, slack.MsgOptionText("Invalid integer value for ID!", true), params)
-			} else {
-				result := common.DeleteDODroplet(number)
-				api.PostMessage(event.Channel, slack.MsgOptionText(result, true), params)
-			}
-		} else {
-			api.PostMessage(event.Channel, slack.MsgOptionText("Please provide Droplet ID from `do` cmd!", true), params)
-		}
 	} else if args[0] == "fsck" {
 		response := ""
 		if len(args) > 1 {
@@ -285,7 +269,6 @@ func CheckCommand(event *slackevents.MessageEvent, user *slack.User, command str
 			response += CheckMediaDiskSpace("")
 			response += CheckServerDiskSpace("")
 		}
-		response += CheckDigitalOceanSpace("")
 
 		response += ":htz_server: *Hetzner Disk Usage* @ `/` & `/mnt/hetzner_disk`:\n"
 		response += CheckHetznerSpace("/", true) + CheckHetznerSpace("/mnt/hetzner_disk", false)
@@ -369,14 +352,14 @@ func CheckCommand(event *slackevents.MessageEvent, user *slack.User, command str
 
 		api.PostMessage(event.Channel, slack.MsgOptionText(response, false), params)
 	} else if args[0] == "www" {
-		digitalOcean := ":do_droplet:: <https://sync.ackerson.de|syncthing> | <https://ackerson.de|homepage>\n"
-		hetzner := ":htz_server:: <https://mv.ackerson.de/dashboard/#/|traefik> | <https://vault.ackerson.de/ui/|vault>\n"
+		homepage := ":baseball:: <https://sync.ackerson.de|syncthing> | <https://ackerson.de|homepage>\n"
+		vault := ":htz_server:: <https://mv.ackerson.de/dashboard/#/|traefik> | <https://vault.ackerson.de/ui/|vault>\n"
 
 		fritzBox := ":house:: <https://fritz.ackerson.de/|fritzbox> | <https://freedns.afraid.org/dynamic/v2/|afraid>\n"
 		pi4 := ":raspberry_pi:: <https://homesync.ackerson.de|syncthing> | <https://photos.ackerson.de/|photoprism> | <http://192.168.178.27:8200|test vault>\n"
 		vpnpi := ":protonvpn:: <https://vpnission.ackerson.de/transmission/web/|transmission> | <https://jelly.ackerson.de/web/index.html#!/home.html|jelly>\n"
 
-		response := digitalOcean + hetzner + fritzBox + pi4 + vpnpi
+		response := homepage + vault + fritzBox + pi4 + vpnpi
 		api.PostMessage(event.Channel, slack.MsgOptionText(response, false), params)
 	} else if args[0] == "key" {
 		response := getBendersCurrentSSHCert()
@@ -403,7 +386,6 @@ func CheckCommand(event *slackevents.MessageEvent, user *slack.User, command str
 				":key: `pass <64 10 10 false true>`: random pass with <chars digits symbols noUpper repeatChars>\n" +
 				":sun_behind_rain_cloud: `rw`: Oberhatzkofen weather\n" +
 				":baseball: `bb <YYYY-MM-DD>`: show baseball games from given date (default yesterday)\n" +
-				":do_droplet: `do|dd <id>`: show|delete DigitalOcean droplet(s)\n" +
 				":htz_server: `htz|htzd <id>`: show|delete Hetzner server(s)\n" +
 				":wifi: `wf [0|1|s]`: turn home wifi [0]ff, [1]n or [-default-s]tatus\n" +
 				":protonvpn: `vpn[s|c]`: [S]how status of VPN on :raspberry_pi:, [C]hange VPN to best in given country or " + VPNCountry + "\n" +

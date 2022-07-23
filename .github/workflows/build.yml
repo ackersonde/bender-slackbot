@@ -35,13 +35,6 @@ jobs:
 
       - name: Deploy to Hetzner
         run: |
-          export CTX_DIGITALOCEAN_DROPLET_PROXY_TOKEN=$(echo ${{ secrets.ORG_DIGITALOCEAN_DROPLET_PROXY_TOKEN }} | base64 -d)
-          export CTX_DIGITALOCEAN_FIREWALL=$(echo ${{ secrets.ORG_DIGITALOCEAN_FIREWALL }} | base64 -d)
-
-          export HETZNER_API_TOKEN=$(echo ${{ secrets.ORG_HETZNER_CLOUD_API_TOKEN }} | base64 -d)
-          #export HETZNER_FIREWALL=$(echo ${{ secrets.ORG_HETZNER_HOME_FIREWALL }} | base64 -d)
-          #export HETZNER_VAULT_VOLUME_ID=$(echo ${{ secrets.ORG_HETZNER_VAULT_VOLUME_ID }} | base64 -d)
-
           git clone https://github.com/ackersonde/hetzner_home.git
           cd hetzner_home
           go mod tidy
@@ -52,9 +45,7 @@ jobs:
           ./hetzner_home/hetzner -fn=firewallSSH -tag=homepage -ip=$public_ip_address
 
           mkdir ~/.ssh
-          cat <<EOF >~/.ssh/id_rsa
-          $(echo ${{ secrets.HETZNER_SSH_PRIVKEY }} | base64 -d)
-          EOF
+          echo "${{ secrets.HETZNER_SSH_PRIVKEY }}" | base64 -d > ~/.ssh/id_rsa
           chmod 400 ~/.ssh/id_rsa
 
           export DUSER=$(echo ${{ secrets.ORG_DOCKER_USER }} | base64 -d)
@@ -71,9 +62,6 @@ jobs:
             docker run -d --restart=always \
               -e ORG_PHOTOS_BASIC_AUTH_TOKEN_B64=${{ secrets.ORG_PHOTOS_BASIC_AUTH_TOKEN }} \
               -e GITHUB_RUN_ID=$GITHUB_RUN_ID \
-              -e HETZNER_API_TOKEN=$(echo ${{ secrets.ORG_HETZNER_CLOUD_API_TOKEN }} | base64 -d)\
-              -e CTX_DIGITALOCEAN_DROPLET_PROXY_TOKEN=$CTX_DIGITALOCEAN_DROPLET_PROXY_TOKEN \
-              -e CTX_DIGITALOCEAN_FIREWALL=$CTX_DIGITALOCEAN_FIREWALL \
               -e HETZNER_API_TOKEN=$(echo ${{ secrets.ORG_HETZNER_CLOUD_API_TOKEN }} | base64 -d) \
               -e HETZNER_VAULT_VOLUME_ID=$(echo ${{ secrets.ORG_HETZNER_VAULT_VOLUME_ID }} | base64 -d) \
               -e HETZNER_PROJECT=$(echo ${{ secrets.ORG_HETZNER_PROJECT }} | base64 -d) \

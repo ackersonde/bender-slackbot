@@ -3,7 +3,6 @@ package commands
 import (
 	"bufio"
 	"fmt"
-	"os/exec"
 	"strconv"
 	"strings"
 	"time"
@@ -239,20 +238,6 @@ func CheckHetznerSpace(path string, showHeader bool) string {
 		response = remoteResult.Stdout
 	}
 
-	return response
-}
-
-func CheckDigitalOceanSpace(path string) string {
-	response := ""
-	out, err := exec.Command("df", "-h", syncthing).Output()
-	if err != nil {
-		Logger.Printf("ERR: %s", err.Error())
-	}
-
-	response = ":do_droplet: *DO Disk Usage* `root@" + syncthing +
-		"`\n" + string(out)
-
-	response += "\n==========================\n"
 	return response
 }
 
