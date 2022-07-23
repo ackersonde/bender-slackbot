@@ -231,7 +231,7 @@ func CheckCommand(event *slackevents.MessageEvent, user *slack.User, command str
 		}
 
 		for _, server := range servers {
-			serverInfoURL := fmt.Sprintf("https://console.hetzner.cloud/projects/%s/servers/%d/overview", HETZNER_PROJECT, server.ID)
+			serverInfoURL := fmt.Sprintf("https://console.hetzner.cloud/projects/%s/servers/%d/graphs", HETZNER_PROJECT, server.ID)
 			serverIPv6 := server.PublicNet.IPv6.IP.String()
 			if strings.HasSuffix(serverIPv6, "::") {
 				serverIPv6 += "1"
@@ -240,10 +240,12 @@ func CheckCommand(event *slackevents.MessageEvent, user *slack.User, command str
 			response += fmt.Sprintf("ID %d: <%s|%s> [%s] @ %s => %s\n",
 				server.ID, serverInfoURL, server.Name, serverIPv6,
 				server.Created.Format("2006-01-02 15:04"), server.Status)
-		}
 
-		remoteResult := executeRemoteCmd("ssh vault 'uptime;uname -a'", structures.PI4RemoteConnectConfig)
-		response += remoteResult.Stdout
+			serverNameParts := strings.Split(server.Name, "-")
+			remoteCmd := fmt.Sprintf("ssh %s 'uptime;uname -a'", serverNameParts[0])
+			remoteResult := executeRemoteCmd(remoteCmd, structures.PI4RemoteConnectConfig)
+			response += remoteResult.Stdout
+		}
 
 		api.PostMessage(event.Channel, slack.MsgOptionText(response, false), params)
 	} else if args[0] == "htzd" {
