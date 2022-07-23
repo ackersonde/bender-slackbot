@@ -41,6 +41,7 @@ jobs:
           go build hetzner.go
           cd ../
 
+          export HETZNER_API_TOKEN=$(echo ${{ secrets.ORG_HETZNER_CLOUD_API_TOKEN }} | base64 -d)
           public_ip_address=$(curl -s https://checkip.amazonaws.com)
           ./hetzner_home/hetzner -fn=firewallSSH -tag=homepage -ip=$public_ip_address
 
