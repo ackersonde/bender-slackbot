@@ -118,7 +118,12 @@ func VpnPiTunnelChecks() string {
 		if homeAndInternetIPsDoNotMatch(vpnTunnelSpecs["endpointIP"]) &&
 			transmissionSettingsAreSane("10.2.0.2") {
 			response = ":protonvpn: VPN: UP @ " +
-				vpnTunnelSpecs["protonvpnServer"] + "[" + vpnTunnelSpecs["endpointIP"] + "]\n" + ipsecVersion.Stdout
+				vpnTunnelSpecs["protonvpnServer"] + " [" + vpnTunnelSpecs["endpointIP"] + "]\n"
+
+			servers := executeRemoteCmd("ls -lrt /etc/wireguard/ | awk 'NR>=2 { print $9 }'",
+				structures.VPNPIRemoteConnectConfig)
+			serversStr := strings.Replace(servers.Stdout, vpnTunnelSpecs["protonvpnServer"], "*"+vpnTunnelSpecs["protonvpnServer"]+"*", 1)
+			response += "Available: " + serversStr + "\n" + ipsecVersion.Stdout
 		}
 	}
 
