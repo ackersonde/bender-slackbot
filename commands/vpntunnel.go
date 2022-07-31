@@ -125,7 +125,7 @@ func VpnPiTunnelChecks(vpnCountry string) string {
 
 	if strings.Contains(response, ":protonvpn: VPN: DOWN") {
 		response = ipsecVersion.Stdout + "VPN was DOWN! Restarting...\n" +
-			updateVpnPiTunnel("NL_88")
+			updateVpnPiTunnel("NL_28")
 	}
 
 	return response
@@ -133,12 +133,9 @@ func VpnPiTunnelChecks(vpnCountry string) string {
 
 func updateVpnPiTunnel(vpnServerDomain string) string {
 	response := "Failed changing :protonvpn: to " + vpnServerDomain
-
-	stopVPNCmd := `docker rm -f vpnission && `
-	startVPNCmd := `docker run --env-file .config/vpnission.env.list -d \
-        --restart=always --name vpnission --privileged -p9091:9091 -p51413:51413 \
-        -v /etc/wireguard:/etc/wireguard -v /mnt/usb4TB/DLNA/torrents:/mnt/torrents \
-        danackerson/vpnission ` + vpnServerDomain
+	dockerComposePrefix := "docker compose -f /home/ubuntu/vpnission/docker-compose-deploy.yml"
+	stopVPNCmd := dockerComposePrefix + ` down; `
+	startVPNCmd := `PROTONVPN_SERVER=` + vpnServerDomain + ` ` + dockerComposePrefix + ` up -d`
 
 	cmd := stopVPNCmd + startVPNCmd
 
