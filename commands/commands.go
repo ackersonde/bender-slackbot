@@ -314,11 +314,7 @@ func CheckCommand(event *slackevents.MessageEvent, user *slack.User, command str
 
 		api.PostMessage(event.Channel, slack.MsgOptionText(response, false), params)
 	} else if args[0] == "vpns" {
-		if len(args) > 1 {
-			VPNCountry = strings.ToUpper(args[1])
-		}
-		response := VpnPiTunnelChecks(VPNCountry)
-		api.PostMessage(event.Channel, slack.MsgOptionText(response, false), params)
+		api.PostMessage(event.Channel, slack.MsgOptionText(VpnPiTunnelChecks(), false), params)
 	} else if args[0] == "vpnc" {
 		response := "Please provide a new VPN server (hint: output from `vpns`)"
 		if len(args) > 1 {
