@@ -323,10 +323,10 @@ func CheckCommand(event *slackevents.MessageEvent, user *slack.User, command str
 		response := "Please provide a new VPN server (hint: output from `vpns`)"
 		if len(args) > 1 {
 			vpnServerDomain := strings.ToLower(scrubParamOfHTTPMagicCrap(args[1]))
-			// ensure vpnServerDomain has format e.g. DE-19
-			var rxPat = regexp.MustCompile(`^(lxc-)?[A-Za-z]{2}-[0-9]{2}`)
+			// ensure vpnServerDomain has format e.g. NL_88
+			var rxPat = regexp.MustCompile(`^[A-Za-z]{2}_[0-9]{2}`)
 			if !rxPat.MatchString(vpnServerDomain) {
-				response = "Provide a validly formatted VPN server (hint: output from `vpns`)"
+				response = "Provide a valid formatted VPN server (hint: output from `vpns`)"
 
 			} else {
 				response = updateVpnPiTunnel(vpnServerDomain)
