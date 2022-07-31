@@ -58,7 +58,7 @@ func inspectVPNConnection() map[string]string {
 	resultsChannel := make(chan string, 10)
 	timeout := time.After(10 * time.Second)
 	go func() {
-		cmd := "docker exec vpnission wg show | grep endpoint"
+		cmd := "docker exec vpnission wg show | grep endpoint; docker inspect vpnission | grep PROTON"
 		remoteResult := executeRemoteCmd(cmd, structures.VPNPIRemoteConnectConfig)
 
 		result := ""
@@ -106,8 +106,7 @@ func ChangeToNextWireguardServer(vpnCountry string) {
 
 // VpnPiTunnelChecks ensures correct VPN connection
 func VpnPiTunnelChecks() string {
-	ipsecVersion := executeRemoteCmd(
-		"docker exec vpnission wg --version",
+	ipsecVersion := executeRemoteCmd("docker exec vpnission wg --version",
 		structures.VPNPIRemoteConnectConfig)
 	response := ipsecVersion.Stdout + ":protonvpn: VPN: DOWN :rotating_light:"
 
