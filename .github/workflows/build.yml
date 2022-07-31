@@ -89,7 +89,6 @@ jobs:
               -v /root/syncthing/2086h-4d0t2:/app/sync \
               --label='traefik.enable=true' \
               --label='traefik.http.routers.bender.middlewares=secHeaders@file' \
-              --label='traefik.http.routers.bender.tls.certResolver=letsencrypt' \
               --label='traefik.http.routers.bender.tls.domains=$(echo ${{ secrets.ORG_SLACK_BENDER_HOST }} | base64 -d)' \
               --label='traefik.http.routers.bender.rule=Host(\`$(echo ${{ secrets.ORG_SLACK_BENDER_HOST }} | base64 -d)\`)' \
               --name bender danackerson/slackbot:vg$GITHUB_RUN_ID"
