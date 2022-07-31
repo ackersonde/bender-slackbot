@@ -74,7 +74,7 @@ func inspectVPNConnection() map[string]string {
 	case res := <-resultsChannel:
 		if res != "" {
 			// look for `endpoint: <IP-Addr>:51820`
-			re := regexp.MustCompile(`endpoint: (?P<endpointIP>.*):51820`)
+			re := regexp.MustCompile(`endpoint: (?P<endpointIP>.*):51820(.*)"PROTONVPN_SERVER=(?P<protonvpnServer>.*)",`)
 			matches := re.FindAllStringSubmatch(res, -1)
 			names := re.SubexpNames()
 
@@ -113,13 +113,13 @@ func VpnPiTunnelChecks(vpnCountry string) string {
 
 	vpnTunnelSpecs := inspectVPNConnection()
 	if len(vpnTunnelSpecs) > 0 {
-		Logger.Printf("Using VPN server: %s\n", vpnTunnelSpecs["endpointIP"])
+		Logger.Printf("Using VPN server: %s\n", vpnTunnelSpecs["protonvpnServer"])
 		response += " with " + vpnTunnelSpecs["endpointIP"]
 
 		if homeAndInternetIPsDoNotMatch(vpnTunnelSpecs["endpointIP"]) &&
 			transmissionSettingsAreSane("10.2.0.2") {
-			response = ipsecVersion.Stdout + ":protonvpn: VPN: UP @ " +
-				vpnTunnelSpecs["endpointIP"]
+			response = ":protonvpn: VPN: UP @ " +
+				vpnTunnelSpecs["protonvpnServer"] + "[" + vpnTunnelSpecs["endpointIP"] + "]\n" + ipsecVersion.Stdout
 		}
 	}
 
