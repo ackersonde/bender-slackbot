@@ -74,7 +74,7 @@ func inspectVPNConnection() map[string]string {
 	case res := <-resultsChannel:
 		if res != "" {
 			// look for `endpoint: <IP-Addr>:51820`
-			re := regexp.MustCompile(`endpoint: (?P<endpointIP>.*):51820(.*)"PROTONVPN_SERVER=(?P<protonvpnServer>.*)",`)
+			re := regexp.MustCompile(`(?s)endpoint: (?P<endpointIP>.*):51820.*"PROTONVPN_SERVER=(?P<protonvpnServer>.*)",`)
 			matches := re.FindAllStringSubmatch(res, -1)
 			names := re.SubexpNames()
 
@@ -105,7 +105,7 @@ func ChangeToNextWireguardServer(vpnCountry string) {
 }
 
 // VpnPiTunnelChecks ensures correct VPN connection
-func VpnPiTunnelChecks(vpnCountry string) string {
+func VpnPiTunnelChecks() string {
 	ipsecVersion := executeRemoteCmd(
 		"docker exec vpnission wg --version",
 		structures.VPNPIRemoteConnectConfig)
