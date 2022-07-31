@@ -122,7 +122,8 @@ func VpnPiTunnelChecks() string {
 
 			servers := executeRemoteCmd("ls -lrt /etc/wireguard/ | awk 'NR>=2 { print $9 }'",
 				structures.VPNPIRemoteConnectConfig)
-			serversStr := strings.Replace(servers.Stdout, vpnTunnelSpecs["protonvpnServer"], "*"+vpnTunnelSpecs["protonvpnServer"]+"*", 1)
+			serversStr := strings.ReplaceAll(servers.Stdout+"\n", ".conf\n", "")
+			serversStr = strings.Replace(serversStr, vpnTunnelSpecs["protonvpnServer"], "*"+vpnTunnelSpecs["protonvpnServer"]+"*", 1)
 			response += "Available: " + serversStr + "\n" + ipsecVersion.Stdout
 		}
 	}
