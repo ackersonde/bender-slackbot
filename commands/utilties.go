@@ -145,12 +145,12 @@ func fetchHomeIPv6Prefix() string {
 
 func dockerInfo(application string) string {
 	response := ""
-	cmd := "docker logs -n 100 " + application
+	cmd := "ssh homepage \"docker  logs -n 100 " + application + "\""
 	if application == "" {
-		cmd = "docker ps -a --format 'table {{.Names}}\t{{.Status}}'"
+		cmd = "ssh homepage \"docker ps -a --format 'table {{.Names}}\t{{.Status}}'\""
 	}
 
-	remoteResult := executeRemoteCmd(cmd, structures.ACKDERemoteConnectConfig)
+	remoteResult := executeRemoteCmd(cmd, structures.PI4RemoteConnectConfig)
 	if remoteResult.Stdout == "" && remoteResult.Stderr != "" {
 		response += remoteResult.Stderr
 	} else {
