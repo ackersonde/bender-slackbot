@@ -98,16 +98,11 @@ func CheckDiskSpace(manuallyCalled bool) string {
 	response += checkDiskSpaceOfServer("hetzner", "/")
 	response += checkDiskSpaceOfServer("hetzner", "/mnt/hetzner_disk")
 
-	// only report back if something is amiss
-	if response != "" {
-		api.PostMessage(SlackReportChannel, slack.MsgOptionText(
-			response, false), slack.MsgOptionAsUser(true))
-	}
-
 	if manuallyCalled {
 		return response
 	} else { // called via Cron - only output if there's an issue!
 		if response != "" {
+			response = ":skull_and_crossbones: " + response + " :skull_and_crossbones:"
 			api.PostMessage(SlackReportChannel, slack.MsgOptionText(response, false),
 				slack.MsgOptionAsUser(true))
 		}

@@ -273,11 +273,13 @@ func CheckCommand(event *slackevents.MessageEvent, user *slack.User, command str
 		response += ":htz_server: *Hetzner Disk Usage* @ `/` & `/mnt/hetzner_disk`:\n"
 		response += CheckHetznerSpace("/", true) + CheckHetznerSpace("/mnt/hetzner_disk", false)
 
-		response += "\n==========================\n:skull_and_crossbones: *Remote Storage and Backups issues* :skull_and_crossbones::\n"
+		response += "\n==========================\n:floppy_disk: *Remote Storage and Backups issues*\n"
 		issues := CheckDiskSpace(true)
 		issues += CheckBackups(true)
 		if issues == "" {
 			issues = ":simple_smile: None found :rainbow:"
+		} else {
+			issues = ":skull_and_crossbones: " + issues + " :skull_and_crossbones:"
 		}
 		response += issues
 
