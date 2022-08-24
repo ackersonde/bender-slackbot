@@ -8,7 +8,6 @@ import (
 	"os/exec"
 	"regexp"
 	"strings"
-	"time"
 
 	"github.com/ackersonde/bender-slackbot/structures"
 	"golang.org/x/crypto/ssh"
@@ -196,12 +195,6 @@ func executeRemoteCmd(cmd string, config *structures.RemoteConnectConfig) struct
 		session.Stderr = &stderrBuf
 		err := session.Run(cmd)
 
-		// as the wakeonlan cmd is usually followed directly by another one
-		// let's put the pause here to have more success
-		if strings.HasPrefix(cmd, "wakeonlan") {
-			time.Sleep(6 * time.Second)
-		}
-
 		errStr := ""
 		if stderrBuf.String() != "" {
 			errStr = strings.TrimSpace(stderrBuf.String())
@@ -238,8 +231,6 @@ func scrubParamOfHTTPMagicCrap(sourceString string) string {
 }
 
 func raspberryPIChecks() string {
-	executeRemoteCmd("wakeonlan 2c:f0:5d:5e:84:43", structures.PI4RemoteConnectConfig)
-
 	response := measureCPUTemp()
 	response += getAppVersions()
 
@@ -250,7 +241,6 @@ func getAppVersions() string {
 	result := "\n*APPs* :martial_arts_uniform:\n"
 
 	hosts := []structures.RemoteConnectConfig{
-		*structures.BlondeBomberRemoteConnectConfig,
 		*structures.VPNPIRemoteConnectConfig,
 		*structures.PI4RemoteConnectConfig}
 
@@ -264,7 +254,6 @@ func getAppVersions() string {
 
 func measureCPUTemp() string {
 	hosts := []structures.RemoteConnectConfig{
-		*structures.BlondeBomberRemoteConnectConfig,
 		*structures.VPNPIRemoteConnectConfig,
 		*structures.PI4RemoteConnectConfig}
 
@@ -291,8 +280,7 @@ func measureCPUTemp() string {
 func retrieveHomeFirewallRules(authorizedIPs []string) []string {
 	hosts := []structures.RemoteConnectConfig{
 		*structures.VPNPIRemoteConnectConfig,
-		*structures.PI4RemoteConnectConfig,
-		*structures.BlondeBomberRemoteConnectConfig}
+		*structures.PI4RemoteConnectConfig}
 
 	var result []string
 	for _, host := range hosts {

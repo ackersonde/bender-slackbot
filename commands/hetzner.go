@@ -4,7 +4,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/ackersonde/bender-slackbot/structures"
 	"github.com/ackersonde/hetzner_home/hetznercloud"
 	"github.com/slack-go/slack"
 )
@@ -35,7 +34,6 @@ func DisplayFirewallRules() {
 // checkFirewallRules does a cross check of SSH access between
 // cloud instances and home network, ensuring minimal connectivity
 func checkFirewallRules(manuallyCalled bool) string {
-	executeRemoteCmd("wakeonlan 2c:f0:5d:5e:84:43", structures.PI4RemoteConnectConfig)
 	homeIPv6Prefix := fetchHomeIPv6Prefix()
 	response := ""
 
