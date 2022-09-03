@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 	"strconv"
@@ -43,7 +43,7 @@ func searchProxy(url string) []byte {
 		}
 		if resp != nil {
 			defer resp.Body.Close()
-			body, err := ioutil.ReadAll(resp.Body)
+			body, err := io.ReadAll(resp.Body)
 			if err != nil || body == nil {
 				Logger.Printf("failed to parse JSON: %s", err.Error())
 				continue
@@ -207,7 +207,7 @@ func callPhotoPrismAPI(url string, basicAuthToken string) []byte {
 		Logger.Printf("photoPrism client: error making http request: %s\n", err)
 	}
 
-	resBody, err := ioutil.ReadAll(res.Body)
+	resBody, err := io.ReadAll(res.Body)
 	if err != nil {
 		Logger.Printf("photoPrism client: could not read response body: %s\n", err)
 	}
