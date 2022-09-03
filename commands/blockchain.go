@@ -3,7 +3,7 @@ package commands
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 	"regexp"
@@ -52,7 +52,7 @@ func getStellarPrice() string {
 		response = fmt.Sprintf("ERR: stellar Lumens http.Get: %s", err)
 	} else {
 		defer stellarPriceResp.Body.Close()
-		stellarPriceJSON, _ := ioutil.ReadAll(stellarPriceResp.Body)
+		stellarPriceJSON, _ := io.ReadAll(stellarPriceResp.Body)
 		// "externalPrices":{"USD_BTC":9650.16,"BTC_XLM":0.00000717,"USD_XLM":0.069192,"USD_XLM_24hAgo":0.070537,"USD_XLM_change":-1.90748}
 
 		re := regexp.MustCompile(`"USD_XLM":(?P<price>[0-9]+\.?[0-9]*),`)
@@ -81,7 +81,7 @@ func getStellarLumens() string {
 	} else {
 		defer stellarResp.Body.Close()
 		stellarLumensLedger := new(structures.StellarLumensLedger)
-		stellarLumensJSON, err2 := ioutil.ReadAll(stellarResp.Body)
+		stellarLumensJSON, err2 := io.ReadAll(stellarResp.Body)
 
 		if err2 == nil {
 			json.Unmarshal([]byte(stellarLumensJSON), &stellarLumensLedger)
@@ -93,7 +93,7 @@ func getStellarLumens() string {
 				}
 			}
 		} else {
-			response = fmt.Sprintf("ERR: stellar Lumens ioutil.ReadAll: %s", err2)
+			response = fmt.Sprintf("ERR: stellar Lumens io.ReadAll: %s", err2)
 		}
 	}
 
@@ -139,7 +139,7 @@ func getEthereumPrice() string {
 		response = fmt.Sprintf("ERR: etherscan EthPrice http.Get: %s", err)
 	} else {
 		defer ethereumResp.Body.Close()
-		ethereumPriceJSON, err2 := ioutil.ReadAll(ethereumResp.Body)
+		ethereumPriceJSON, err2 := io.ReadAll(ethereumResp.Body)
 
 		if err2 == nil {
 			var result map[string]map[string]string
@@ -153,7 +153,7 @@ func getEthereumPrice() string {
 				response = fmt.Sprintf("ERR: etherscan EthPrice ParseFloat: %s", err3)
 			}
 		} else {
-			response = fmt.Sprintf("ERR: etherscan EthPrice ioutil.ReadAll: %s", err2)
+			response = fmt.Sprintf("ERR: etherscan EthPrice io.ReadAll: %s", err2)
 		}
 	}
 
@@ -176,7 +176,7 @@ func getEthereumTokens() string {
 		response = fmt.Sprintf("ERR: etherscan AcctBal http.Get: %s", err)
 	} else {
 		defer accountBalanceWeiResp.Body.Close()
-		accountBalanceWeiJSON, err2 := ioutil.ReadAll(accountBalanceWeiResp.Body)
+		accountBalanceWeiJSON, err2 := io.ReadAll(accountBalanceWeiResp.Body)
 		Logger.Println("Wei response: " + string(accountBalanceWeiJSON))
 		if err2 == nil {
 			var result map[string]string
@@ -191,7 +191,7 @@ func getEthereumTokens() string {
 				response = fmt.Sprintf("ERR: etherscan AcctBal ParseFloat: %s", err3)
 			}
 		} else {
-			response = fmt.Sprintf("ERR: etherscan AcctBal ioutil.ReadAll: %s", err2)
+			response = fmt.Sprintf("ERR: etherscan AcctBal io.ReadAll: %s", err2)
 		}
 	}
 

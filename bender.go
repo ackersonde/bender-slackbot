@@ -3,7 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 	"strings"
@@ -44,7 +44,7 @@ func ensureWiFiOffOvernight(s *gocron.Scheduler) {
 
 func verifiedSlackMessage(w http.ResponseWriter, r *http.Request) []byte {
 	defer r.Body.Close()
-	body, err := ioutil.ReadAll(r.Body)
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		commands.Logger.Printf("[ERROR] Fail to read request body: %v", err)

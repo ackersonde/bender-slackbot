@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os/exec"
 	"regexp"
 	"strings"
@@ -23,7 +23,7 @@ func remoteConnectionConfiguration(unparsedHostKey string, username string) *ssh
 	signer := GetPublicCertificate(privateKeyPath)
 
 	if username == "root" { // TODO : figure out a better way to distinguish
-		key, err := ioutil.ReadFile(privateKeyPath)
+		key, err := io.ReadFile(privateKeyPath)
 		if err != nil {
 			Logger.Printf("ROOT: unable to read private key: %v", err)
 			return nil
@@ -46,7 +46,7 @@ func remoteConnectionConfiguration(unparsedHostKey string, username string) *ssh
 
 // GetPublicCertificate retrieves it from the given privateKeyPath param
 func GetPublicCertificate(privateKeyPath string) ssh.Signer {
-	key, err := ioutil.ReadFile(privateKeyPath)
+	key, err := io.ReadFile(privateKeyPath)
 	if err != nil {
 		Logger.Printf("unable to read private key file: %v", err)
 	}
@@ -56,7 +56,7 @@ func GetPublicCertificate(privateKeyPath string) ssh.Signer {
 		Logger.Printf("Unable to parse private key: %v", err)
 	}
 
-	cert, _ := ioutil.ReadFile(privateKeyPath + "-cert.pub")
+	cert, _ := io.ReadFile(privateKeyPath + "-cert.pub")
 	pk, _, _, _, err := ssh.ParseAuthorizedKey(cert)
 	if err != nil {
 		Logger.Printf("unable to parse CA public key: %v", err)
