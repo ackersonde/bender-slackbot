@@ -179,14 +179,16 @@ func buildPhotoPrismAlbums() structures.PhotoPrismAlbums {
 		if err := json.Unmarshal(linksJSON, &links); err != nil {
 			Logger.Printf("photoPrism: Can't unmarshal JSON: %s => %s", err, linksJSON)
 		}
-		album.PublicURL = fmt.Sprintf("https://albums.ackerson.de/s/%s/%s", links[0].Token, album.UID)
-		album.ExpiringInDays = links[0].Expires / 3600 / 24
-		album.Views = links[0].Views
-		expirationDate := links[0].ModifiedAt.AddDate(0, 0, -1*links[0].Expires)
+		if len(links) > 0 {
+			album.PublicURL = fmt.Sprintf("https://albums.ackerson.de/s/%s/%s", links[0].Token, album.UID)
+			album.ExpiringInDays = links[0].Expires / 3600 / 24
+			album.Views = links[0].Views
+			expirationDate := links[0].ModifiedAt.AddDate(0, 0, -1*links[0].Expires)
 
-		if links[0].Expires == 0 || !(time.Now().After(expirationDate)) {
-			populatedAlbums = append(populatedAlbums, album)
-		}
+			if links[0].Expires == 0 || !(time.Now().After(expirationDate)) {
+				populatedAlbums = append(populatedAlbums, album)
+			}
+		} // else no public links available in the album
 	}
 
 	return populatedAlbums
