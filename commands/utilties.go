@@ -4,11 +4,10 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"os/exec"
 	"regexp"
 	"strings"
-	"time"
 
 	"github.com/ackersonde/bender-slackbot/structures"
 	"golang.org/x/crypto/ssh"
@@ -24,7 +23,7 @@ func remoteConnectionConfiguration(unparsedHostKey string, username string) *ssh
 	signer := GetPublicCertificate(privateKeyPath)
 
 	if username == "root" { // TODO : figure out a better way to distinguish
-		key, err := ioutil.ReadFile(privateKeyPath)
+		key, err := os.ReadFile(privateKeyPath)
 		if err != nil {
 			Logger.Printf("ROOT: unable to read private key: %v", err)
 			return nil
@@ -47,7 +46,7 @@ func remoteConnectionConfiguration(unparsedHostKey string, username string) *ssh
 
 // GetPublicCertificate retrieves it from the given privateKeyPath param
 func GetPublicCertificate(privateKeyPath string) ssh.Signer {
-	key, err := ioutil.ReadFile(privateKeyPath)
+	key, err := os.ReadFile(privateKeyPath)
 	if err != nil {
 		Logger.Printf("unable to read private key file: %v", err)
 	}
@@ -57,7 +56,7 @@ func GetPublicCertificate(privateKeyPath string) ssh.Signer {
 		Logger.Printf("Unable to parse private key: %v", err)
 	}
 
-	cert, _ := ioutil.ReadFile(privateKeyPath + "-cert.pub")
+	cert, _ := os.ReadFile(privateKeyPath + "-cert.pub")
 	pk, _, _, _, err := ssh.ParseAuthorizedKey(cert)
 	if err != nil {
 		Logger.Printf("unable to parse CA public key: %v", err)
@@ -145,12 +144,12 @@ func fetchHomeIPv6Prefix() string {
 
 func dockerInfo(application string) string {
 	response := ""
-	cmd := "docker logs -n 100 " + application
+	cmd := "ssh homepage \"docker  logs -n 100 " + application + "\""
 	if application == "" {
-		cmd = "docker ps -a --format 'table {{.Names}}\t{{.Status}}'"
+		cmd = "ssh homepage \"docker ps -a --format 'table {{.Names}}\t{{.Status}}'\""
 	}
 
-	remoteResult := executeRemoteCmd(cmd, structures.ACKDERemoteConnectConfig)
+	remoteResult := executeRemoteCmd(cmd, structures.PI4RemoteConnectConfig)
 	if remoteResult.Stdout == "" && remoteResult.Stderr != "" {
 		response += remoteResult.Stderr
 	} else {
@@ -196,12 +195,6 @@ func executeRemoteCmd(cmd string, config *structures.RemoteConnectConfig) struct
 		session.Stderr = &stderrBuf
 		err := session.Run(cmd)
 
-		// as the wakeonlan cmd is usually followed directly by another one
-		// let's put the pause here to have more success
-		if strings.HasPrefix(cmd, "wakeonlan") {
-			time.Sleep(6 * time.Second)
-		}
-
 		errStr := ""
 		if stderrBuf.String() != "" {
 			errStr = strings.TrimSpace(stderrBuf.String())
@@ -238,8 +231,6 @@ func scrubParamOfHTTPMagicCrap(sourceString string) string {
 }
 
 func raspberryPIChecks() string {
-	executeRemoteCmd("wakeonlan 2c:f0:5d:5e:84:43", structures.PI4RemoteConnectConfig)
-
 	response := measureCPUTemp()
 	response += getAppVersions()
 
@@ -250,7 +241,6 @@ func getAppVersions() string {
 	result := "\n*APPs* :martial_arts_uniform:\n"
 
 	hosts := []structures.RemoteConnectConfig{
-		*structures.BlondeBomberRemoteConnectConfig,
 		*structures.VPNPIRemoteConnectConfig,
 		*structures.PI4RemoteConnectConfig}
 
@@ -264,7 +254,6 @@ func getAppVersions() string {
 
 func measureCPUTemp() string {
 	hosts := []structures.RemoteConnectConfig{
-		*structures.BlondeBomberRemoteConnectConfig,
 		*structures.VPNPIRemoteConnectConfig,
 		*structures.PI4RemoteConnectConfig}
 
@@ -291,8 +280,7 @@ func measureCPUTemp() string {
 func retrieveHomeFirewallRules(authorizedIPs []string) []string {
 	hosts := []structures.RemoteConnectConfig{
 		*structures.VPNPIRemoteConnectConfig,
-		*structures.PI4RemoteConnectConfig,
-		*structures.BlondeBomberRemoteConnectConfig}
+		*structures.PI4RemoteConnectConfig}
 
 	var result []string
 	for _, host := range hosts {

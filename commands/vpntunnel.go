@@ -58,7 +58,7 @@ func inspectVPNConnection() map[string]string {
 	resultsChannel := make(chan string, 10)
 	timeout := time.After(10 * time.Second)
 	go func() {
-		cmd := "docker exec vpnission wg show | grep endpoint"
+		cmd := "docker exec vpnission wg show | grep endpoint; docker inspect vpnission | grep PROTON"
 		remoteResult := executeRemoteCmd(cmd, structures.VPNPIRemoteConnectConfig)
 
 		result := ""
@@ -74,7 +74,7 @@ func inspectVPNConnection() map[string]string {
 	case res := <-resultsChannel:
 		if res != "" {
 			// look for `endpoint: <IP-Addr>:51820`
-			re := regexp.MustCompile(`endpoint: (?P<endpointIP>.*):51820`)
+			re := regexp.MustCompile(`(?s)endpoint: (?P<endpointIP>.*):51820.*"PROTONVPN_SERVER=(?P<protonvpnServer>.*)",`)
 			matches := re.FindAllStringSubmatch(res, -1)
 			names := re.SubexpNames()
 
@@ -105,27 +105,32 @@ func ChangeToNextWireguardServer(vpnCountry string) {
 }
 
 // VpnPiTunnelChecks ensures correct VPN connection
-func VpnPiTunnelChecks(vpnCountry string) string {
-	ipsecVersion := executeRemoteCmd(
-		"docker exec vpnission wg --version",
+func VpnPiTunnelChecks() string {
+	ipsecVersion := executeRemoteCmd("docker exec vpnission wg --version",
 		structures.VPNPIRemoteConnectConfig)
 	response := ipsecVersion.Stdout + ":protonvpn: VPN: DOWN :rotating_light:"
 
 	vpnTunnelSpecs := inspectVPNConnection()
 	if len(vpnTunnelSpecs) > 0 {
-		Logger.Printf("Using VPN server: %s\n", vpnTunnelSpecs["endpointIP"])
+		Logger.Printf("Using VPN server: %s\n", vpnTunnelSpecs["protonvpnServer"])
 		response += " with " + vpnTunnelSpecs["endpointIP"]
 
 		if homeAndInternetIPsDoNotMatch(vpnTunnelSpecs["endpointIP"]) &&
 			transmissionSettingsAreSane("10.2.0.2") {
-			response = ipsecVersion.Stdout + ":protonvpn: VPN: UP @ " +
-				vpnTunnelSpecs["endpointIP"]
+			response = ":protonvpn: VPN: UP @ " +
+				vpnTunnelSpecs["protonvpnServer"] + " [" + vpnTunnelSpecs["endpointIP"] + "]\n"
+
+			servers := executeRemoteCmd("ls -lrt /etc/wireguard/ | awk 'NR>=2 { print $9 }'",
+				structures.VPNPIRemoteConnectConfig)
+			serversStr := strings.ReplaceAll(servers.Stdout+"\n", ".conf\n", ", ")
+			serversStr = strings.Replace(serversStr, vpnTunnelSpecs["protonvpnServer"], "*"+vpnTunnelSpecs["protonvpnServer"]+"*", 1)
+			response += "Available: " + serversStr + "\n" + ipsecVersion.Stdout
 		}
 	}
 
 	if strings.Contains(response, ":protonvpn: VPN: DOWN") {
 		response = ipsecVersion.Stdout + "VPN was DOWN! Restarting...\n" +
-			updateVpnPiTunnel("NL_88")
+			updateVpnPiTunnel("NL_28")
 	}
 
 	return response
@@ -133,12 +138,9 @@ func VpnPiTunnelChecks(vpnCountry string) string {
 
 func updateVpnPiTunnel(vpnServerDomain string) string {
 	response := "Failed changing :protonvpn: to " + vpnServerDomain
-
-	stopVPNCmd := `docker rm -f vpnission && `
-	startVPNCmd := `docker run --env-file .config/vpnission.env.list -d \
-        --restart=always --name vpnission --privileged -p9091:9091 -p51413:51413 \
-        -v /etc/wireguard:/etc/wireguard -v /mnt/usb4TB/DLNA/torrents:/mnt/torrents \
-        danackerson/vpnission ` + vpnServerDomain
+	dockerComposePrefix := "docker compose -f /home/ubuntu/vpnission/docker-compose-deploy.yml"
+	stopVPNCmd := dockerComposePrefix + ` down; `
+	startVPNCmd := `PROTONVPN_SERVER=` + vpnServerDomain + ` ` + dockerComposePrefix + ` up -d`
 
 	cmd := stopVPNCmd + startVPNCmd
 

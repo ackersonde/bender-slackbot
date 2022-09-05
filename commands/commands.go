@@ -5,7 +5,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"net/url"
@@ -17,8 +17,7 @@ import (
 	"time"
 
 	"github.com/ackersonde/bender-slackbot/structures"
-	"github.com/ackersonde/digitaloceans/common"
-	"github.com/ackersonde/hetzner_vault/hetznercloud"
+	"github.com/ackersonde/hetzner_home/hetznercloud"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/sethvargo/go-password/password"
 	"github.com/slack-go/slack"
@@ -231,7 +230,7 @@ func CheckCommand(event *slackevents.MessageEvent, user *slack.User, command str
 		}
 
 		for _, server := range servers {
-			serverInfoURL := fmt.Sprintf("https://console.hetzner.cloud/projects/%s/servers/%d/overview", HETZNER_PROJECT, server.ID)
+			serverInfoURL := fmt.Sprintf("https://console.hetzner.cloud/projects/%s/servers/%d/graphs", HETZNER_PROJECT, server.ID)
 			serverIPv6 := server.PublicNet.IPv6.IP.String()
 			if strings.HasSuffix(serverIPv6, "::") {
 				serverIPv6 += "1"
@@ -240,10 +239,12 @@ func CheckCommand(event *slackevents.MessageEvent, user *slack.User, command str
 			response += fmt.Sprintf("ID %d: <%s|%s> [%s] @ %s => %s\n",
 				server.ID, serverInfoURL, server.Name, serverIPv6,
 				server.Created.Format("2006-01-02 15:04"), server.Status)
-		}
 
-		remoteResult := executeRemoteCmd("ssh vault 'uptime;uname -a'", structures.PI4RemoteConnectConfig)
-		response += remoteResult.Stdout
+			serverNameParts := strings.Split(server.Name, "-")
+			remoteCmd := fmt.Sprintf("ssh %s 'uptime;uname -a'", serverNameParts[0])
+			remoteResult := executeRemoteCmd(remoteCmd, structures.PI4RemoteConnectConfig)
+			response += remoteResult.Stdout
+		}
 
 		api.PostMessage(event.Channel, slack.MsgOptionText(response, false), params)
 	} else if args[0] == "htzd" {
@@ -253,21 +254,6 @@ func CheckCommand(event *slackevents.MessageEvent, user *slack.User, command str
 				api.PostMessage(event.Channel, slack.MsgOptionText("Invalid integer value for ID!", true), params)
 			} else {
 				result := hetznercloud.DeleteServer(serverID)
-				api.PostMessage(event.Channel, slack.MsgOptionText(result, true), params)
-			}
-		} else {
-			api.PostMessage(event.Channel, slack.MsgOptionText("Please provide Droplet ID from `do` cmd!", true), params)
-		}
-	} else if args[0] == "do" {
-		response := ListDODroplets()
-		api.PostMessage(event.Channel, slack.MsgOptionText(response, false), params)
-	} else if args[0] == "dd" {
-		if len(args) > 1 {
-			number, err := strconv.Atoi(args[1])
-			if err != nil {
-				api.PostMessage(event.Channel, slack.MsgOptionText("Invalid integer value for ID!", true), params)
-			} else {
-				result := common.DeleteDODroplet(number)
 				api.PostMessage(event.Channel, slack.MsgOptionText(result, true), params)
 			}
 		} else {
@@ -283,16 +269,17 @@ func CheckCommand(event *slackevents.MessageEvent, user *slack.User, command str
 			response += CheckMediaDiskSpace("")
 			response += CheckServerDiskSpace("")
 		}
-		response += CheckDigitalOceanSpace("")
 
 		response += ":htz_server: *Hetzner Disk Usage* @ `/` & `/mnt/hetzner_disk`:\n"
 		response += CheckHetznerSpace("/", true) + CheckHetznerSpace("/mnt/hetzner_disk", false)
 
-		response += "\n==========================\n:skull_and_crossbones: *Remote Storage and Backups issues* :skull_and_crossbones::\n"
+		response += "\n==========================\n:floppy_disk: *Remote Storage and Backups issues*\n"
 		issues := CheckDiskSpace(true)
 		issues += CheckBackups(true)
 		if issues == "" {
 			issues = ":simple_smile: None found :rainbow:"
+		} else {
+			issues = ":skull_and_crossbones: " + issues + " :skull_and_crossbones:"
 		}
 		response += issues
 
@@ -329,19 +316,17 @@ func CheckCommand(event *slackevents.MessageEvent, user *slack.User, command str
 
 		api.PostMessage(event.Channel, slack.MsgOptionText(response, false), params)
 	} else if args[0] == "vpns" {
-		if len(args) > 1 {
-			VPNCountry = strings.ToUpper(args[1])
-		}
-		response := VpnPiTunnelChecks(VPNCountry)
-		api.PostMessage(event.Channel, slack.MsgOptionText(response, false), params)
+		api.PostMessage(event.Channel, slack.MsgOptionText(VpnPiTunnelChecks(), false), params)
 	} else if args[0] == "vpnc" {
 		response := "Please provide a new VPN server (hint: output from `vpns`)"
 		if len(args) > 1 {
-			vpnServerDomain := strings.ToLower(scrubParamOfHTTPMagicCrap(args[1]))
-			// ensure vpnServerDomain has format e.g. DE-19
-			var rxPat = regexp.MustCompile(`^(lxc-)?[A-Za-z]{2}-[0-9]{2}`)
+			vpnServerDomain := strings.ToUpper(scrubParamOfHTTPMagicCrap(args[1]))
+			vpnServerDomain = strings.ReplaceAll(vpnServerDomain, "-", "_")
+
+			// ensure vpnServerDomain has format e.g. NL_88
+			var rxPat = regexp.MustCompile(`^[A-Za-z]{2}_[0-9]{2}`)
 			if !rxPat.MatchString(vpnServerDomain) {
-				response = "Provide a validly formatted VPN server (hint: output from `vpns`)"
+				response = "Provide a valid formatted VPN server (hint: output from `vpns`)"
 
 			} else {
 				response = updateVpnPiTunnel(vpnServerDomain)
@@ -367,14 +352,14 @@ func CheckCommand(event *slackevents.MessageEvent, user *slack.User, command str
 
 		api.PostMessage(event.Channel, slack.MsgOptionText(response, false), params)
 	} else if args[0] == "www" {
-		digitalOcean := ":do_droplet:: <https://sync.ackerson.de|syncthing> | <https://ackerson.de|homepage>\n"
-		hetzner := ":htz_server:: <https://mv.ackerson.de/dashboard/#/|traefik> | <https://vault.ackerson.de/ui/|vault>\n"
+		homepage := ":baseball:: <https://sync.ackerson.de|syncthing> | <https://ackerson.de|homepage>\n"
+		vault := ":htz_server:: <https://mv.ackerson.de/dashboard/#/|traefik> | <https://vault.ackerson.de/ui/|vault>\n"
 
 		fritzBox := ":house:: <https://fritz.ackerson.de/|fritzbox> | <https://freedns.afraid.org/dynamic/v2/|afraid>\n"
 		pi4 := ":raspberry_pi:: <https://homesync.ackerson.de|syncthing> | <https://photos.ackerson.de/|photoprism> | <http://192.168.178.27:8200|test vault>\n"
 		vpnpi := ":protonvpn:: <https://vpnission.ackerson.de/transmission/web/|transmission> | <https://jelly.ackerson.de/web/index.html#!/home.html|jelly>\n"
 
-		response := digitalOcean + hetzner + fritzBox + pi4 + vpnpi
+		response := homepage + vault + fritzBox + pi4 + vpnpi
 		api.PostMessage(event.Channel, slack.MsgOptionText(response, false), params)
 	} else if args[0] == "key" {
 		response := getBendersCurrentSSHCert()
@@ -386,7 +371,11 @@ func CheckCommand(event *slackevents.MessageEvent, user *slack.User, command str
 		response := "Available public photo albums on :photoprism::\n=========================\n"
 		albums := buildPhotoPrismAlbums()
 		for _, album := range albums {
-			response += fmt.Sprintf("<%s|%s> (expiring %dd w/ %d views)\n", album.PublicURL, album.Title, album.ExpiringInDays, album.Views)
+			expiryMessage := fmt.Sprintf("expiring %dd w/ ", album.ExpiringInDays)
+			if album.ExpiringInDays == 0 {
+				expiryMessage = ""
+			}
+			response += fmt.Sprintf("<%s|%s> (%s%d views)\n", album.PublicURL, album.Title, expiryMessage, album.Views)
 		}
 		api.PostMessage(event.Channel, slack.MsgOptionText(response, false), params)
 	} else if args[0] == "help" {
@@ -397,7 +386,6 @@ func CheckCommand(event *slackevents.MessageEvent, user *slack.User, command str
 				":key: `pass <64 10 10 false true>`: random pass with <chars digits symbols noUpper repeatChars>\n" +
 				":sun_behind_rain_cloud: `rw`: Oberhatzkofen weather\n" +
 				":baseball: `bb <YYYY-MM-DD>`: show baseball games from given date (default yesterday)\n" +
-				":do_droplet: `do|dd <id>`: show|delete DigitalOcean droplet(s)\n" +
 				":htz_server: `htz|htzd <id>`: show|delete Hetzner server(s)\n" +
 				":wifi: `wf [0|1|s]`: turn home wifi [0]ff, [1]n or [-default-s]tatus\n" +
 				":protonvpn: `vpn[s|c]`: [S]how status of VPN on :raspberry_pi:, [C]hange VPN to best in given country or " + VPNCountry + "\n" +
@@ -494,7 +482,7 @@ func fetchAktuelles() string {
 	}
 	defer resp.Body.Close()
 
-	response, err := ioutil.ReadAll(resp.Body)
+	response, err := io.ReadAll(resp.Body)
 	if err != nil {
 		Logger.Printf("ERR read resp: %s", err.Error())
 	}

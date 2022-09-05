@@ -3,7 +3,6 @@ package commands
 import (
 	"bufio"
 	"fmt"
-	"os/exec"
 	"strconv"
 	"strings"
 	"time"
@@ -99,16 +98,11 @@ func CheckDiskSpace(manuallyCalled bool) string {
 	response += checkDiskSpaceOfServer("hetzner", "/")
 	response += checkDiskSpaceOfServer("hetzner", "/mnt/hetzner_disk")
 
-	// only report back if something is amiss
-	if response != "" {
-		api.PostMessage(SlackReportChannel, slack.MsgOptionText(
-			response, false), slack.MsgOptionAsUser(true))
-	}
-
 	if manuallyCalled {
 		return response
 	} else { // called via Cron - only output if there's an issue!
 		if response != "" {
+			response = ":skull_and_crossbones: " + response + " :skull_and_crossbones:"
 			api.PostMessage(SlackReportChannel, slack.MsgOptionText(response, false),
 				slack.MsgOptionAsUser(true))
 		}
@@ -239,20 +233,6 @@ func CheckHetznerSpace(path string, showHeader bool) string {
 		response = remoteResult.Stdout
 	}
 
-	return response
-}
-
-func CheckDigitalOceanSpace(path string) string {
-	response := ""
-	out, err := exec.Command("df", "-h", syncthing).Output()
-	if err != nil {
-		Logger.Printf("ERR: %s", err.Error())
-	}
-
-	response = ":do_droplet: *DO Disk Usage* `root@" + syncthing +
-		"`\n" + string(out)
-
-	response += "\n==========================\n"
 	return response
 }
 
