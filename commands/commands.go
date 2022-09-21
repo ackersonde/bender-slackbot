@@ -54,16 +54,25 @@ func CheckCommand(event *slackevents.MessageEvent, user *slack.User, command str
 		response := ""
 		cmdPrefix := "ssh vault "
 		ipv6Prefix := strings.Split(fetchHomeIPv6Prefix(), "::")
-
-		cmd := fmt.Sprintf("%s\"awk '{print \\$1}' traefik/logs/access.log | grep -v %s | sort -n | uniq -c | sort -nr | head -10\"", cmdPrefix, ipv6Prefix[0])
+		cmdDetails := "%s\"awk '{print \\$1}' traefik/logs/access.log | grep -v %s | sort -n | uniq -c | sort -nr | head -10\""
+		cmd := fmt.Sprintf(cmdDetails, cmdPrefix, ipv6Prefix[0])
 
 		remoteResult := executeRemoteCmd(cmd, structures.PI4RemoteConnectConfig)
-
 		if remoteResult.Stdout == "" && remoteResult.Stderr != "" {
-			response = remoteResult.Stderr
+			response = "=======:vault: vault.ackerson.de==========\n" + remoteResult.Stderr
 		} else {
-			response = remoteResult.Stdout
+			response = "=======:vault: vault.ackerson.de==========\n" + remoteResult.Stdout
 		}
+
+		cmdPrefix = "ssh homepage "
+		cmd = fmt.Sprintf(cmdDetails, cmdPrefix, ipv6Prefix[0])
+		remoteResult = executeRemoteCmd(cmd, structures.PI4RemoteConnectConfig)
+		if remoteResult.Stdout == "" && remoteResult.Stderr != "" {
+			response += "\n=======:house: ackerson.de==========\n" + remoteResult.Stderr
+		} else {
+			response += "\n=======:house: ackerson.de==========\n" + remoteResult.Stdout
+		}
+
 		api.PostMessage(event.Channel,
 			slack.MsgOptionText(response, false), params)
 	} else if args[0] == "crypto" {
