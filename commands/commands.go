@@ -50,7 +50,23 @@ func CheckCommand(event *slackevents.MessageEvent, user *slack.User, command str
 	args := strings.Fields(command)
 	params := slack.MsgOptionAsUser(true)
 
-	if args[0] == "crypto" {
+	if args[0] == "h4x07S" {
+		response := ""
+		sshConfig := structures.PI4RemoteConnectConfig
+		cmdPrefix := "ssh vault "
+		ipv6Prefix := "2a02:810d:c0:581b" // TODO: replace w/ fetchHomeIPv6Prefix
+		cmd := fmt.Sprintf("%sawk '{print $1}' traefik/logs/access.log | sort -n | uniq -c | sort -nr | head -20 | grep -v %s", cmdPrefix, ipv6Prefix)
+
+		remoteResult := executeRemoteCmd(cmd, sshConfig)
+
+		if remoteResult.Stdout == "" && remoteResult.Stderr != "" {
+			response = remoteResult.Stderr
+		} else {
+			response = remoteResult.Stdout
+		}
+		api.PostMessage(event.Channel,
+			slack.MsgOptionText(response, false), params)
+	} else if args[0] == "crypto" {
 		response := checkEthereumValue() + "\n" + checkStellarLumensValue()
 		api.PostMessage(event.Channel,
 			slack.MsgOptionText(response, false), params)
@@ -382,6 +398,7 @@ func CheckCommand(event *slackevents.MessageEvent, user *slack.User, command str
 		response :=
 			":ethereum: `crypto`: Current cryptocurrency stats :lumens:\n" +
 				":sleuth_or_spy: `pgp`: PGP keys\n" +
+				":ninja: `h4X07s`: Show remote IPs accessing sites\n" +
 				":vault: `vfa <get (keyname)| put keyname secret>`: Vault Factor Auth (TOTP)\n" +
 				":key: `pass <64 10 10 false true>`: random pass with <chars digits symbols noUpper repeatChars>\n" +
 				":sun_behind_rain_cloud: `rw`: Oberhatzkofen weather\n" +
