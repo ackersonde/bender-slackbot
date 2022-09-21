@@ -62,7 +62,7 @@ func CheckCommand(event *slackevents.MessageEvent, user *slack.User, command str
 		if remoteResult.Stdout == "" && remoteResult.Stderr != "" {
 			response = remoteResult.Stderr
 		} else {
-			response = remoteResult.Stdout
+			response = remoteResult.Stdout + " : " + fetchHomeIPv6Prefix()
 		}
 		api.PostMessage(event.Channel,
 			slack.MsgOptionText(response, false), params)
