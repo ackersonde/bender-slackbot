@@ -50,7 +50,7 @@ func CheckCommand(event *slackevents.MessageEvent, user *slack.User, command str
 	args := strings.Fields(command)
 	params := slack.MsgOptionAsUser(true)
 
-	if args[0] == "h4x07S" {
+	if args[0] == "h4X07s" {
 		response := ""
 		sshConfig := structures.PI4RemoteConnectConfig
 		cmdPrefix := "ssh vault "
