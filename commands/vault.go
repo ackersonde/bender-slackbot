@@ -158,9 +158,6 @@ func loginToVault() (*vault.Secret, error) {
 					err = errors.New(remoteResult.Stderr)
 				} else {
 					authInfo, err = vaultClient.Auth().Login(context.Background(), appRoleAuth)
-					if authInfo != nil {
-						err = errors.New("successfully unsealed vault")
-					}
 				}
 			}
 		}

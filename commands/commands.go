@@ -54,7 +54,7 @@ func CheckCommand(event *slackevents.MessageEvent, user *slack.User, command str
 		response := ""
 		cmdPrefix := "ssh vault "
 		ipv6Prefix := strings.Split(fetchHomeIPv6Prefix(), "::")
-		cmdDetails := "%s\"awk '{print \\$1}' traefik/logs/access.log | grep -v %s | sort -n | uniq -c | sort -nr | head -10\""
+		cmdDetails := "%s\"awk '{print \\$1}' traefik/logs/access.log | grep -v %s | sort -n | uniq -c | sort -nr | head -5\""
 		cmd := fmt.Sprintf(cmdDetails, cmdPrefix, ipv6Prefix[0])
 
 		remoteResult := executeRemoteCmd(cmd, structures.PI4RemoteConnectConfig)
