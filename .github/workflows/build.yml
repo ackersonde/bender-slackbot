@@ -2,7 +2,7 @@ name: Deploy bender slackbot
 
 on:
   push:
-    branches: [ master, hetzner ]
+    branches: [master, hetzner]
   workflow_dispatch:
     inputs:
       ca_pub_fingerprint:
@@ -18,7 +18,7 @@ jobs:
       - uses: actions/checkout@v2
       - uses: actions/setup-go@v2
         with:
-          go-version: '1.18'
+          go-version: "1.19"
       - name: Build application and docker image
         run: |
           go mod tidy
@@ -100,4 +100,3 @@ jobs:
           curl -s -o /dev/null -X POST -d token=$SLACK_NOTIFY_TOKEN -d channel=C092UE0H4 \
             -d text="<https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID|$GITHUB_REPOSITORY @ $GITHUB_RUN_ID>" \
             https://slack.com/api/chat.postMessage
-
